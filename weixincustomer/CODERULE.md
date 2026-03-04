@@ -3,7 +3,7 @@
 ### 1. 本项目的所有代码要能在微信小程序运行
 ### 2. 代码要基于SOLID原则
 ### 3. 相同代码要抽象并抽离出来
-### 4. 所有调用后端api接口，放在appapi.js文件中，后端api接口有开发者实现。
+### 4. 所有调用后端api接口，放在AppApi.tsx文件中，后端api接口有开发者实现。
   * 所有接口是都http请求，post方式，入参以json格式放在payload中
   * 返回值格式如下:
   ```json
@@ -13,7 +13,7 @@
         "data": {}  // 这里返回业务数据，可以是任意格式 如"data": 123
     }
   ```
-  * 所有api接口都由你来定义，命名格式为驼峰格式，前缀为 v1/sale/[api名称]，如v1/sale/getPigPrices
+  * 所有api接口都由你来定义，命名格式为驼峰格式，前缀为 v1/weixincustomer/[api名称]，如v1/weixincustomer/getPigPrices
   * 所有接口入参和出参的字段由你来定义，字段名称格式是驼峰格式，如下:
   ```json
   // 入参
