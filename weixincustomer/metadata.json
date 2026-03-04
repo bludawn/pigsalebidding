@@ -1,0 +1,7 @@
+{
+  "name": "极速生猪贸易助手",
+  "description": "专业生猪贸易全链路管理平台，涵盖竞拍、市场资讯、消息通知与资产管理。",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
