@@ -92,7 +92,7 @@ const App: React.FC = () => {
 
   return (
     <AppContext.Provider value={{ farms, productTags, loading }}>
-      <div className="flex flex-col min-h-screen bg-industry-bg text-industry-text pb-20 max-w-md mx-auto relative shadow-xl overflow-hidden min-h-screen">
+      <div className="flex flex-col min-h-screen bg-industry-bg text-industry-text max-w-md mx-auto relative shadow-xl">
         {renderContent()}
 
         {currentRoute === 'tabs' && (

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { AuctionItem, FilterState, PaginationState } from '../types';
 import { getAuctionList } from '../AppApi';
 import { useAppContext } from '../App';
@@ -436,7 +437,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
       </div>
 
       {/* Filter Drawer Overlay */}
-      {showFilterDrawer && (
+      {showFilterDrawer && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 bg-black/40 z-[100] flex items-end animate-in fade-in duration-200" onClick={() => setShowFilterDrawer(false)}>
           <div className="bg-white w-full rounded-t-xl p-4 max-h-[70vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
@@ -449,20 +450,24 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             </div>
             {renderFilterContent()}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Region Picker */}
-      <RegionPicker
-        visible={showRegionPicker}
-        onClose={() => setShowRegionPicker(false)}
-        onConfirm={(code, name) => {
-          setFilter(prev => ({ ...prev, regionCode: code, regionName: name }));
-        }}
-      />
+      {showRegionPicker && typeof document !== 'undefined' && createPortal(
+        <RegionPicker
+          visible={showRegionPicker}
+          onClose={() => setShowRegionPicker(false)}
+          onConfirm={(code, name) => {
+            setFilter(prev => ({ ...prev, regionCode: code, regionName: name }));
+          }}
+        />,
+        document.body
+      )}
 
       {/* Auction List */}
-      <div className="px-4 py-4 flex flex-col gap-4">
+      <div className="px-4 py-4 pb-28 flex flex-col gap-4">
         {auctionList.map(item => (
           <div
             key={item.id}
