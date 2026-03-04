@@ -65,32 +65,73 @@ async function request<T>(url: string, payload: object = {}): Promise<ApiRespons
   }
 }
 
+// ============ 基础数据接口 ============
+
+/** 场点数据 */
+export interface FarmRecord {
+  id: string;
+  name: string;
+  regionCode?: string; // 所属区域编码
+}
+
+/** 获取场点列表 */
+export function getFarmList(params?: { regionCode?: string }): Promise<ApiResponse<FarmRecord[]>> {
+  return request<FarmRecord[]>('/v1/weixincustomer/getFarmList', params || {});
+}
+
+/** 产品标签数据 */
+export interface ProductTagRecord {
+  id: string;
+  name: string;
+}
+
+/** 获取产品标签列表 */
+export function getProductTags(): Promise<ApiResponse<ProductTagRecord[]>> {
+  return request<ProductTagRecord[]>('/v1/weixincustomer/getProductTags');
+}
+
+/** 区域数据（树形） */
+export interface RegionRecord {
+  code: string;
+  name: string;
+  level: number; // 1:省 2:市 3:区/县 4:镇
+  children?: RegionRecord[];
+}
+
+/** 获取区域列表 */
+export function getRegionList(params?: { parentCode?: string }): Promise<ApiResponse<RegionRecord[]>> {
+  return request<RegionRecord[]>('/v1/weixincustomer/getRegionList', params || {});
+}
+
 // ============ 竞价相关接口 ============
 
 /** 竞价项数据 */
 export interface AuctionRecord {
   id: string;
+  farmId: string;
   farmName: string;
   farmIcon: string;
   breed: string;
   quantity: number;
   weightRange: string;
-  category: string;
-  quality: string;
+  tags: string[]; // 产品标签数组，如 ["挪系A", "白猪"]
   startingPrice: number;
   startingCount: number;
   endTime: string;
   imageUrl: string;
 }
 
+/** 竞价列表请求参数 */
+export interface AuctionListParams extends ListRequestParams {
+  farmId?: string;       // 场点ID
+  regionCode?: string;   // 区域编码
+  weightRange?: string;  // 体重段
+  tags?: string[];       // 产品标签（多选）
+  distance?: number;     // 距离
+}
+
 /** 获取竞价列表 */
-export function getAuctionList(params: ListRequestParams & {
-  region?: string;      // 区域
-  weightRange?: string; // 体重段
-  productGrade?: string; // 产品等级
-  ticketType?: string;  // AB票
-  distance?: number;    // 距离
-}): Promise<ApiResponse<ListResponseData<AuctionRecord>>> {
+export function getAuctionList(params: AuctionListParams): Promise<ApiResponse<ListResponseData<AuctionRecord>>> {
   return request<ListResponseData<AuctionRecord>>('/v1/weixincustomer/getAuctionList', params);
 }
 
