@@ -45,6 +45,7 @@
   }
   ```
   * 列表请求入参固定是size、current、searchCount，出参current、size、total、pages、records
-  
-### 5. 所有  
+
+### 5. 1个页面1个代码文件，高内聚，低耦合
+
   
