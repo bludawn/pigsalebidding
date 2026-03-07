@@ -435,27 +435,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div 
-      ref={scrollRef}
-      onScroll={handleScroll}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      className="flex flex-col min-h-screen bg-industry-bg relative overscroll-contain"
-      style={{ 
-        WebkitOverflowScrolling: 'touch',
-        overflowY: 'auto',
-        maxHeight: '100vh'
-      }}
-    >
-      {(pullDistance > 0 || isRefreshing) && (
-        <div
-          className="flex items-center justify-center text-xs text-slate-400"
-          style={{ height: isRefreshing ? 40 : pullDistance }}
-        >
-          {isRefreshing ? '正在刷新...' : pullDistance >= 50 ? '松开刷新' : '下拉刷新'}
-        </div>
-      )}
+    <div className="flex flex-col h-screen bg-industry-bg relative overflow-hidden">
       {/* Search Header */}
       <div className="sticky top-0 bg-white z-20 px-4 py-3 border-b border-slate-100 shadow-sm">
         <div className="relative">
@@ -531,104 +511,123 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         document.body
       )}
 
-      {/* Auction List */}
-      <div className="px-4 py-4 pb-28 flex flex-col gap-4">
-        {auctionList.map(item => (
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="flex-1 overflow-y-auto overscroll-contain"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        {(pullDistance > 0 || isRefreshing) && (
           <div
-            key={item.id}
-            className="bg-white rounded-custom overflow-hidden shadow-sm border border-slate-100 active:scale-[0.98] transition-transform"
-            onClick={() => onNavigate('auction-detail', item)}
+            className="flex items-center justify-center text-xs text-slate-400"
+            style={{ height: isRefreshing ? 40 : pullDistance }}
           >
-            {/* Countdown Bar */}
-            <div className="bg-industry-red px-3 py-2 flex justify-between items-center">
-              <Countdown endTime={item.endTime} />
-            </div>
+            {isRefreshing ? '正在刷新...' : pullDistance >= 50 ? '松开刷新' : '下拉刷新'}
+          </div>
+        )}
 
-            {/* Farm Info Bar */}
-            <div className="px-3 py-3 flex items-center justify-between border-b border-slate-50">
-              <div className="flex items-center gap-2">
-                <img src={item.farmIcon} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-100 shadow-sm" />
-                <span className="text-xs font-bold text-slate-800">{item.farmName}</span>
+        {/* Auction List */}
+        <div className="px-4 py-4 pb-28 flex flex-col gap-4">
+          {auctionList.map(item => (
+            <div
+              key={item.id}
+              className="bg-white rounded-custom overflow-hidden shadow-sm border border-slate-100 active:scale-[0.98] transition-transform"
+              onClick={() => onNavigate('auction-detail', item)}
+            >
+              {/* Countdown Bar */}
+              <div className="bg-industry-red px-3 py-2 flex justify-between items-center">
+                <Countdown endTime={item.endTime} />
+              </div>
+
+              {/* Farm Info Bar */}
+              <div className="px-3 py-3 flex items-center justify-between border-b border-slate-50">
+                <div className="flex items-center gap-2">
+                  <img src={item.farmIcon} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-100 shadow-sm" />
+                  <span className="text-xs font-bold text-slate-800">{item.farmName}</span>
+                </div>
+              </div>
+
+              {/* Pig Info Bar */}
+              <div className="p-3 flex gap-4 relative items-center">
+                <div className="relative w-28 h-28 flex-shrink-0 group">
+                  <img src={item.imageUrl} alt="" className="w-full h-full object-cover rounded-custom border border-slate-100 shadow-inner" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-custom">
+                    <div className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+                      <svg className="w-4 h-4 text-industry-red translate-x-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.333-5.89a1.5 1.5 0 000-2.538L6.3 2.841z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-2 py-0.5 rounded-sm font-bold backdrop-blur-sm">
+                    {item.breed}
+                  </div>
+                  <div className="absolute bottom-1 right-1 bg-white/95 text-industry-text text-[9px] px-2 py-0.5 rounded-sm font-bold shadow-sm">
+                    {item.quantity}头
+                  </div>
+                </div>
+
+                <div className="flex-1 flex flex-col justify-between h-28 py-0.5">
+                  <div>
+                    <h3 className="text-[15px] font-bold text-slate-800 line-clamp-1">{item.weightRange}</h3>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {item.tags.map(tag => (
+                        <span key={tag} className="bg-slate-100 text-slate-500 text-[10px] px-2 py-1 rounded-sm font-medium">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-industry-gray text-[10px] mb-1">
+                      起拍头数：<span className="text-slate-700 font-bold">{item.startingCount}</span>
+                    </span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-industry-red text-xl font-black">¥{item.startingPrice.toFixed(2)}</span>
+                      <span className="text-industry-gray text-[10px] font-medium">元/kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="self-center">
+                  <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </div>
             </div>
+          ))}
 
-            {/* Pig Info Bar */}
-            <div className="p-3 flex gap-4 relative items-center">
-              <div className="relative w-28 h-28 flex-shrink-0 group">
-                <img src={item.imageUrl} alt="" className="w-full h-full object-cover rounded-custom border border-slate-100 shadow-inner" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-custom">
-                  <div className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center shadow-lg active:scale-90 transition-transform">
-                    <svg className="w-4 h-4 text-industry-red translate-x-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.333-5.89a1.5 1.5 0 000-2.538L6.3 2.841z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-2 py-0.5 rounded-sm font-bold backdrop-blur-sm">
-                  {item.breed}
-                </div>
-                <div className="absolute bottom-1 right-1 bg-white/95 text-industry-text text-[9px] px-2 py-0.5 rounded-sm font-bold shadow-sm">
-                  {item.quantity}头
-                </div>
-              </div>
+          {/* Loading */}
+          {pagination.loading && (
+            <div className="py-4 flex justify-center">
+              <div className="w-6 h-6 border-2 border-industry-red border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
 
-              <div className="flex-1 flex flex-col justify-between h-28 py-0.5">
-                <div>
-                  <h3 className="text-[15px] font-bold text-slate-800 line-clamp-1">{item.weightRange}</h3>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {item.tags.map(tag => (
-                      <span key={tag} className="bg-slate-100 text-slate-500 text-[10px] px-2 py-1 rounded-sm font-medium">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-industry-gray text-[10px] mb-1">
-                    起拍头数：<span className="text-slate-700 font-bold">{item.startingCount}</span>
-                  </span>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-industry-red text-xl font-black">¥{item.startingPrice.toFixed(2)}</span>
-                    <span className="text-industry-gray text-[10px] font-medium">元/kg</span>
-                  </div>
-                </div>
-              </div>
+          {/* End of List */}
+          {!pagination.hasMore && auctionList.length > 0 && (
+            <div className="py-6 flex items-center justify-center gap-4">
+              <div className="flex-1 h-px bg-slate-200" />
+              <span className="text-slate-400 text-xs">已到底部</span>
+              <div className="flex-1 h-px bg-slate-200" />
+            </div>
+          )}
 
-              <div className="self-center">
-                <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+          {/* Empty State */}
+          {auctionList.length === 0 && !pagination.loading && (
+            <div className="flex flex-col items-center justify-center py-20 px-10 text-center">
+              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
+              <p className="text-slate-400 text-sm">暂无匹配竞价信息，请尝试调整过滤条件</p>
             </div>
-          </div>
-        ))}
-
-        {/* Loading */}
-        {pagination.loading && (
-          <div className="py-4 flex justify-center">
-            <div className="w-6 h-6 border-2 border-industry-red border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-
-        {/* End of List */}
-        {!pagination.hasMore && auctionList.length > 0 && (
-          <div className="py-6 flex items-center justify-center gap-4">
-            <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-slate-400 text-xs">已到底部</span>
-            <div className="flex-1 h-px bg-slate-200" />
-          </div>
-        )}
-
-        {/* Empty State */}
-        {auctionList.length === 0 && !pagination.loading && (
-          <div className="flex flex-col items-center justify-center py-20 px-10 text-center">
-            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <p className="text-slate-400 text-sm">暂无匹配竞价信息，请尝试调整过滤条件</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Floating Plus Button */}

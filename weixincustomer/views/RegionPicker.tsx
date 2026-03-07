@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { RegionItem } from '../types';
-import { getRegionList } from '../AppApi';
+import regionData from '../data/pcas-code.json';
+
+const normalizeRegions = (items: any[], level: number): RegionItem[] => {
+  return items.map(item => ({
+    code: item.code,
+    name: item.name,
+    level,
+    children: item.children ? normalizeRegions(item.children, level + 1) : undefined,
+  }));
+};
+
+const REGION_TREE: RegionItem[] = normalizeRegions(regionData as any[], 1);
 
 interface RegionPickerProps {
   visible: boolean;
@@ -32,38 +43,10 @@ const RegionPicker: React.FC<RegionPickerProps> = ({
 
   // 加载省份数据
   useEffect(() => {
-    if (visible && provinces.length === 0) {
-      loadProvinces();
+    if (visible) {
+      setProvinces(REGION_TREE);
     }
   }, [visible]);
-
-  const loadProvinces = async () => {
-    const res = await getRegionList();
-    if (res.errcode === 0 && res.data) {
-      setProvinces(res.data);
-    }
-  };
-
-  const loadCities = async (parentCode: string) => {
-    const res = await getRegionList({ parentCode });
-    if (res.errcode === 0 && res.data) {
-      setCities(res.data);
-    }
-  };
-
-  const loadDistricts = async (parentCode: string) => {
-    const res = await getRegionList({ parentCode });
-    if (res.errcode === 0 && res.data) {
-      setDistricts(res.data);
-    }
-  };
-
-  const loadTowns = async (parentCode: string) => {
-    const res = await getRegionList({ parentCode });
-    if (res.errcode === 0 && res.data) {
-      setTowns(res.data);
-    }
-  };
 
   // 选择省份
   const handleSelectProvince = (item: RegionItem) => {
@@ -71,10 +54,9 @@ const RegionPicker: React.FC<RegionPickerProps> = ({
     setSelectedCity(null);
     setSelectedDistrict(null);
     setSelectedTown(null);
-    setCities([]);
+    setCities(item.children || []);
     setDistricts([]);
     setTowns([]);
-    loadCities(item.code);
     setActiveTab(1);
   };
 
@@ -83,9 +65,8 @@ const RegionPicker: React.FC<RegionPickerProps> = ({
     setSelectedCity(item);
     setSelectedDistrict(null);
     setSelectedTown(null);
-    setDistricts([]);
+    setDistricts(item.children || []);
     setTowns([]);
-    loadDistricts(item.code);
     setActiveTab(2);
   };
 
@@ -93,8 +74,7 @@ const RegionPicker: React.FC<RegionPickerProps> = ({
   const handleSelectDistrict = (item: RegionItem) => {
     setSelectedDistrict(item);
     setSelectedTown(null);
-    setTowns([]);
-    loadTowns(item.code);
+    setTowns(item.children || []);
     setActiveTab(3);
   };
 
@@ -126,6 +106,9 @@ const RegionPicker: React.FC<RegionPickerProps> = ({
     setSelectedCity(null);
     setSelectedDistrict(null);
     setSelectedTown(null);
+    setCities([]);
+    setDistricts([]);
+    setTowns([]);
     setActiveTab(0);
   };
 
