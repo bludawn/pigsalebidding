@@ -3,6 +3,15 @@
  * 所有后端接口统一在此文件管理
  */
 
+import {
+  AuctionDetailInfo,
+  AuctionItem,
+  BidRecordItem,
+  FarmItem,
+  ProductTagItem,
+  RegionItem,
+} from './types';
+
 // ============ 通用类型定义 ============
 
 /** API 响应通用格式 */
@@ -75,91 +84,36 @@ async function request<T>(url: string, payload: object = {}): Promise<ApiRespons
 
 // ============ 基础数据接口 ============
 
-/** 场点数据 */
-export interface FarmRecord {
-  id: string;
-  name: string;
-  regionCode?: string; // 所属区域编码
-}
-
 /** 获取场点列表 */
-export function getFarmList(params?: { regionCode?: string }): Promise<ApiResponse<FarmRecord[]>> {
-  return request<FarmRecord[]>('/v1/weixincustomer/getFarmList', params || {});
-}
-
-/** 产品标签数据 */
-export interface ProductTagRecord {
-  id: string;
-  name: string;
+export function getFarmList(params?: { regionCode?: string }): Promise<ApiResponse<FarmItem[]>> {
+  return request<FarmItem[]>('/v1/weixincustomer/getFarmList', params || {});
 }
 
 /** 获取产品标签列表 */
-export function getProductTags(): Promise<ApiResponse<ProductTagRecord[]>> {
-  return request<ProductTagRecord[]>('/v1/weixincustomer/getProductTags');
-}
-
-/** 区域数据（树形） */
-export interface RegionRecord {
-  code: string;
-  name: string;
-  level: number; // 1:省 2:市 3:区/县 4:镇
-  children?: RegionRecord[];
+export function getProductTags(): Promise<ApiResponse<ProductTagItem[]>> {
+  return request<ProductTagItem[]>('/v1/weixincustomer/getProductTags');
 }
 
 /** 获取区域列表 */
-export function getRegionList(params?: { parentCode?: string }): Promise<ApiResponse<RegionRecord[]>> {
-  return request<RegionRecord[]>('/v1/weixincustomer/getRegionList', params || {});
+export function getRegionList(params?: { parentCode?: string }): Promise<ApiResponse<RegionItem[]>> {
+  return request<RegionItem[]>('/v1/weixincustomer/getRegionList', params || {});
 }
 
 // ============ 竞价相关接口 ============
 
-/** 竞价项数据 */
-export interface AuctionRecord {
-  id: string;
-  farmId: string;
-  farmName: string;
-  farmIcon: string;
-  breed: string;
-  quantity: number;
-  weightRange: string;
-  tags: string[]; // 产品标签数组，如 ["挪系A", "白猪"]
-  startingPrice: number;
-  startingCount: number;
+/** 竞价列表接口原始数据 */
+interface AuctionRecordDto extends Omit<AuctionItem, 'endTime'> {
   endTime: string;
-  imageUrl: string;
 }
 
-/** 竞价详情数据 */
-export interface AuctionDetailRecord {
-  id: string;
-  mediaUrls: string[];
-  endCountdownSeconds: number;
-  productTags: string[];
-  pigTypeName: string;
-  weightRanges: string[];
-  sessionName: string;
-  price: string;
-  remark: string;
-  startingCount: number;
-  bidStep: number;
-  addPrice: number;
-  quarantineRegion: string;
-  invoiceScope: string;
-  deliverySupport: string;
-  feedQuality: string;
-  epidemicStatus: string;
-  biddingNotice: string;
-  bidRecordIntervalSeconds?: number;
-}
+const mapAuctionRecord = (record: AuctionRecordDto): AuctionItem => {
+  const parsedEndTime = new Date(record.endTime);
 
-/** 出价明细 */
-export interface BidRecord {
-  id: string;
-  customerName: string;
-  price: number;
-  quantity: number;
-  time: string;
-}
+  return {
+    ...record,
+    endTime: Number.isNaN(parsedEndTime.getTime()) ? new Date() : parsedEndTime,
+  };
+};
 
 /** 竞价列表请求参数 */
 export interface AuctionListParams extends ListRequestParams {
@@ -171,18 +125,30 @@ export interface AuctionListParams extends ListRequestParams {
 }
 
 /** 获取竞价列表 */
-export function getAuctionList(params: AuctionListParams): Promise<ApiResponse<ListResponseData<AuctionRecord>>> {
-  return request<ListResponseData<AuctionRecord>>('/v1/weixincustomer/getAuctionList', params);
+export async function getAuctionList(params: AuctionListParams): Promise<ApiResponse<ListResponseData<AuctionItem>>> {
+  const result = await request<ListResponseData<AuctionRecordDto>>('/v1/weixincustomer/getAuctionList', params);
+
+  if (result.errcode !== 0 || !result.data) {
+    return result as unknown as ApiResponse<ListResponseData<AuctionItem>>;
+  }
+
+  return {
+    ...result,
+    data: {
+      ...result.data,
+      records: (result.data.records || []).map(mapAuctionRecord),
+    },
+  };
 }
 
 /** 获取竞价详情 */
-export function getAuctionDetail(params: { auctionId: string }): Promise<ApiResponse<AuctionDetailRecord>> {
-  return request<AuctionDetailRecord>('/v1/weixincustomer/getAuctionDetail', params);
+export function getAuctionDetail(params: { auctionId: string }): Promise<ApiResponse<AuctionDetailInfo>> {
+  return request<AuctionDetailInfo>('/v1/weixincustomer/getAuctionDetail', params);
 }
 
 /** 获取出价明细 */
-export function getBidRecords(params: ListRequestParams & { auctionId: string }): Promise<ApiResponse<ListResponseData<BidRecord>>> {
-  return request<ListResponseData<BidRecord>>('/v1/weixincustomer/getBidRecords', params);
+export function getBidRecords(params: ListRequestParams & { auctionId: string }): Promise<ApiResponse<ListResponseData<BidRecordItem>>> {
+  return request<ListResponseData<BidRecordItem>>('/v1/weixincustomer/getBidRecords', params);
 }
 
 /** 提交竞价 */
@@ -191,9 +157,8 @@ export function submitBid(params: {
   bidPrice: number;
   bidCount: number;
 }): Promise<ApiResponse<{ success: boolean; bidId: string }>> {
-  return request('/v1/weixincustomer/submitBid', params);
+  return request<{ success: boolean; bidId: string }>('/v1/weixincustomer/submitBid', params);
 }
-
 
 /** 用户信息 */
 export interface UserInfo {
@@ -255,4 +220,3 @@ export function getOrderList(params: ListRequestParams & {
 }): Promise<ApiResponse<ListResponseData<any>>> {
   return request('/v1/weixincustomer/getOrderList', params);
 }
-
