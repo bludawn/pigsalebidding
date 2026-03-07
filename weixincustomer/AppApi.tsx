@@ -129,6 +129,38 @@ export interface AuctionRecord {
   imageUrl: string;
 }
 
+/** 竞价详情数据 */
+export interface AuctionDetailRecord {
+  id: string;
+  mediaUrls: string[];
+  endCountdownSeconds: number;
+  productTags: string[];
+  pigTypeName: string;
+  weightRanges: string[];
+  sessionName: string;
+  price: string;
+  remark: string;
+  startingCount: number;
+  bidStep: number;
+  addPrice: number;
+  quarantineRegion: string;
+  invoiceScope: string;
+  deliverySupport: string;
+  feedQuality: string;
+  epidemicStatus: string;
+  biddingNotice: string;
+  bidRecordIntervalSeconds?: number;
+}
+
+/** 出价明细 */
+export interface BidRecord {
+  id: string;
+  customerName: string;
+  price: number;
+  quantity: number;
+  time: string;
+}
+
 /** 竞价列表请求参数 */
 export interface AuctionListParams extends ListRequestParams {
   farmId?: string;       // 场点ID
@@ -144,8 +176,13 @@ export function getAuctionList(params: AuctionListParams): Promise<ApiResponse<L
 }
 
 /** 获取竞价详情 */
-export function getAuctionDetail(params: { auctionId: string }): Promise<ApiResponse<AuctionRecord>> {
-  return request<AuctionRecord>('/v1/weixincustomer/getAuctionDetail', params);
+export function getAuctionDetail(params: { auctionId: string }): Promise<ApiResponse<AuctionDetailRecord>> {
+  return request<AuctionDetailRecord>('/v1/weixincustomer/getAuctionDetail', params);
+}
+
+/** 获取出价明细 */
+export function getBidRecords(params: ListRequestParams & { auctionId: string }): Promise<ApiResponse<ListResponseData<BidRecord>>> {
+  return request<ListResponseData<BidRecord>>('/v1/weixincustomer/getBidRecords', params);
 }
 
 /** 提交竞价 */
@@ -155,19 +192,6 @@ export function submitBid(params: {
   bidCount: number;
 }): Promise<ApiResponse<{ success: boolean; bidId: string }>> {
   return request('/v1/weixincustomer/submitBid', params);
-}
-
-// ============ 自由报价相关接口 ============
-
-/** 提交自由报价 */
-export function submitFreeQuote(params: {
-  quotePrice: number;
-  quoteCount: number;
-  address: string;
-  loadTime: string;
-  remarks?: string;
-}): Promise<ApiResponse<{ success: boolean; quoteId: string }>> {
-  return request('/v1/weixincustomer/submitFreeQuote', params);
 }
 
 

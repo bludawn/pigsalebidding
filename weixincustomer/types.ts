@@ -17,6 +17,38 @@ export interface AuctionItem {
   imageUrl: string;
 }
 
+/** 竞价详情数据 */
+export interface AuctionDetailInfo {
+  id: string;
+  mediaUrls: string[];
+  endCountdownSeconds: number;
+  productTags: string[];
+  pigTypeName: string;
+  weightRanges: string[];
+  sessionName: string;
+  price: string;
+  remark: string;
+  startingCount: number;
+  bidStep: number;
+  addPrice: number;
+  quarantineRegion: string;
+  invoiceScope: string;
+  deliverySupport: string;
+  feedQuality: string;
+  epidemicStatus: string;
+  biddingNotice: string;
+  bidRecordIntervalSeconds?: number;
+}
+
+/** 出价明细 */
+export interface BidRecordItem {
+  id: string;
+  customerName: string;
+  price: number;
+  quantity: number;
+  time: string;
+}
+
 /** 场点数据 */
 export interface FarmItem {
   id: string;
