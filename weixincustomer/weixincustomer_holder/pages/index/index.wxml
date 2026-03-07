@@ -1,0 +1,3 @@
+<!--index.wxml-->
+<navigation-bar title="销售竞价系统" back="{{false}}" color="black" background="#FFF"></navigation-bar>
+<web-view src="{{h5Url}}" class="webview"></web-view>

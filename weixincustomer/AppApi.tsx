@@ -170,7 +170,6 @@ export function submitFreeQuote(params: {
   return request('/v1/weixincustomer/submitFreeQuote', params);
 }
 
-// ============ 用户相关接口 ============
 
 /** 用户信息 */
 export interface UserInfo {

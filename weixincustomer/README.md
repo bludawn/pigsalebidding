@@ -4,10 +4,9 @@
 
 ## 功能概述
 
-软件功能页面分为 4 大部分，分别是首页、市场、消息、我的：
+软件功能页面分为 3 大部分，分别是首页、消息、我的：
 
 - **首页（竞价列表）**：筛选排序、查看详情、竞价出价、自由报价
-- **市场（资讯中心）**：行情资讯、政策解读、货源快讯、行业动态
 - **消息中心**：商品猪消息、支付消息、商城消息
 - **我的**：个人信息、我的订单、收货地址、账户资产、业务统计、功能区
 
@@ -28,7 +27,6 @@ weixincustomer/
 ├── dist/                    # 构建输出目录
 ├── views/                   # 页面视图组件
 │   ├── HomeView.tsx         # 首页 - 竞价列表
-│   ├── MarketView.tsx       # 市场资讯页
 │   ├── MessageView.tsx      # 消息中心入口
 │   ├── ProfileView.tsx      # 个人中心页
 │   ├── AuctionDetail.tsx    # 竞价详情页
@@ -77,7 +75,6 @@ weixincustomer/
 | 组件 | 功能 |
 |------|------|
 | **HomeView.tsx** | 首页，展示竞价列表，支持搜索、筛选（区域/体重/等级/距离），倒计时组件 |
-| **MarketView.tsx** | 市场资讯页，展示行情/政策/货源等资讯列表，支持分类筛选 |
 | **MessageView.tsx** | 消息中心入口，三类消息入口：商品猪、支付、商城 |
 | **ProfileView.tsx** | 个人中心，展示资产、订单、积分、优惠券、业务统计 |
 | **AuctionDetail.tsx** | 竞价详情页，展示竞价参数、委托出价、竞价须知 |
@@ -95,7 +92,6 @@ weixincustomer/
 ```
 tabs (主 Tab 页面)
 ├── home    → HomeView
-├── market  → MarketView
 ├── message → MessageView
 └── profile → ProfileView
 
@@ -112,22 +108,13 @@ tabs (主 Tab 页面)
 
 ## API 接口模块
 
-`AppApi.tsx` 包含以下接口模块：
-
-| 模块 | 接口 |
-|------|------|
-| 竞价 | `getAuctionList`, `getAuctionDetail`, `submitBid` |
-| 自由报价 | `submitFreeQuote` |
-| 资讯 | `getNewsList`, `getNewsDetail` |
-| 消息 | `getMessageList`, `markMessageRead`, `getUnreadCount` |
-| 用户 | `getUserInfo`, `getAccountBalance`, `getTransactionList` |
-| 订单 | `getOrderStats`, `getOrderList` |
-| 匹配 | `getMatchDetail`, `getMatchList` |
-| 收藏 | `addFavorite`, `removeFavorite`, `getFavoriteList` |
+`AppApi.tsx` 是 API 接口层，统一管理所有后端接口调用。
 
 所有接口遵循规范：前缀 `v1/weixincustomer/`，POST 方式，驼峰命名。
 
 ---
+
+## weixincustomer_holder是一个微信小程序入口工程，用WebView打开本应用H5页面
 
 ## 本地运行
 
