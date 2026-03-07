@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { AuctionItem, FilterState, PaginationState } from '../types';
-import { getAuctionList } from '../AppApi';
+import { getAuctionList, setRequestHeaders } from '../AppApi';
 import { useAppContext } from '../App';
 import RegionPicker from './RegionPicker';
 
@@ -84,9 +84,12 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showRegionPicker, setShowRegionPicker] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
 
   // 滚动容器引用
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pullStartYRef = useRef<number | null>(null);
 
   // 加载竞价列表数据
   const loadAuctionList = useCallback(async (page: number, append: boolean = false) => {
@@ -177,6 +180,25 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
     loadAuctionList(1, false);
   }, [filter, selectedTags]); // 依赖筛选条件变化
 
+  // 获取地理位置并写入请求头
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        setRequestHeaders({
+          'X-Geo-Latitude': String(latitude),
+          'X-Geo-Longitude': String(longitude),
+          'X-Geo-Accuracy': String(Math.round(accuracy || 0)),
+        });
+      },
+      (error) => {
+        console.warn('获取地理位置失败:', error);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
+  }, []);
+
   // 搜索防抖
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -195,6 +217,38 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
       loadAuctionList(pagination.current + 1, true);
     }
   }, [pagination, loadAuctionList]);
+
+  const triggerRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    await loadAuctionList(1, false);
+    setIsRefreshing(false);
+  }, [isRefreshing, loadAuctionList]);
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!scrollRef.current || scrollRef.current.scrollTop > 0 || isRefreshing) return;
+    pullStartYRef.current = e.touches[0].clientY;
+    setPullDistance(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (pullStartYRef.current === null || isRefreshing) return;
+    if (!scrollRef.current || scrollRef.current.scrollTop > 0) return;
+    const delta = e.touches[0].clientY - pullStartYRef.current;
+    if (delta > 0) {
+      e.preventDefault();
+      setPullDistance(Math.min(delta, 80));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullStartYRef.current === null) return;
+    if (pullDistance >= 50) {
+      triggerRefresh();
+    }
+    pullStartYRef.current = null;
+    setPullDistance(0);
+  };
 
   // 打开筛选抽屉
   const openFilter = (tab: string) => {
@@ -384,6 +438,9 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
     <div 
       ref={scrollRef}
       onScroll={handleScroll}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       className="flex flex-col min-h-screen bg-industry-bg relative overscroll-contain"
       style={{ 
         WebkitOverflowScrolling: 'touch',
@@ -391,6 +448,14 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         maxHeight: '100vh'
       }}
     >
+      {(pullDistance > 0 || isRefreshing) && (
+        <div
+          className="flex items-center justify-center text-xs text-slate-400"
+          style={{ height: isRefreshing ? 40 : pullDistance }}
+        >
+          {isRefreshing ? '正在刷新...' : pullDistance >= 50 ? '松开刷新' : '下拉刷新'}
+        </div>
+      )}
       {/* Search Header */}
       <div className="sticky top-0 bg-white z-20 px-4 py-3 border-b border-slate-100 shadow-sm">
         <div className="relative">

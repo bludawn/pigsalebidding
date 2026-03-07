@@ -38,12 +38,20 @@ const API_BASE_URL = '/api'; // 可根据环境配置
  * @param url 接口地址
  * @param payload 请求参数
  */
+let extraHeaders: Record<string, string> = {};
+
+/** 设置请求头（例如地理位置） */
+export function setRequestHeaders(headers: Record<string, string>) {
+  extraHeaders = { ...extraHeaders, ...headers };
+}
+
 async function request<T>(url: string, payload: object = {}): Promise<ApiResponse<T>> {
   try {
     const response = await fetch(`${API_BASE_URL}${url}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...extraHeaders,
       },
       body: JSON.stringify(payload),
     });
@@ -162,70 +170,6 @@ export function submitFreeQuote(params: {
   return request('/v1/weixincustomer/submitFreeQuote', params);
 }
 
-// ============ 资讯相关接口 ============
-
-/** 资讯项数据 */
-export interface NewsRecord {
-  id: string;
-  title: string;
-  type: string;
-  author: string;
-  isOfficial: boolean;
-  isAuth: boolean;
-  publishTime: string;
-  readCount: number;
-  likeCount: number;
-  isHot: boolean;
-  isFeatured: boolean;
-  mediaType: 'image' | 'video';
-  thumbnail: string;
-  videoDuration?: string;
-  summary: string;
-  tags: string[];
-}
-
-/** 获取资讯列表 */
-export function getNewsList(params: ListRequestParams & {
-  type?: string; // 类型筛选
-}): Promise<ApiResponse<ListResponseData<NewsRecord>>> {
-  return request<ListResponseData<NewsRecord>>('/v1/weixincustomer/getNewsList', params);
-}
-
-/** 获取资讯详情 */
-export function getNewsDetail(params: { newsId: string }): Promise<ApiResponse<NewsRecord>> {
-  return request<NewsRecord>('/v1/weixincustomer/getNewsDetail', params);
-}
-
-// ============ 消息相关接口 ============
-
-/** 消息项数据 */
-export interface MessageRecord {
-  id: string;
-  type: 'product' | 'payment' | 'mall';
-  title: string;
-  content: string;
-  time: string;
-  isRead: boolean;
-  details?: any;
-}
-
-/** 获取消息列表 */
-export function getMessageList(params: ListRequestParams & {
-  type: 'product' | 'payment' | 'mall';
-}): Promise<ApiResponse<ListResponseData<MessageRecord>>> {
-  return request<ListResponseData<MessageRecord>>('/v1/weixincustomer/getMessageList', params);
-}
-
-/** 标记消息已读 */
-export function markMessageRead(params: { messageId: string }): Promise<ApiResponse<{ success: boolean }>> {
-  return request('/v1/weixincustomer/markMessageRead', params);
-}
-
-/** 获取未读消息数量 */
-export function getUnreadCount(): Promise<ApiResponse<{ product: number; payment: number; mall: number }>> {
-  return request('/v1/weixincustomer/getUnreadCount');
-}
-
 // ============ 用户相关接口 ============
 
 /** 用户信息 */
@@ -289,50 +233,3 @@ export function getOrderList(params: ListRequestParams & {
   return request('/v1/weixincustomer/getOrderList', params);
 }
 
-// ============ 匹配相关接口 ============
-
-/** 匹配详情 */
-export interface MatchDetail {
-  matchId: string;
-  farmName: string;
-  breed: string;
-  weightRange: string;
-  quantity: number;
-  price: number;
-  quality: string;
-  status: string;
-  orderTime: string;
-  loadTime: string;
-  carType: string;
-  address: string;
-  totalAmount: number;
-}
-
-/** 获取匹配详情 */
-export function getMatchDetail(params: { matchId: string }): Promise<ApiResponse<MatchDetail>> {
-  return request<MatchDetail>('/v1/weixincustomer/getMatchDetail', params);
-}
-
-/** 获取匹配列表 */
-export function getMatchList(params: ListRequestParams & {
-  status?: string;
-}): Promise<ApiResponse<ListResponseData<MatchDetail>>> {
-  return request('/v1/weixincustomer/getMatchList', params);
-}
-
-// ============ 收藏相关接口 ============
-
-/** 添加收藏 */
-export function addFavorite(params: { targetId: string; type: string }): Promise<ApiResponse<{ success: boolean }>> {
-  return request('/v1/weixincustomer/addFavorite', params);
-}
-
-/** 取消收藏 */
-export function removeFavorite(params: { targetId: string }): Promise<ApiResponse<{ success: boolean }>> {
-  return request('/v1/weixincustomer/removeFavorite', params);
-}
-
-/** 获取收藏列表 */
-export function getFavoriteList(params: ListRequestParams): Promise<ApiResponse<ListResponseData<any>>> {
-  return request('/v1/weixincustomer/getFavoriteList', params);
-}

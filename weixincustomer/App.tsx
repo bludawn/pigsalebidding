@@ -2,7 +2,6 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { TabType, FarmItem, ProductTagItem } from './types';
 import HomeView from './views/HomeView';
-import MarketView from './views/MarketView';
 import MessageView from './views/MessageView';
 import ProfileView from './views/ProfileView';
 import AuctionDetail from './views/AuctionDetail';
@@ -73,7 +72,6 @@ const App: React.FC = () => {
     if (currentRoute === 'tabs') {
       switch (activeTab) {
         case 'home': return <HomeView onNavigate={navigate} />;
-        case 'market': return <MarketView onNavigate={navigate} />;
         case 'message': return <MessageView onNavigate={navigate} />;
         case 'profile': return <ProfileView onNavigate={navigate} />;
         default: return <HomeView onNavigate={navigate} />;
@@ -102,12 +100,6 @@ const App: React.FC = () => {
               label="首页" 
               icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>}
               onClick={() => setActiveTab('home')} 
-            />
-            <TabItem 
-              active={activeTab === 'market'} 
-              label="市场" 
-              icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
-              onClick={() => setActiveTab('market')} 
             />
             <TabItem 
               active={activeTab === 'message'} 

@@ -38,25 +38,6 @@ export interface RegionItem {
   children?: RegionItem[];
 }
 
-export interface NewsItem {
-  id: string;
-  title: string;
-  type: '行情' | '政策' | '货源' | '动态' | '技术';
-  author: string;
-  isOfficial: boolean;
-  isAuth: boolean;
-  publishTime: string;
-  readCount: number;
-  likeCount: number;
-  isHot: boolean;
-  isFeatured: boolean;
-  mediaType: 'image' | 'video';
-  thumbnail: string;
-  videoDuration?: string;
-  summary: string;
-  tags: string[];
-}
-
 export interface Message {
   id: string;
   type: 'product' | 'payment' | 'mall';
