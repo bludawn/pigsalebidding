@@ -31,7 +31,7 @@ const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
   biddingNotice: '竞价结束后30分钟内确认订单，超时将自动取消。',
 };
 
-const MOCK_BID_RECORDS: BidRecordItem[] = Array.from({ length: 6 }, (_, index) => ({
+const MOCK_BID_RECORDS: BidRecordItem[] = Array.from({ length: 16 }, (_, index) => ({
   id: `mock-bid-${index + 1}`,
   customerName: `采购*****购商${index + 1}`,
   price: 15.5 + index * 0.05,
@@ -154,6 +154,11 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
   const handleExpandRecords = async () => {
     setIsExpanded(true);
     await loadBidRecords(true);
+  };
+
+  const handleCollapseRecords = async () => {
+    setIsExpanded(false);
+    await loadBidRecords(false);
   };
 
   const handleRefreshRecords = () => {
@@ -351,6 +356,14 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
             className="w-full mt-3 py-2 text-xs text-industry-red font-bold bg-industry-red/5 rounded-custom"
           >
             展开全部
+          </button>
+        )}
+        {isExpanded && (
+          <button
+            onClick={handleCollapseRecords}
+            className="w-full mt-3 py-2 text-xs text-slate-500 font-bold bg-slate-100 rounded-custom"
+          >
+            收起
           </button>
         )}
       </div>
