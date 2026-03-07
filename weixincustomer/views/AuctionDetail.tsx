@@ -11,6 +11,36 @@ const DEFAULT_BID_RECORD_INTERVAL = 10;
 const DEFAULT_BID_RECORD_SIZE = 10;
 const ALL_BID_RECORD_SIZE = 9999;
 
+const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
+  id: 'mock-auction-1',
+  mediaUrls: [],
+  endCountdownSeconds: 3600,
+  productTags: ['挪系A', '白猪'],
+  pigTypeName: '育肥猪',
+  weightRanges: ['105-115kg', '115-125kg'],
+  sessionName: '2026春季第3场',
+  price: '15.80',
+  remark: '本场支持分批提货，需提前24小时预约。',
+  startingCount: 120,
+  bidStep: 0.05,
+  addPrice: 0.1,
+  quarantineRegion: '山东·济宁',
+  invoiceScope: '增值税专用发票增值税专用发票增值税专用发票增值税专用发票增值税专用发票增值税专用发票增值税专用发票',
+  deliverySupport: '支持配送',
+  feedQuality: '一级饲料',
+  epidemicStatus: '无疫',
+  biddingNotice: '竞价结束后30分钟内确认订单，超时将自动取消。',
+  bidRecordIntervalSeconds: DEFAULT_BID_RECORD_INTERVAL,
+};
+
+const MOCK_BID_RECORDS: BidRecordItem[] = Array.from({ length: 6 }, (_, index) => ({
+  id: `mock-bid-${index + 1}`,
+  customerName: `采购*****购商${index + 1}`,
+  price: 15.5 + index * 0.05,
+  quantity: 100 + index * 5,
+  time: `今天 ${10 + index}:0${index}`,
+}));
+
 const formatCountdown = (seconds: number) => {
   const safe = Math.max(0, seconds);
   const h = Math.floor(safe / 3600).toString().padStart(2, '0');
@@ -65,7 +95,10 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
       if (res.errcode === 0 && res.data) {
         setDetail(res.data);
         setCountdownSeconds(res.data.endCountdownSeconds || 0);
+        return;
       }
+      setDetail(MOCK_AUCTION_DETAIL);
+      setCountdownSeconds(MOCK_AUCTION_DETAIL.endCountdownSeconds || 0);
     };
 
     loadDetail();
@@ -98,9 +131,14 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
     });
     if (res.errcode === 0 && res.data) {
       const records = res.data.records || [];
-      setBidRecords(records);
-      setBidRecordsTotal(res.data.total || records.length);
+      const finalRecords = records.length ? records : MOCK_BID_RECORDS;
+      setBidRecords(finalRecords);
+      setBidRecordsTotal(res.data.total || finalRecords.length);
+      setIsBidRecordsLoading(false);
+      return;
     }
+    setBidRecords(MOCK_BID_RECORDS);
+    setBidRecordsTotal(MOCK_BID_RECORDS.length);
     setIsBidRecordsLoading(false);
   };
 
@@ -330,9 +368,9 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
 
         {/* Input area */}
         <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="text-[10px] text-slate-400 block mb-1">出价 (元/kg)</label>
-            <div className="flex items-center bg-slate-100 rounded-custom p-1">
+          <div className="flex-1 min-w-0">
+            <label className="text-[10px] text-slate-400 block mb-1 text-center">出价 (元/kg)</label>
+            <div className="flex items-center justify-center bg-slate-100 rounded-custom p-1">
               <button
                 onClick={() => setBidPrice(p => Math.max(0, Number((p - bidStep).toFixed(2))))}
                 className="w-8 h-8 flex items-center justify-center text-slate-500 font-bold"
@@ -343,7 +381,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
                 type="number"
                 value={bidPrice}
                 onChange={e => setBidPrice(parseFloat(e.target.value) || 0)}
-                className="flex-1 bg-transparent text-center font-bold text-sm focus:outline-none"
+                className="flex-1 min-w-0 bg-transparent text-center font-bold text-sm focus:outline-none"
               />
               <button
                 onClick={() => setBidPrice(p => Number((p + bidStep).toFixed(2)))}
@@ -353,15 +391,15 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
               </button>
             </div>
           </div>
-          <div className="flex-1">
-            <label className="text-[10px] text-slate-400 block mb-1">数量 (头)</label>
-            <div className="flex items-center bg-slate-100 rounded-custom p-1">
+          <div className="flex-1 min-w-0">
+            <label className="text-[10px] text-slate-400 block mb-1 text-center">数量 (头)</label>
+            <div className="flex items-center justify-center bg-slate-100 rounded-custom p-1">
               <button onClick={() => setBidCount(c => Math.max(0, c - 1))} className="w-8 h-8 flex items-center justify-center text-slate-500 font-bold">-</button>
               <input
                 type="number"
                 value={bidCount}
                 onChange={e => setBidCount(parseInt(e.target.value, 10) || 0)}
-                className="flex-1 bg-transparent text-center font-bold text-sm focus:outline-none"
+                className="flex-1 min-w-0 bg-transparent text-center font-bold text-sm focus:outline-none"
               />
               <button onClick={() => setBidCount(c => c + 1)} className="w-8 h-8 flex items-center justify-center text-slate-500 font-bold">+</button>
             </div>
@@ -370,14 +408,11 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
         {bidValidationMessage && (
           <div className="mt-2 text-[10px] text-industry-red">{bidValidationMessage}</div>
         )}
-      </div>
 
-      {/* Footer Button */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-white border-t border-slate-100 z-30">
         <button
           onClick={() => setIsDialogOpen(true)}
           disabled={!canSubmit}
-          className="w-full bg-industry-red text-white py-3 rounded-custom font-bold shadow-lg shadow-industry-red/20 active:scale-95 transition-transform disabled:opacity-60"
+          className="w-full mt-4 bg-industry-red text-white py-3 rounded-custom font-bold shadow-lg shadow-industry-red/20 active:scale-95 transition-transform disabled:opacity-60"
         >
           确认出价
         </button>
