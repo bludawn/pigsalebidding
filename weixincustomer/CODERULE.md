@@ -47,5 +47,5 @@
   * 列表请求入参固定是size、current、searchCount，出参current、size、total、pages、records
 
 ### 5. 1个页面1个代码文件，高内聚，低耦合
-
+### 6. 每一次改动，如何涉及到结构、架构调整，文件新增删除，也要同步修改README.md文件
   
