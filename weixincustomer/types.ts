@@ -37,7 +37,6 @@ export interface AuctionDetailInfo {
   feedQuality: string;
   epidemicStatus: string;
   biddingNotice: string;
-  bidRecordIntervalSeconds?: number;
 }
 
 /** 出价明细 */

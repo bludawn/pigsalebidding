@@ -7,7 +7,6 @@ interface AuctionDetailProps {
   onBack: () => void;
 }
 
-const DEFAULT_BID_RECORD_INTERVAL = 10;
 const DEFAULT_BID_RECORD_SIZE = 10;
 const ALL_BID_RECORD_SIZE = 9999;
 
@@ -30,7 +29,6 @@ const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
   feedQuality: '一级饲料',
   epidemicStatus: '无疫',
   biddingNotice: '竞价结束后30分钟内确认订单，超时将自动取消。',
-  bidRecordIntervalSeconds: DEFAULT_BID_RECORD_INTERVAL,
 };
 
 const MOCK_BID_RECORDS: BidRecordItem[] = Array.from({ length: 6 }, (_, index) => ({
@@ -79,7 +77,6 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
   const initializedRef = useRef(false);
 
   const mediaList = detail?.mediaUrls?.length ? detail.mediaUrls : [params.imageUrl];
-  const bidIntervalSeconds = detail?.bidRecordIntervalSeconds || DEFAULT_BID_RECORD_INTERVAL;
   const minBidCount = detail?.startingCount ?? params.startingCount;
   const bidStep = detail?.bidStep ?? 0.05;
 
@@ -146,12 +143,6 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
     loadBidRecords(false);
   }, [params.id]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      loadBidRecords(isExpanded);
-    }, bidIntervalSeconds * 1000);
-    return () => clearInterval(timer);
-  }, [bidIntervalSeconds, isExpanded, params.id]);
 
   const handleMediaScroll = () => {
     if (!mediaRef.current) return;
@@ -163,6 +154,10 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
   const handleExpandRecords = async () => {
     setIsExpanded(true);
     await loadBidRecords(true);
+  };
+
+  const handleRefreshRecords = () => {
+    loadBidRecords(isExpanded);
   };
 
   const bidValidationMessage = useMemo(() => {
@@ -313,7 +308,18 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
       <div className="p-4 border-b-8 border-slate-100">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold">出价明细</h2>
-          <span className="text-[10px] text-slate-400">{bidRecordsTotal ? `共${bidRecordsTotal}条` : '最新10条'}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-slate-400">{bidRecordsTotal ? `共${bidRecordsTotal}条` : '最新10条'}</span>
+            <button
+              onClick={handleRefreshRecords}
+              className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:bg-slate-200"
+              aria-label="刷新出价明细"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14.906-3.906L4 10M4 14a8 8 0 0014.906 3.906L20 14" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div className="bg-slate-50 rounded-custom overflow-hidden">
           <div className="grid grid-cols-4 text-[10px] text-slate-400 px-3 py-2 border-b border-slate-100">
