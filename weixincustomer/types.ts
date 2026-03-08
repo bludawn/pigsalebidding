@@ -25,8 +25,8 @@ export type BidStatus = 'WAITING' | 'BIDDING' | 'ENDED';
 /** 订单状态枚举（用于数量统计） */
 export type OrderStatus = 'ORDER_PAYMENT' | 'ORDER_SHIPMENT' | 'ORDER_RECEIPT' | 'ORDER_COMPLETED';
 
-/** 我的竞拍状态 */
-export type MyBidStatus = 'BIDDING' | 'BID_SUCCESS' | 'BID_FAILED';
+/** 我的竞拍状态  BIDDING 竞拍中，BID_SUCCESS 竞拍成功，BID_FAILED 竞拍失败，NO_BID 没有竞拍  */
+export type MyBidStatus = 'BIDDING' | 'BID_SUCCESS' | 'BID_FAILED' | 'NO_BID';
 
 /** 个人信息 */
 export interface UserProfile {

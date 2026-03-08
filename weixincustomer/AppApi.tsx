@@ -226,34 +226,111 @@ export function getUserInfo(): Promise<ApiResponse<UserInfo>> {
 
 // ============ 个人中心相关接口 ==========
 
+const MOCK_PROFILE_INFO: UserProfile = {
+  userId: 'user-10001',
+  name: '广豚食品采购',
+  avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=200&h=200&fit=crop',
+  depositTag: '保证金已缴',
+  companyName: '广东广豚食品有限公司广东广豚食品有限公司',
+};
+
+const MOCK_ORDER_COUNTS: OrderCounts = {
+  paymentCount: 1,
+  shipmentCount: 2,
+  receiptCount: 1,
+  completedCount: 8,
+  allCount: 12,
+  myBidCount: 3,
+};
+
+const MOCK_ASSET_SUMMARY: AssetSummary = {
+  depositAmount: 50000,
+  goodsAmount: 126000,
+  totalBalance: 176000,
+};
+
+const MOCK_BUSINESS_STATS: BusinessStats = {
+  totalTradeAmount: 3568000,
+  totalPurchaseCount: 1280,
+};
+
+const MOCK_CONTACT_INFO: ContactInfo = {
+  phone: '400-123-4567',
+  address: '广东省深圳市南山区科技园科苑路 88 号',
+  wechatQrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=weixin-contact',
+};
+
+const MOCK_ADDRESS_LIST: AddressItem[] = [
+  {
+    id: 'addr-001',
+    contactName: '张经理张经理张经理张经理',
+    contactPhone: '+86-138-0013-8000',
+    regionCode: '440305',
+    regionName: '广东省 深圳市 南山区',
+    detailAddress: '科技南八路 88 号科技南八科技南八路 88 号路 88 号科技南八路 88 号科技南八路 88 号科技南八路 88 号',
+    isDefault: true,
+    updatedAt: '2026-03-08 10:20',
+  },
+  {
+    id: 'addr-002',
+    contactName: '李主管',
+    contactPhone: '+86-0755-8888-6666',
+    regionCode: '440304',
+    regionName: '广东省 深圳市 福田区',
+    detailAddress: '彩田路 1001 号',
+    isDefault: false,
+    updatedAt: '2026-03-06 09:10',
+  },
+];
+
+const buildListResponse = <T,>(params: ListRequestParams, records: T[]): ListResponseData<T> => ({
+  current: params.current,
+  size: params.size,
+  total: records.length,
+  pages: 1,
+  records,
+});
+
 /** 获取个人中心信息 */
-export function getProfileInfo(): Promise<ApiResponse<UserProfile>> {
-  return request<UserProfile>('/v1/weixincustomer/getProfileInfo');
+export async function getProfileInfo(): Promise<ApiResponse<UserProfile>> {
+  const result = await request<UserProfile>('/v1/weixincustomer/getProfileInfo');
+  if (result.errcode === 0 && result.data) return result;
+  return { errcode: 0, errmsg: '', data: MOCK_PROFILE_INFO };
 }
 
 /** 获取我的订单数量统计 */
-export function getOrderCounts(): Promise<ApiResponse<OrderCounts>> {
-  return request<OrderCounts>('/v1/weixincustomer/getOrderCounts');
+export async function getOrderCounts(): Promise<ApiResponse<OrderCounts>> {
+  const result = await request<OrderCounts>('/v1/weixincustomer/getOrderCounts');
+  if (result.errcode === 0 && result.data) return result;
+  return { errcode: 0, errmsg: '', data: MOCK_ORDER_COUNTS };
 }
 
 /** 获取总资产 */
-export function getAssetSummary(): Promise<ApiResponse<AssetSummary>> {
-  return request<AssetSummary>('/v1/weixincustomer/getAssetSummary');
+export async function getAssetSummary(): Promise<ApiResponse<AssetSummary>> {
+  const result = await request<AssetSummary>('/v1/weixincustomer/getAssetSummary');
+  if (result.errcode === 0 && result.data) return result;
+  return { errcode: 0, errmsg: '', data: MOCK_ASSET_SUMMARY };
 }
 
 /** 获取数据统计 */
-export function getBusinessStats(): Promise<ApiResponse<BusinessStats>> {
-  return request<BusinessStats>('/v1/weixincustomer/getBusinessStats');
+export async function getBusinessStats(): Promise<ApiResponse<BusinessStats>> {
+  const result = await request<BusinessStats>('/v1/weixincustomer/getBusinessStats');
+  if (result.errcode === 0 && result.data) return result;
+  return { errcode: 0, errmsg: '', data: MOCK_BUSINESS_STATS };
 }
 
 /** 获取联系我们信息 */
-export function getContactInfo(): Promise<ApiResponse<ContactInfo>> {
-  return request<ContactInfo>('/v1/weixincustomer/getContactInfo');
+export async function getContactInfo(): Promise<ApiResponse<ContactInfo>> {
+  const result = await request<ContactInfo>('/v1/weixincustomer/getContactInfo');
+  if (result.errcode === 0 && result.data) return result;
+  return { errcode: 0, errmsg: '', data: MOCK_CONTACT_INFO };
 }
 
 /** 获取地址列表 */
-export function getAddressList(params: ListRequestParams): Promise<ApiResponse<ListResponseData<AddressItem>>> {
-  return request<ListResponseData<AddressItem>>('/v1/weixincustomer/getAddressList', params);
+export async function getAddressList(params: ListRequestParams): Promise<ApiResponse<ListResponseData<AddressItem>>> {
+  const result = await request<ListResponseData<AddressItem>>('/v1/weixincustomer/getAddressList', params);
+  if (result.errcode === 0 && result.data) return result;
+  return { errcode: 0, errmsg: '', data: buildListResponse(params, MOCK_ADDRESS_LIST) };
 }
 
 /** 新增地址 */
@@ -277,8 +354,11 @@ export function setDefaultAddress(params: { id: string }): Promise<ApiResponse<{
 }
 
 /** 获取默认地址 */
-export function getDefaultAddress(): Promise<ApiResponse<AddressItem>> {
-  return request<AddressItem>('/v1/weixincustomer/getDefaultAddress');
+export async function getDefaultAddress(): Promise<ApiResponse<AddressItem>> {
+  const result = await request<AddressItem>('/v1/weixincustomer/getDefaultAddress');
+  if (result.errcode === 0 && result.data) return result;
+  const fallback = MOCK_ADDRESS_LIST.find(item => item.isDefault) || MOCK_ADDRESS_LIST[0];
+  return { errcode: 0, errmsg: '', data: fallback };
 }
 
 /** 获取账户余额 */
