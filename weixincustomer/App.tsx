@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, createContext, useContext } from 'react';
-import { TabType, FarmItem, ProductTagItem } from './types';
+import React, { useState, useEffect, createContext, useContext, useRef } from 'react';
+import { TabType, FarmItem, ProductTagItem, AuctionItem } from './types';
 import HomeView from './views/HomeView';
 import MessageView from './views/MessageView';
 import ProfileView from './views/ProfileView';
@@ -32,6 +32,8 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [currentRoute, setCurrentRoute] = useState<string>('tabs');
   const [routeParams, setRouteParams] = useState<any>(null);
+  const [auctionDetailParams, setAuctionDetailParams] = useState<AuctionItem | null>(null);
+  const scrollPositionsRef = useRef<Record<string, number>>({});
   
   // 全局数据
   const [farms, setFarms] = useState<FarmItem[]>([]);
@@ -65,10 +67,28 @@ const App: React.FC = () => {
   }, []);
 
   const navigate = (route: string, params: any = null) => {
+    if (currentRoute === 'tabs') {
+      scrollPositionsRef.current[`tabs-${activeTab}`] = window.scrollY;
+    }
+
+    if (route === 'auction-detail' && params) {
+      setAuctionDetailParams(params as AuctionItem);
+    }
+
     setCurrentRoute(route);
     setRouteParams(params);
-    window.scrollTo(0, 0);
   };
+
+  useEffect(() => {
+    if (currentRoute === 'tabs') {
+      const savedScrollTop = scrollPositionsRef.current[`tabs-${activeTab}`];
+      if (typeof savedScrollTop === 'number') {
+        window.scrollTo(0, savedScrollTop);
+      }
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [currentRoute, activeTab]);
 
   const renderTabContent = () => (
     <div className={`flex-1 ${currentRoute === 'tabs' ? '' : 'hidden'}`}>
@@ -84,28 +104,25 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderSubPage = () => {
-    if (currentRoute === 'tabs') return null;
-
-    switch (currentRoute) {
-      case 'auction-detail':
-        return <AuctionDetail params={routeParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />;
-      case 'free-quote':
-        return <FreeQuote onBack={() => setCurrentRoute('tabs')} />;
-      case 'msg-list':
-        return <MessageList params={routeParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />;
-      case 'payment-detail':
-        return <PaymentDetail onBack={() => setCurrentRoute('msg-list')} />;
-      case 'match-detail':
-        return <MatchDetail onBack={() => setCurrentRoute('msg-list')} />;
-      case 'my-bids':
-        return <MyBidsView onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />;
-      case 'address-management':
-        return <AddressManagementView onBack={() => setCurrentRoute('tabs')} />;
-      default:
-        return null;
-    }
-  };
+  const renderSubPage = () => (
+    <div className={`absolute inset-0 bg-white ${currentRoute === 'tabs' ? 'hidden' : ''}`}>
+      {auctionDetailParams && (
+        <div className={currentRoute === 'auction-detail' ? 'block h-full' : 'hidden h-full'}>
+          <AuctionDetail params={auctionDetailParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+        </div>
+      )}
+      {currentRoute === 'free-quote' && <FreeQuote onBack={() => setCurrentRoute('tabs')} />}
+      {currentRoute === 'msg-list' && (
+        <MessageList params={routeParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+      )}
+      {currentRoute === 'payment-detail' && <PaymentDetail onBack={() => setCurrentRoute('msg-list')} />}
+      {currentRoute === 'match-detail' && <MatchDetail onBack={() => setCurrentRoute('msg-list')} />}
+      <div className={currentRoute === 'my-bids' ? 'block h-full' : 'hidden h-full'}>
+        <MyBidsView onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+      </div>
+      {currentRoute === 'address-management' && <AddressManagementView onBack={() => setCurrentRoute('tabs')} />}
+    </div>
+  );
 
   return (
     <AppContext.Provider value={{ farms, productTags, loading }}>

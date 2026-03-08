@@ -17,6 +17,7 @@ export interface AuctionItem {
   imageUrl: string;
   bidStatus: BidStatus;
   bidStartTime: string;
+  customerBidStatus?: MyBidStatus;
 }
 
 /** 竞价状态 */
@@ -111,6 +112,7 @@ export interface AuctionDetailInfo {
   startingCount: number;
   bidStep: number;
   addPrice: number;
+  quantity: number;
   quarantineRegion: string;
   invoiceScope: string;
   deliverySupport: string;
@@ -119,6 +121,7 @@ export interface AuctionDetailInfo {
   biddingNotice: string;
   bidStatus: BidStatus;
   bidStartTime: string;
+  customerBidStatus: MyBidStatus;
 }
 
 /** 出价明细 */

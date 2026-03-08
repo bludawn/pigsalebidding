@@ -152,7 +152,7 @@ const MyBidsView: React.FC<MyBidsViewProps> = ({ onBack, onNavigate }) => {
   }, [activeStatus]);
 
   return (
-    <div className="bg-slate-50 min-h-screen flex flex-col">
+    <div className="bg-slate-50 h-full flex flex-col overflow-hidden">
       <div className="sticky top-0 bg-white px-4 py-4 border-b border-slate-100 flex items-center z-10">
         <button onClick={onBack} className="absolute left-4">
           <svg className="w-5 h-5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,7 +184,7 @@ const MyBidsView: React.FC<MyBidsViewProps> = ({ onBack, onNavigate }) => {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overscroll-contain"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="px-4 py-4 pb-20 flex flex-col gap-4">

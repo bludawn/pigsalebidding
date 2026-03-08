@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AddressItem, AuctionDetailInfo, AuctionItem, BidRecordItem } from '../types';
+import { AddressItem, AuctionDetailInfo, AuctionItem, BidRecordItem, MyBidStatus } from '../types';
 import { getAuctionDetail, getBidRecords, getDefaultAddress, submitBid } from '../AppApi';
 
 interface AuctionDetailProps {
@@ -30,6 +30,7 @@ const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
   startingCount: 120,
   bidStep: 0.05,
   addPrice: 0.1,
+  quantity: 260,
   quarantineRegion: '山东·济宁',
   invoiceScope: '增值税专用发票增值税专用发票增值税专用发票增值税专用发票增值税专用发票增值税专用发票增值税专用发票',
   deliverySupport: '支持配送',
@@ -38,6 +39,7 @@ const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
   biddingNotice: '竞价结束后30分钟内确认订单，超时将自动取消。',
   bidStatus: 'ENDED',
   bidStartTime: '2026-03-07 10:00:00',
+  customerBidStatus: 'NO_BID',
 };
 
 const MOCK_BID_RECORDS: BidRecordItem[] = Array.from({ length: 16 }, (_, index) => ({
@@ -290,6 +292,14 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
     : isWaitingStatus
       ? detail?.bidStartTime || '-'
       : formatCountdown(countdownSeconds);
+  const customerBidStatus = (detail?.customerBidStatus ?? params.customerBidStatus ?? 'NO_BID') as MyBidStatus;
+  const customerStatusConfig: Record<MyBidStatus, { label: string; className: string }> = {
+    BIDDING: { label: '我的竞拍中', className: 'bg-white/20 text-white' },
+    BID_SUCCESS: { label: '竞拍成功', className: 'bg-emerald-500/25 text-white' },
+    BID_FAILED: { label: '竞拍失败', className: 'bg-white/20 text-white' },
+    NO_BID: { label: '未参与', className: 'bg-white/20 text-white' },
+  };
+  const customerStatusMeta = customerStatusConfig[customerBidStatus] || customerStatusConfig.NO_BID;
 
   return (
     <div className="bg-white min-h-screen pb-24 relative">
@@ -395,6 +405,9 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
       <div className={`${statusBarClass} px-4 py-2 flex justify-between items-center text-white`}>
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold">{statusLabel}</span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${customerStatusMeta.className}`}>
+            {customerStatusMeta.label}
+          </span>
         </div>
         <div className="flex items-center gap-1 text-[11px]">
           <span>{countdownLabel}</span>
@@ -473,6 +486,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
         <ParamItem label="起拍数量" value={`${detail?.startingCount ?? params.startingCount}头`} />
         <ParamItem label="加价幅度" value={`${detail?.bidStep ?? 0}元/kg`} />
         <ParamItem label="加拍价" value={`¥${detail?.addPrice ?? 0}`} />
+        <ParamItem label="竞拍头数" value={`${detail?.quantity ?? params.quantity}头`} />
         <ParamItem label="无疫地区" value={detail?.quarantineRegion || '-'} />
         <ParamItem label="开票范围" value={detail?.invoiceScope || '-'} />
         <ParamItem label="是否配送" value={detail?.deliverySupport || '-'} />
