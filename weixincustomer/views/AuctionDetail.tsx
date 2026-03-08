@@ -13,7 +13,7 @@ const ALL_BID_RECORD_SIZE = 9999;
 const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
   id: 'mock-auction-1',
   mediaUrls: [
-  'http://localhost:3000/dist/d398957b326bbb6dfcb9ad0702c1b948.mp4',
+  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
   'https://images.unsplash.com/photo-1544216717-3bbf52512659?w=400&h=300&fit=crop',
   'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&h=300&fit=crop',
   'https://images.unsplash.com/photo-1605001011156-cbf0b0f67a51?w=400&h=300&fit=crop',
@@ -271,9 +271,16 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
                   }}
                   src={url}
                   muted={isMuted}
+                  playsInline
+                  preload="metadata"
+                  poster={params.imageUrl}
+                  webkit-playsinline="true"
                   autoPlay={index === currentMediaIndex}
                   loop
-                  playsInline
+                  x5-playsinline="true"
+                  x5-video-player-type="h5"
+                  x5-video-player-fullscreen="false"
+                  x5-video-player-orientation="portrait"
                   onClick={() => handleToggleVideo(index)}
                   onTimeUpdate={event => {
                     if (index !== currentMediaIndex) return;
