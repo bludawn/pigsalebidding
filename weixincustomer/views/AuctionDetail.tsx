@@ -35,6 +35,8 @@ const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
   feedQuality: '一级饲料',
   epidemicStatus: '无疫',
   biddingNotice: '竞价结束后30分钟内确认订单，超时将自动取消。',
+  bidStatus: 'ENDED',
+  bidStartTime: '2026-03-07 10:00:00',
 };
 
 const MOCK_BID_RECORDS: BidRecordItem[] = Array.from({ length: 16 }, (_, index) => ({
@@ -228,7 +230,8 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
     return '';
   }, [bidPrice, bidCount, bidStep, minBidCount]);
 
-  const canSubmit = !bidValidationMessage && !isSubmitting;
+  const isBidding = detail?.bidStatus === 'BIDDING';
+  const canSubmit = isBidding && !bidValidationMessage && !isSubmitting;
 
   const handleSubmitBid = async () => {
     if (!canSubmit) return;
@@ -252,6 +255,17 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
 
   const isCurrentMediaVideo = isVideoUrl(mediaList[currentMediaIndex] || '');
   const progressPercent = currentVideoDuration > 0 ? Math.min(100, (currentVideoTime / currentVideoDuration) * 100) : 0;
+  const bidStatus = detail?.bidStatus ?? 'BIDDING';
+  const isEndedStatus = bidStatus === 'ENDED';
+  const isWaitingStatus = bidStatus === 'WAITING';
+  const statusLabel = isEndedStatus ? '竞价结束' : isWaitingStatus ? '等待竞价' : '竞价进行中';
+  const statusBarClass = isEndedStatus ? 'bg-slate-400' : 'bg-industry-red';
+  const countdownLabel = isEndedStatus ? '已结束' : isWaitingStatus ? '开始时间' : '距结束';
+  const displayCountdown = isEndedStatus
+    ? '00:00:00'
+    : isWaitingStatus
+      ? detail?.bidStartTime || '-'
+      : formatCountdown(countdownSeconds);
 
   return (
     <div className="bg-white min-h-screen pb-24 relative">
@@ -354,14 +368,13 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
       </div>
 
       {/* Status Bar */}
-      <div className="bg-industry-red px-4 py-2 flex justify-between items-center text-white">
+      <div className={`${statusBarClass} px-4 py-2 flex justify-between items-center text-white`}>
         <div className="flex items-center gap-2">
-          <span className="bg-white/20 text-[10px] px-2 py-0.5 rounded-sm font-medium">{detail?.pigTypeName || params.breed}</span>
-          <span className="text-sm font-bold">竞价进行中</span>
+          <span className="text-sm font-bold">{statusLabel}</span>
         </div>
         <div className="flex items-center gap-1 text-[11px]">
-          <span>距结束</span>
-          <span className="font-mono bg-white/20 px-1 rounded-sm">{formatCountdown(countdownSeconds)}</span>
+          <span>{countdownLabel}</span>
+          <span className="font-mono bg-white/20 px-1 rounded-sm">{displayCountdown}</span>
         </div>
       </div>
 

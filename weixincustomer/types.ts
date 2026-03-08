@@ -17,6 +17,9 @@ export interface AuctionItem {
   imageUrl: string;
 }
 
+/** 竞价状态 */
+export type BidStatus = 'WAITING' | 'BIDDING' | 'ENDED';
+
 /** 竞价详情数据 */
 export interface AuctionDetailInfo {
   id: string;
@@ -37,6 +40,8 @@ export interface AuctionDetailInfo {
   feedQuality: string;
   epidemicStatus: string;
   biddingNotice: string;
+  bidStatus: BidStatus;
+  bidStartTime: string;
 }
 
 /** 出价明细 */
