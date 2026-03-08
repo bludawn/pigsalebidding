@@ -12,11 +12,17 @@ const ALL_BID_RECORD_SIZE = 9999;
 
 const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
   id: 'mock-auction-1',
-  mediaUrls: [],
+  mediaUrls: [
+  'http://localhost:3000/dist/d398957b326bbb6dfcb9ad0702c1b948.mp4',
+  'https://images.unsplash.com/photo-1544216717-3bbf52512659?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1605001011156-cbf0b0f67a51?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1597113366853-fea190b6cd82?w=400&h=300&fit=crop',
+],
   endCountdownSeconds: 3600,
   productTags: ['挪系A', '白猪'],
   pigTypeName: '育肥猪',
-  weightRanges: ['105-115kg', '115-125kg'],
+  weightRanges: ['105', '125kg'],
   sessionName: '2026春季第3场',
   price: '15.80',
   remark: '本场支持分批提货，需提前24小时预约。',
@@ -51,6 +57,13 @@ const formatCountdown = (seconds: number) => {
   return `${h}:${m}:${s}`;
 };
 
+const formatMediaTime = (seconds: number) => {
+  const safe = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+  const m = Math.floor(safe / 60).toString().padStart(2, '0');
+  const s = Math.floor(safe % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+};
+
 const isVideoUrl = (url: string) => /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(url);
 
 const parsePriceValue = (value: string) => {
@@ -78,7 +91,12 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [currentVideoTime, setCurrentVideoTime] = useState(0);
+  const [currentVideoDuration, setCurrentVideoDuration] = useState(0);
+  const [isCurrentVideoPlaying, setIsCurrentVideoPlaying] = useState(false);
   const mediaRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
+  const prevMediaIndexRef = useRef(0);
   const initializedRef = useRef(false);
 
   const mediaList = detail?.mediaUrls?.length ? detail.mediaUrls : [params.imageUrl];
@@ -157,7 +175,29 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
     if (!mediaRef.current) return;
     const width = mediaRef.current.clientWidth || 1;
     const index = Math.round(mediaRef.current.scrollLeft / width);
-    setCurrentMediaIndex(Math.min(Math.max(index, 0), mediaList.length - 1));
+    const nextIndex = Math.min(Math.max(index, 0), mediaList.length - 1);
+    if (nextIndex === currentMediaIndex) return;
+
+    const prevVideo = videoRefs.current[prevMediaIndexRef.current];
+    prevVideo?.pause();
+
+    const nextVideo = videoRefs.current[nextIndex];
+    setCurrentVideoTime(nextVideo?.currentTime || 0);
+    setCurrentVideoDuration(nextVideo?.duration || 0);
+    setIsCurrentVideoPlaying(Boolean(nextVideo && !nextVideo.paused));
+
+    prevMediaIndexRef.current = nextIndex;
+    setCurrentMediaIndex(nextIndex);
+  };
+
+  const handleToggleVideo = (index: number) => {
+    const video = videoRefs.current[index];
+    if (!video) return;
+    if (video.paused) {
+      video.play();
+    } else {
+      video.pause();
+    }
   };
 
   const handleExpandRecords = async () => {
@@ -210,6 +250,9 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
     return Number((bidPrice * bidCount).toFixed(2));
   }, [bidPrice, bidCount]);
 
+  const isCurrentMediaVideo = isVideoUrl(mediaList[currentMediaIndex] || '');
+  const progressPercent = currentVideoDuration > 0 ? Math.min(100, (currentVideoTime / currentVideoDuration) * 100) : 0;
+
   return (
     <div className="bg-white min-h-screen pb-24 relative">
       {/* Header Media Section */}
@@ -223,11 +266,36 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
             <div key={`${url}-${index}`} className="w-full h-full flex-shrink-0 snap-center">
               {isVideoUrl(url) ? (
                 <video
+                  ref={el => {
+                    videoRefs.current[index] = el;
+                  }}
                   src={url}
                   muted={isMuted}
-                  autoPlay
+                  autoPlay={index === currentMediaIndex}
                   loop
                   playsInline
+                  onClick={() => handleToggleVideo(index)}
+                  onTimeUpdate={event => {
+                    if (index !== currentMediaIndex) return;
+                    const target = event.currentTarget;
+                    setCurrentVideoTime(target.currentTime);
+                    setCurrentVideoDuration(target.duration || 0);
+                  }}
+                  onLoadedMetadata={event => {
+                    if (index !== currentMediaIndex) return;
+                    const target = event.currentTarget;
+                    setCurrentVideoDuration(target.duration || 0);
+                    setCurrentVideoTime(target.currentTime || 0);
+                  }}
+                  onPlay={() => {
+                    if (index === currentMediaIndex) setIsCurrentVideoPlaying(true);
+                  }}
+                  onPause={() => {
+                    if (index === currentMediaIndex) setIsCurrentVideoPlaying(false);
+                  }}
+                  onEnded={() => {
+                    if (index === currentMediaIndex) setIsCurrentVideoPlaying(false);
+                  }}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -253,6 +321,29 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
             )}
           </button>
         )}
+        {isCurrentMediaVideo && (
+          <button
+            onClick={() => handleToggleVideo(currentMediaIndex)}
+            className="absolute bottom-12 right-4 w-9 h-9 bg-black/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+            aria-label={isCurrentVideoPlaying ? '暂停播放' : '继续播放'}
+          >
+            {isCurrentVideoPlaying ? (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z" /></svg>
+            ) : (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z" /></svg>
+            )}
+          </button>
+        )}
+        {isCurrentMediaVideo && (
+          <div className="absolute bottom-4 left-4 right-4 flex items-center gap-3">
+            <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+              <div className="h-full bg-white/80" style={{ width: `${progressPercent}%` }} />
+            </div>
+            <span className="text-[10px] text-white/90 font-mono">
+              {formatMediaTime(currentVideoTime)}/{formatMediaTime(currentVideoDuration)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Status Bar */}
@@ -272,7 +363,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h1 className="text-lg font-bold">{detail?.weightRanges?.join(' / ') || params.weightRange}</h1>
+              <h1 className="text-lg font-bold">{(detail?.pigTypeName || params.breed) + ' '  + (detail?.weightRanges?.join(' / ') || params.weightRange)}</h1>
               {detail?.productTags?.length
                 ? detail.productTags.map(tag => (
                     <span key={tag} className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-sm">
