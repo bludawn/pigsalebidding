@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MyBidItem, MyBidStatus, PaginationState } from '../types';
-import { getMyBidList } from '../AppApi';
+import { MyBidItem, MyBidStatus, MyBidStatusCounts, PaginationState } from '../types';
+import { getMyBidList, getMyBidStatusCounts } from '../AppApi';
 import AuctionCard from '../components/AuctionCard';
 import CountdownTimer from '../components/CountdownTimer';
 
@@ -20,6 +20,7 @@ const TAB_ITEMS: { label: string; status: MyBidStatus }[] = [
 const MyBidsView: React.FC<MyBidsViewProps> = ({ onBack, onNavigate }) => {
   const [activeStatus, setActiveStatus] = useState<MyBidStatus>('BIDDING');
   const [bidList, setBidList] = useState<MyBidItem[]>([]);
+  const [statusCounts, setStatusCounts] = useState<MyBidStatusCounts | null>(null);
   const [pagination, setPagination] = useState<PaginationState>({
     current: 1,
     size: PAGE_SIZE,
@@ -108,6 +109,26 @@ const MyBidsView: React.FC<MyBidsViewProps> = ({ onBack, onNavigate }) => {
   };
 
   useEffect(() => {
+    const loadCounts = async () => {
+      const res = await getMyBidStatusCounts();
+      if (res.errcode === 0 && res.data) {
+        setStatusCounts(res.data);
+      }
+    };
+
+    loadCounts();
+  }, []);
+
+  useEffect(() => {
+    setBidList([]);
+    setPagination(prev => ({
+      ...prev,
+      current: 1,
+      total: 0,
+      pages: 0,
+      hasMore: true,
+    }));
+    scrollRef.current?.scrollTo({ top: 0 });
     loadMyBids(1, false);
   }, [activeStatus]);
 
@@ -166,15 +187,24 @@ const MyBidsView: React.FC<MyBidsViewProps> = ({ onBack, onNavigate }) => {
         <div className="flex gap-2">
           {TAB_ITEMS.map(tab => {
             const isActive = tab.status === activeStatus;
+            const countLabel = tab.status === 'BIDDING'
+              ? statusCounts?.biddingCount
+              : tab.status === 'BID_SUCCESS'
+                ? statusCounts?.successCount
+                : statusCounts?.failedCount;
             return (
               <button
                 key={tab.status}
-                onClick={() => setActiveStatus(tab.status)}
+                onClick={() => {
+                  if (tab.status !== activeStatus) {
+                    setActiveStatus(tab.status);
+                  }
+                }}
                 className={`flex-1 py-2 text-xs font-bold rounded-custom transition-colors ${
                   isActive ? 'bg-industry-red text-white' : 'bg-slate-100 text-slate-500'
                 }`}
               >
-                {tab.label}
+                {tab.label}{typeof countLabel === 'number' ? `(${countLabel})` : ''}
               </button>
             );
           })}

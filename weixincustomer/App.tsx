@@ -33,6 +33,7 @@ const App: React.FC = () => {
   const [currentRoute, setCurrentRoute] = useState<string>('tabs');
   const [routeParams, setRouteParams] = useState<any>(null);
   const [auctionDetailParams, setAuctionDetailParams] = useState<AuctionItem | null>(null);
+  const [auctionDetailBackRoute, setAuctionDetailBackRoute] = useState<string>('tabs');
   const scrollPositionsRef = useRef<Record<string, number>>({});
   
   // 全局数据
@@ -73,6 +74,7 @@ const App: React.FC = () => {
 
     if (route === 'auction-detail' && params) {
       setAuctionDetailParams(params as AuctionItem);
+      setAuctionDetailBackRoute(currentRoute);
     }
 
     setCurrentRoute(route);
@@ -108,7 +110,7 @@ const App: React.FC = () => {
     <div className={`absolute inset-0 bg-white ${currentRoute === 'tabs' ? 'hidden' : ''}`}>
       {auctionDetailParams && (
         <div className={currentRoute === 'auction-detail' ? 'block h-full' : 'hidden h-full'}>
-          <AuctionDetail params={auctionDetailParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+          <AuctionDetail params={auctionDetailParams} onBack={() => setCurrentRoute(auctionDetailBackRoute)} onNavigate={navigate} />
         </div>
       )}
       {currentRoute === 'free-quote' && <FreeQuote onBack={() => setCurrentRoute('tabs')} />}

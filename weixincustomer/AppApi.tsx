@@ -14,6 +14,7 @@ import {
   FarmItem,
   MyBidItem,
   MyBidStatus,
+  MyBidStatusCounts,
   OrderCounts,
   ProductTagItem,
   RegionItem,
@@ -183,6 +184,19 @@ export async function getMyBidList(params: MyBidListParams): Promise<ApiResponse
       records: (result.data.records || []).map(mapMyBidRecord),
     },
   };
+}
+
+const MOCK_MY_BID_STATUS_COUNTS: MyBidStatusCounts = {
+  biddingCount: 10,
+  successCount: 12,
+  failedCount: 13,
+};
+
+/** 获取我的竞拍状态数量 */
+export async function getMyBidStatusCounts(): Promise<ApiResponse<MyBidStatusCounts>> {
+  const result = await request<MyBidStatusCounts>('/v1/weixincustomer/getMyBidStatusCounts');
+  if (result.errcode === 0 && result.data) return result;
+  return { errcode: 0, errmsg: '', data: MOCK_MY_BID_STATUS_COUNTS };
 }
 
 /** 获取竞价详情 */

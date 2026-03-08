@@ -98,6 +98,13 @@ export interface MyBidItem {
   bidStatus: MyBidStatus;
 }
 
+/** 我的竞拍状态数量 */
+export interface MyBidStatusCounts {
+  biddingCount: number;
+  successCount: number;
+  failedCount: number;
+}
+
 /** 竞价详情数据 */
 export interface AuctionDetailInfo {
   id: string;
