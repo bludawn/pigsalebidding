@@ -37,7 +37,11 @@ const MOCK_BID_RECORDS: BidRecordItem[] = Array.from({ length: 16 }, (_, index) 
   price: 15.5 + index * 0.05,
   quantity: 100 + index * 5,
   time: `今天 ${10 + index}:0${index}`,
+  isCurrentCustomer: index % 4 === 0,
 }));
+
+const getMockBidRecords = (onlyMine: boolean) =>
+  onlyMine ? MOCK_BID_RECORDS.filter(record => record.isCurrentCustomer) : MOCK_BID_RECORDS;
 
 const formatCountdown = (seconds: number) => {
   const safe = Math.max(0, seconds);
@@ -67,6 +71,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
   const [bidRecordsTotal, setBidRecordsTotal] = useState(0);
   const [isBidRecordsLoading, setIsBidRecordsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMineOnly, setIsMineOnly] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [bidPrice, setBidPrice] = useState(params.startingPrice);
   const [bidCount, setBidCount] = useState(params.startingCount);
@@ -116,7 +121,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
     return () => clearInterval(timer);
   }, [detail]);
 
-  const loadBidRecords = async (loadAll: boolean) => {
+  const loadBidRecords = async (loadAll: boolean, onlyMine: boolean = isMineOnly) => {
     if (isBidRecordsLoading) return;
     setIsBidRecordsLoading(true);
     const size = loadAll ? ALL_BID_RECORD_SIZE : DEFAULT_BID_RECORD_SIZE;
@@ -125,22 +130,26 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
       current: 1,
       size,
       searchCount: true,
+      isMine: onlyMine,
     });
+    const mockRecords = getMockBidRecords(onlyMine);
     if (res.errcode === 0 && res.data) {
       const records = res.data.records || [];
-      const finalRecords = records.length ? records : MOCK_BID_RECORDS;
+      const finalRecords = records.length ? records : mockRecords;
       setBidRecords(finalRecords);
       setBidRecordsTotal(res.data.total || finalRecords.length);
       setIsBidRecordsLoading(false);
       return;
     }
-    setBidRecords(MOCK_BID_RECORDS);
-    setBidRecordsTotal(MOCK_BID_RECORDS.length);
+    setBidRecords(mockRecords);
+    setBidRecordsTotal(mockRecords.length);
     setIsBidRecordsLoading(false);
   };
 
   useEffect(() => {
-    loadBidRecords(false);
+    setIsExpanded(false);
+    setIsMineOnly(false);
+    loadBidRecords(false, false);
   }, [params.id]);
 
 
@@ -153,16 +162,22 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
 
   const handleExpandRecords = async () => {
     setIsExpanded(true);
-    await loadBidRecords(true);
+    await loadBidRecords(true, isMineOnly);
   };
 
   const handleCollapseRecords = async () => {
     setIsExpanded(false);
-    await loadBidRecords(false);
+    await loadBidRecords(false, isMineOnly);
   };
 
   const handleRefreshRecords = () => {
-    loadBidRecords(isExpanded);
+    loadBidRecords(isExpanded, isMineOnly);
+  };
+
+  const handleToggleMine = () => {
+    const nextValue = !isMineOnly;
+    setIsMineOnly(nextValue);
+    loadBidRecords(isExpanded, nextValue);
   };
 
   const bidValidationMessage = useMemo(() => {
@@ -185,7 +200,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
     });
     if (res.errcode === 0) {
       setIsDialogOpen(false);
-      await loadBidRecords(isExpanded);
+      await loadBidRecords(isExpanded, isMineOnly);
     }
     setIsSubmitting(false);
   };
@@ -316,13 +331,18 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-slate-400">{bidRecordsTotal ? `共${bidRecordsTotal}条` : '最新10条'}</span>
             <button
-              onClick={handleRefreshRecords}
-              className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:bg-slate-200"
-              aria-label="刷新出价明细"
+              onClick={handleToggleMine}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded-full transition-colors ${
+                isMineOnly ? 'bg-industry-red text-white' : 'bg-slate-100 text-slate-500'
+              }`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14.906-3.906L4 10M4 14a8 8 0 0014.906 3.906L20 14" />
-              </svg>
+              我的
+            </button>
+            <button
+              onClick={handleRefreshRecords}
+              className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+            >
+              刷新
             </button>
           </div>
         </div>
@@ -333,14 +353,20 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
             <span>数量</span>
             <span>时间</span>
           </div>
-          {bidRecords.map(record => (
-            <div key={record.id} className="grid grid-cols-4 text-[11px] text-slate-700 px-3 py-2 border-b border-slate-100 last:border-b-0">
-              <span className="truncate">{record.customerName}</span>
-              <span>¥{record.price.toFixed(2)}</span>
-              <span>{record.quantity}头</span>
-              <span>{record.time}</span>
-            </div>
-          ))}
+          {bidRecords.map(record => {
+            const rowClassName = record.isCurrentCustomer
+              ? 'grid grid-cols-4 text-[11px] text-industry-red px-3 py-2 border-b border-industry-red/10 bg-industry-red/5 last:border-b-0'
+              : 'grid grid-cols-4 text-[11px] text-slate-700 px-3 py-2 border-b border-slate-100 last:border-b-0';
+
+            return (
+              <div key={record.id} className={rowClassName}>
+                <span className="truncate">{record.customerName}</span>
+                <span>¥{record.price.toFixed(2)}</span>
+                <span>{record.quantity}头</span>
+                <span>{record.time}</span>
+              </div>
+            );
+          })}
           {!bidRecords.length && !isBidRecordsLoading && (
             <div className="py-6 text-center text-xs text-slate-400">暂无出价明细</div>
           )}
@@ -353,17 +379,27 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
         {!isExpanded && bidRecordsTotal > DEFAULT_BID_RECORD_SIZE && (
           <button
             onClick={handleExpandRecords}
-            className="w-full mt-3 py-2 text-xs text-industry-red font-bold bg-industry-red/5 rounded-custom"
+            className="w-full mt-3 py-2 flex justify-center"
+            aria-label="展开出价明细"
           >
-            展开全部
+            <span className="w-7 h-7 rounded-full bg-industry-red/10 text-industry-red flex items-center justify-center">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
           </button>
         )}
         {isExpanded && (
           <button
             onClick={handleCollapseRecords}
-            className="w-full mt-3 py-2 text-xs text-slate-500 font-bold bg-slate-100 rounded-custom"
+            className="w-full mt-3 py-2 flex justify-center"
+            aria-label="收起出价明细"
           >
-            收起
+            <span className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+              </svg>
+            </span>
           </button>
         )}
       </div>

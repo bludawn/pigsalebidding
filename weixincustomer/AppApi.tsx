@@ -147,7 +147,9 @@ export function getAuctionDetail(params: { auctionId: string }): Promise<ApiResp
 }
 
 /** 获取出价明细 */
-export function getBidRecords(params: ListRequestParams & { auctionId: string }): Promise<ApiResponse<ListResponseData<BidRecordItem>>> {
+export function getBidRecords(
+  params: ListRequestParams & { auctionId: string; isMine?: boolean }
+): Promise<ApiResponse<ListResponseData<BidRecordItem>>> {
   return request<ListResponseData<BidRecordItem>>('/v1/weixincustomer/getBidRecords', params);
 }
 

@@ -46,6 +46,7 @@ export interface BidRecordItem {
   price: number;
   quantity: number;
   time: string;
+  isCurrentCustomer?: boolean;
 }
 
 /** 场点数据 */
