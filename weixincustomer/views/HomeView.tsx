@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { AuctionItem, FilterState, PaginationState } from '../types';
+import { AuctionItem, BidStatus, FilterState, PaginationState } from '../types';
 import { getAuctionList, setRequestHeaders } from '../AppApi';
 import { useAppContext } from '../App';
 import RegionPicker from './RegionPicker';
@@ -20,15 +20,18 @@ const PIG_IMAGES = [
 const PAGE_SIZE = 20;
 
 // 倒计时组件
-const Countdown: React.FC<{ endTime: Date }> = ({ endTime }) => {
+const Countdown: React.FC<{ endTime: Date; bidStatus: BidStatus }> = ({ endTime, bidStatus }) => {
   const [timeLeft, setTimeLeft] = useState({ h: '00', m: '00', s: '00' });
 
   useEffect(() => {
+    if (bidStatus !== 'BIDDING') return;
+
     const timer = setInterval(() => {
       const now = new Date().getTime();
       const distance = endTime.getTime() - now;
       if (distance < 0) {
         clearInterval(timer);
+        setTimeLeft({ h: '00', m: '00', s: '00' });
         return;
       }
       const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -41,7 +44,7 @@ const Countdown: React.FC<{ endTime: Date }> = ({ endTime }) => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [endTime]);
+  }, [endTime, bidStatus]);
 
   return (
     <div className="flex items-center gap-1">
@@ -153,26 +156,36 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   // 生成模拟数据
   const generateMockData = (page: number): AuctionItem[] => {
     const startIndex = (page - 1) * PAGE_SIZE;
-    return Array.from({ length: PAGE_SIZE }, (_, i) => ({
-      id: `${startIndex + i + 1}`,
-      farmId: `farm-${(startIndex + i) % 5 + 1}`,
-      farmName: ['牧原股份·山东五号场', '温氏集团·广东清远基地', '正邦科技·江西基地', '新希望·四川中心场', '天邦股份·江苏基地'][(startIndex + i) % 5],
-      farmIcon: PIG_IMAGES[(startIndex + i) % 4],
-      breed: ['挪系 A', '三元 A', '法系 A', '杜洛克', '长白'][i % 5],
-      quantity: 150 + Math.floor(Math.random() * 100),
-      weightRange: ['育肥猪 105-125kg', '大猪 125-140kg', '中猪 90-110kg'][i % 3],
-      tags: [
-        ['挪系A', '白猪'],
-        ['三元A', '黑猪'],
-        ['法系A', '白猪'],
-        ['杜洛克', '黑猪'],
-        ['长白', '白猪'],
-      ][i % 5],
-      startingPrice: 15 + Math.random() * 3,
-      startingCount: 100 + Math.floor(Math.random() * 100),
-      endTime: new Date(Date.now() + 1000 * 60 * (30 + Math.floor(Math.random() * 90))),
-      imageUrl: PIG_IMAGES[(startIndex + i) % 4],
-    }));
+    const statusPool: BidStatus[] = ['WAITING', 'BIDDING', 'ENDED'];
+    return Array.from({ length: PAGE_SIZE }, (_, i) => {
+      const bidStatus = statusPool[(startIndex + i) % statusPool.length];
+      const endTime = new Date(Date.now() + 1000 * 60 * (30 + Math.floor(Math.random() * 90)));
+      const startTime = new Date(Date.now() + 1000 * 60 * (5 + Math.floor(Math.random() * 120)));
+      const bidStartTime = `${startTime.getFullYear()}-${String(startTime.getMonth() + 1).padStart(2, '0')}-${String(startTime.getDate()).padStart(2, '0')} ${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}:${String(startTime.getSeconds()).padStart(2, '0')}`;
+
+      return {
+        id: `${startIndex + i + 1}`,
+        farmId: `farm-${(startIndex + i) % 5 + 1}`,
+        farmName: ['牧原股份·山东五号场', '温氏集团·广东清远基地', '正邦科技·江西基地', '新希望·四川中心场', '天邦股份·江苏基地'][(startIndex + i) % 5],
+        farmIcon: PIG_IMAGES[(startIndex + i) % 4],
+        breed: ['挪系 A', '三元 A', '法系 A', '杜洛克', '长白'][i % 5],
+        quantity: 150 + Math.floor(Math.random() * 100),
+        weightRange: ['育肥猪 105-125kg', '大猪 125-140kg', '中猪 90-110kg'][i % 3],
+        tags: [
+          ['挪系A', '白猪'],
+          ['三元A', '黑猪'],
+          ['法系A', '白猪'],
+          ['杜洛克', '黑猪'],
+          ['长白', '白猪'],
+        ][i % 5],
+        startingPrice: 15 + Math.random() * 3,
+        startingCount: 100 + Math.floor(Math.random() * 100),
+        endTime: bidStatus === 'ENDED' ? new Date(Date.now() - 1000 * 60 * 10) : endTime,
+        imageUrl: PIG_IMAGES[(startIndex + i) % 4],
+        bidStatus,
+        bidStartTime,
+      };
+    });
   };
 
   // 初始加载
@@ -538,8 +551,30 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
               onClick={() => onNavigate('auction-detail', item)}
             >
               {/* Countdown Bar */}
-              <div className="bg-industry-red px-3 py-2 flex justify-between items-center">
-                <Countdown endTime={item.endTime} />
+              <div className={`${item.bidStatus === 'ENDED' ? 'bg-slate-400' : 'bg-industry-red'} px-3 py-2 flex justify-between items-center`}>
+                {item.bidStatus === 'BIDDING' ? (
+                  <Countdown endTime={item.endTime} bidStatus={item.bidStatus} />
+                ) : (
+                  <>
+                    <span className="text-white text-xs font-medium">
+                      {item.bidStatus === 'WAITING' ? '等待竞价' : '竞价结束'}
+                    </span>
+                    {item.bidStatus === 'WAITING' ? (
+                      <div className="flex items-center gap-2 text-white text-[10px]">
+                        <span>开始时间</span>
+                        <span className="font-mono bg-white/20 px-1 rounded-sm max-w-[140px] truncate">{item.bidStartTime || '-'}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-0.5 ml-1">
+                        <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">00</span>
+                        <span className="text-white text-[10px]">:</span>
+                        <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">00</span>
+                        <span className="text-white text-[10px]">:</span>
+                        <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">00</span>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Farm Info Bar */}

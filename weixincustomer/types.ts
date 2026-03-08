@@ -15,6 +15,8 @@ export interface AuctionItem {
   startingCount: number;
   endTime: Date;
   imageUrl: string;
+  bidStatus: BidStatus;
+  bidStartTime: string;
 }
 
 /** 竞价状态 */
