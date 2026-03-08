@@ -4,6 +4,8 @@ import { createPortal } from 'react-dom';
 import { AuctionItem, BidStatus, FilterState, PaginationState } from '../types';
 import { getAuctionList, setRequestHeaders } from '../AppApi';
 import { useAppContext } from '../App';
+import AuctionCard from '../components/AuctionCard';
+import CountdownTimer from '../components/CountdownTimer';
 import RegionPicker from './RegionPicker';
 
 interface HomeViewProps {
@@ -18,44 +20,6 @@ const PIG_IMAGES = [
 ];
 
 const PAGE_SIZE = 20;
-
-// 倒计时组件
-const Countdown: React.FC<{ endTime: Date; bidStatus: BidStatus }> = ({ endTime, bidStatus }) => {
-  const [timeLeft, setTimeLeft] = useState({ h: '00', m: '00', s: '00' });
-
-  useEffect(() => {
-    if (bidStatus !== 'BIDDING') return;
-
-    const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = endTime.getTime() - now;
-      if (distance < 0) {
-        clearInterval(timer);
-        setTimeLeft({ h: '00', m: '00', s: '00' });
-        return;
-      }
-      const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const s = Math.floor((distance % (1000 * 60)) / 1000);
-      setTimeLeft({
-        h: h.toString().padStart(2, '0'),
-        m: m.toString().padStart(2, '0'),
-        s: s.toString().padStart(2, '0')
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [endTime, bidStatus]);
-
-  return (
-    <div className="flex items-center gap-0.5">
-      <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">{timeLeft.h}</span>
-      <span className="text-white text-[10px]">:</span>
-      <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">{timeLeft.m}</span>
-      <span className="text-white text-[10px]">:</span>
-      <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">{timeLeft.s}</span>
-    </div>
-  );
-};
 
 const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   const { farms, productTags } = useAppContext();
@@ -444,6 +408,42 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
     }
   };
 
+  const renderAuctionStatusBar = (item: AuctionItem) => {
+    if (item.bidStatus === 'BIDDING') {
+      return (
+        <>
+          <span className="text-white text-xs font-medium">竞价中</span>
+          <CountdownTimer endTime={item.endTime} />
+        </>
+      );
+    }
+
+    if (item.bidStatus === 'WAITING') {
+      return (
+        <>
+          <span className="text-white text-xs font-medium">等待竞价</span>
+          <div className="flex items-center gap-2 text-white text-[10px]">
+            <span>开始时间</span>
+            <span className="font-mono bg-white/20 px-1 rounded-sm max-w-[140px] truncate">{item.bidStartTime || '-'}</span>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <span className="text-white text-xs font-medium">竞价结束</span>
+        <div className="flex items-center gap-0.5 ml-1">
+          <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">00</span>
+          <span className="text-white text-[10px]">:</span>
+          <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">00</span>
+          <span className="text-white text-[10px]">:</span>
+          <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">00</span>
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="flex flex-col h-screen bg-industry-bg relative overflow-hidden">
       {/* Search Header */}
@@ -542,97 +542,21 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         {/* Auction List */}
         <div className="px-4 py-4 pb-28 flex flex-col gap-4">
           {auctionList.map(item => (
-            <div
+            <AuctionCard
               key={item.id}
-              className="bg-white rounded-custom overflow-hidden shadow-sm border border-slate-100 active:scale-[0.98] transition-transform"
               onClick={() => onNavigate('auction-detail', item)}
-            >
-              {/* Countdown Bar */}
-              <div className={`${item.bidStatus === 'ENDED' ? 'bg-slate-400' : 'bg-industry-red'} px-3 py-2 flex justify-between items-center`}>
-                {item.bidStatus === 'BIDDING' ? (
-                  <>
-                    <span className="text-white text-xs font-medium">距竞价结束</span>
-                    <Countdown endTime={item.endTime} bidStatus={item.bidStatus} />
-                  </>
-                ) : (
-                  <>
-                    <span className="text-white text-xs font-medium">
-                      {item.bidStatus === 'WAITING' ? '等待竞价' : '竞价结束'}
-                    </span>
-                    {item.bidStatus === 'WAITING' ? (
-                      <div className="flex items-center gap-2 text-white text-[10px]">
-                        <span>开始时间</span>
-                        <span className="font-mono bg-white/20 px-1 rounded-sm max-w-[140px] truncate">{item.bidStartTime || '-'}</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-0.5 ml-1">
-                        <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">00</span>
-                        <span className="text-white text-[10px]">:</span>
-                        <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">00</span>
-                        <span className="text-white text-[10px]">:</span>
-                        <span className="bg-white/20 text-white text-[10px] px-1 rounded-sm">00</span>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* Farm Info Bar */}
-              <div className="px-3 py-3 flex items-center justify-between border-b border-slate-50">
-                <div className="flex items-center gap-2">
-                  <img src={item.farmIcon} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-100 shadow-sm" />
-                  <span className="text-xs font-bold text-slate-800">{item.farmName}</span>
-                </div>
-              </div>
-
-              {/* Pig Info Bar */}
-              <div className="p-3 flex gap-4 relative items-center">
-                <div className="relative w-28 h-28 flex-shrink-0 group">
-                  <img src={item.imageUrl} alt="" className="w-full h-full object-cover rounded-custom border border-slate-100 shadow-inner" />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-custom">
-                    <div className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center shadow-lg active:scale-90 transition-transform">
-                      <svg className="w-4 h-4 text-industry-red translate-x-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.333-5.89a1.5 1.5 0 000-2.538L6.3 2.841z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="absolute top-1 left-1 bg-black/60 text-white text-[9px] px-2 py-0.5 rounded-sm font-bold backdrop-blur-sm">
-                    {item.breed}
-                  </div>
-                  <div className="absolute bottom-1 right-1 bg-white/95 text-industry-text text-[9px] px-2 py-0.5 rounded-sm font-bold shadow-sm">
-                    {item.quantity}头
-                  </div>
-                </div>
-
-                <div className="flex-1 flex flex-col justify-between h-28 py-0.5">
-                  <div>
-                    <h3 className="text-[15px] font-bold text-slate-800 line-clamp-1">{item.weightRange}</h3>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {item.tags.map(tag => (
-                        <span key={tag} className="bg-slate-100 text-slate-500 text-[10px] px-2 py-1 rounded-sm font-medium">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-industry-gray text-[10px] mb-1">
-                      起拍头数：<span className="text-slate-700 font-bold">{item.startingCount}</span>
-                    </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-industry-red text-xl font-black">¥{item.startingPrice.toFixed(2)}</span>
-                      <span className="text-industry-gray text-[10px] font-medium">元/kg</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="self-center">
-                  <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
+              topBar={renderAuctionStatusBar(item)}
+              topBarClassName={item.bidStatus === 'ENDED' ? 'bg-slate-400' : 'bg-industry-red'}
+              farmIcon={item.farmIcon}
+              farmName={item.farmName}
+              imageUrl={item.imageUrl}
+              breed={item.breed}
+              quantity={item.quantity}
+              weightRange={item.weightRange}
+              tags={item.tags}
+              startingCount={item.startingCount}
+              startingPrice={item.startingPrice}
+            />
           ))}
 
           {/* Loading */}

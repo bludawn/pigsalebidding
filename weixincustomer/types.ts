@@ -22,6 +22,81 @@ export interface AuctionItem {
 /** 竞价状态 */
 export type BidStatus = 'WAITING' | 'BIDDING' | 'ENDED';
 
+/** 订单状态枚举（用于数量统计） */
+export type OrderStatus = 'ORDER_PAYMENT' | 'ORDER_SHIPMENT' | 'ORDER_RECEIPT' | 'ORDER_COMPLETED';
+
+/** 我的竞拍状态 */
+export type MyBidStatus = 'BIDDING' | 'BID_SUCCESS' | 'BID_FAILED';
+
+/** 个人信息 */
+export interface UserProfile {
+  userId: string;
+  name: string;
+  avatar: string;
+  depositTag: string;
+  companyName: string;
+}
+
+/** 我的订单数量 */
+export interface OrderCounts {
+  paymentCount: number;
+  shipmentCount: number;
+  receiptCount: number;
+  completedCount: number;
+  allCount: number;
+  myBidCount: number;
+}
+
+/** 总资产 */
+export interface AssetSummary {
+  depositAmount: number;
+  goodsAmount: number;
+  totalBalance: number;
+}
+
+/** 数据统计 */
+export interface BusinessStats {
+  totalTradeAmount: number;
+  totalPurchaseCount: number;
+}
+
+/** 联系我们 */
+export interface ContactInfo {
+  phone: string;
+  address: string;
+  wechatQrCodeUrl: string;
+}
+
+/** 地址信息 */
+export interface AddressItem {
+  id: string;
+  contactName: string;
+  contactPhone: string;
+  regionCode: string;
+  regionName: string;
+  detailAddress: string;
+  isDefault: boolean;
+  updatedAt?: string;
+}
+
+/** 我的竞拍列表项 */
+export interface MyBidItem {
+  id: string;
+  auctionId: string;
+  farmId: string;
+  farmName: string;
+  farmIcon: string;
+  breed: string;
+  quantity: number;
+  weightRange: string;
+  tags: string[];
+  startingPrice: number;
+  startingCount: number;
+  endTime: Date;
+  imageUrl: string;
+  bidStatus: MyBidStatus;
+}
+
 /** 竞价详情数据 */
 export interface AuctionDetailInfo {
   id: string;

@@ -33,7 +33,12 @@ weixincustomer/
 │   ├── FreeQuote.tsx        # 自由报价页
 │   ├── MessageList.tsx      # 消息列表页
 │   ├── PaymentDetail.tsx    # 支付明细页
-│   └── MatchDetail.tsx      # 匹配详情页
+│   ├── MatchDetail.tsx      # 匹配详情页
+│   ├── MyBidsView.tsx       # 我的竞拍页
+│   └── AddressManagementView.tsx # 收货地址管理页
+├── components/              # 通用组件
+│   ├── AuctionCard.tsx      # 竞价列表卡片
+│   └── CountdownTimer.tsx   # 倒计时组件
 ├── App.tsx                  # 应用主入口，路由管理
 ├── AppApi.tsx               # API 接口层
 ├── index.tsx                # React DOM 挂载入口
@@ -76,12 +81,14 @@ weixincustomer/
 |------|------|
 | **HomeView.tsx** | 首页，展示竞价列表，支持搜索、筛选（区域/体重/等级/距离），倒计时组件 |
 | **MessageView.tsx** | 消息中心入口，三类消息入口：商品猪、支付、商城 |
-| **ProfileView.tsx** | 个人中心，展示资产、订单、积分、优惠券、业务统计 |
+| **ProfileView.tsx** | 个人中心，展示个人信息、订单数量、资产与统计 |
 | **AuctionDetail.tsx** | 竞价详情页，展示竞价参数、委托出价、竞价须知 |
 | **FreeQuote.tsx** | 自由报价页，提交报价参与撮合 |
 | **MessageList.tsx** | 消息列表，根据类型展示不同消息内容 |
 | **PaymentDetail.tsx** | 支付明细，展示账户余额、交易记录 |
 | **MatchDetail.tsx** | 匹配详情，展示报单匹配结果 |
+| **MyBidsView.tsx** | 我的竞拍页，按状态展示竞拍记录 |
+| **AddressManagementView.tsx** | 收货地址管理页，支持增删改查 |
 
 ---
 
@@ -96,11 +103,13 @@ tabs (主 Tab 页面)
 └── profile → ProfileView
 
 子页面
-├── auction-detail → AuctionDetail
-├── free-quote     → FreeQuote
-├── msg-list       → MessageList
-├── payment-detail → PaymentDetail
-└── match-detail   → MatchDetail
+├── auction-detail      → AuctionDetail
+├── free-quote          → FreeQuote
+├── msg-list            → MessageList
+├── payment-detail      → PaymentDetail
+├── match-detail        → MatchDetail
+├── my-bids             → MyBidsView
+└── address-management  → AddressManagementView
 ```
 
 ---

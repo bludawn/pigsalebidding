@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AuctionDetailInfo, AuctionItem, BidRecordItem } from '../types';
-import { getAuctionDetail, getBidRecords, submitBid } from '../AppApi';
+import { AddressItem, AuctionDetailInfo, AuctionItem, BidRecordItem } from '../types';
+import { getAuctionDetail, getBidRecords, getDefaultAddress, submitBid } from '../AppApi';
 
 interface AuctionDetailProps {
   params: AuctionItem;
   onBack: () => void;
+  onNavigate?: (route: string, params?: any) => void;
 }
 
 const DEFAULT_BID_RECORD_SIZE = 10;
@@ -79,7 +80,7 @@ const isStepValid = (value: number, step: number) => {
   return Math.abs(ratio - Math.round(ratio)) < 1e-6;
 };
 
-const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
+const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigate }) => {
   const [detail, setDetail] = useState<AuctionDetailInfo | null>(null);
   const [countdownSeconds, setCountdownSeconds] = useState(0);
   const [bidRecords, setBidRecords] = useState<BidRecordItem[]>([]);
@@ -96,6 +97,8 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
   const [currentVideoDuration, setCurrentVideoDuration] = useState(0);
   const [isCurrentVideoPlaying, setIsCurrentVideoPlaying] = useState(false);
+  const [defaultAddress, setDefaultAddress] = useState<AddressItem | null>(null);
+  const [isAddressLoading, setIsAddressLoading] = useState(false);
   const mediaRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const prevMediaIndexRef = useRef(0);
@@ -125,6 +128,27 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
 
     loadDetail();
   }, [params.id]);
+
+  useEffect(() => {
+    const loadDefaultAddress = async () => {
+      setIsAddressLoading(true);
+      try {
+        const res = await getDefaultAddress();
+        if (res.errcode === 0 && res.data) {
+          setDefaultAddress(res.data);
+        } else {
+          setDefaultAddress(null);
+        }
+      } catch (error) {
+        console.error('Failed to load default address:', error);
+        setDefaultAddress(null);
+      } finally {
+        setIsAddressLoading(false);
+      }
+    };
+
+    loadDefaultAddress();
+  }, []);
 
   useEffect(() => {
     if (!detail || initializedRef.current) return;
@@ -419,8 +443,29 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack }) => {
         <div>
           <h2 className="text-sm font-bold">信息维护</h2>
           <p className="text-[11px] text-slate-400 mt-0.5">请确认收货地址、装猪时间等基础信息</p>
+          <div className="mt-2 text-[11px] text-slate-500">
+            {isAddressLoading ? (
+              <span className="text-slate-400">默认地址加载中...</span>
+            ) : defaultAddress ? (
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] px-1.5 py-0.5 bg-industry-red/10 text-industry-red rounded-sm font-bold">默认地址</span>
+                  <span>{defaultAddress.contactName}</span>
+                  <span>{defaultAddress.contactPhone}</span>
+                </div>
+                <div className="mt-1 text-slate-600">{defaultAddress.regionName} {defaultAddress.detailAddress}</div>
+              </div>
+            ) : (
+              <span className="text-slate-400">暂无默认地址</span>
+            )}
+          </div>
         </div>
-        <button className="bg-industry-red text-white px-4 py-1.5 rounded-custom text-xs font-bold shadow-sm shadow-industry-red/20">立即维护</button>
+        <button
+          onClick={() => onNavigate?.('address-management')}
+          className="bg-industry-red text-white px-4 py-1.5 rounded-custom text-xs font-bold shadow-sm shadow-industry-red/20"
+        >
+          立即维护
+        </button>
       </div>
 
       {/* Bidding Params */}

@@ -9,6 +9,8 @@ import FreeQuote from './views/FreeQuote';
 import MessageList from './views/MessageList';
 import PaymentDetail from './views/PaymentDetail';
 import MatchDetail from './views/MatchDetail';
+import MyBidsView from './views/MyBidsView';
+import AddressManagementView from './views/AddressManagementView';
 import { getFarmList, getProductTags } from './AppApi';
 
 /** 全局数据上下文 */
@@ -87,7 +89,7 @@ const App: React.FC = () => {
 
     switch (currentRoute) {
       case 'auction-detail':
-        return <AuctionDetail params={routeParams} onBack={() => setCurrentRoute('tabs')} />;
+        return <AuctionDetail params={routeParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />;
       case 'free-quote':
         return <FreeQuote onBack={() => setCurrentRoute('tabs')} />;
       case 'msg-list':
@@ -96,6 +98,10 @@ const App: React.FC = () => {
         return <PaymentDetail onBack={() => setCurrentRoute('msg-list')} />;
       case 'match-detail':
         return <MatchDetail onBack={() => setCurrentRoute('msg-list')} />;
+      case 'my-bids':
+        return <MyBidsView onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />;
+      case 'address-management':
+        return <AddressManagementView onBack={() => setCurrentRoute('tabs')} />;
       default:
         return null;
     }

@@ -4,12 +4,20 @@
  */
 
 import {
+  AddressItem,
+  AssetSummary,
   AuctionDetailInfo,
   AuctionItem,
   BidRecordItem,
+  BusinessStats,
+  ContactInfo,
   FarmItem,
+  MyBidItem,
+  MyBidStatus,
+  OrderCounts,
   ProductTagItem,
   RegionItem,
+  UserProfile,
 } from './types';
 
 // ============ 通用类型定义 ============
@@ -141,6 +149,42 @@ export async function getAuctionList(params: AuctionListParams): Promise<ApiResp
   };
 }
 
+/** 我的竞拍列表原始数据 */
+interface MyBidRecordDto extends Omit<MyBidItem, 'endTime'> {
+  endTime: string;
+}
+
+const mapMyBidRecord = (record: MyBidRecordDto): MyBidItem => {
+  const parsedEndTime = new Date(record.endTime);
+
+  return {
+    ...record,
+    endTime: Number.isNaN(parsedEndTime.getTime()) ? new Date() : parsedEndTime,
+  };
+};
+
+/** 我的竞拍列表请求参数 */
+export interface MyBidListParams extends ListRequestParams {
+  status: MyBidStatus;
+}
+
+/** 获取我的竞拍列表 */
+export async function getMyBidList(params: MyBidListParams): Promise<ApiResponse<ListResponseData<MyBidItem>>> {
+  const result = await request<ListResponseData<MyBidRecordDto>>('/v1/weixincustomer/getMyBidList', params);
+
+  if (result.errcode !== 0 || !result.data) {
+    return result as unknown as ApiResponse<ListResponseData<MyBidItem>>;
+  }
+
+  return {
+    ...result,
+    data: {
+      ...result.data,
+      records: (result.data.records || []).map(mapMyBidRecord),
+    },
+  };
+}
+
 /** 获取竞价详情 */
 export function getAuctionDetail(params: { auctionId: string }): Promise<ApiResponse<AuctionDetailInfo>> {
   return request<AuctionDetailInfo>('/v1/weixincustomer/getAuctionDetail', params);
@@ -178,6 +222,63 @@ export interface UserInfo {
 /** 获取用户信息 */
 export function getUserInfo(): Promise<ApiResponse<UserInfo>> {
   return request<UserInfo>('/v1/weixincustomer/getUserInfo');
+}
+
+// ============ 个人中心相关接口 ==========
+
+/** 获取个人中心信息 */
+export function getProfileInfo(): Promise<ApiResponse<UserProfile>> {
+  return request<UserProfile>('/v1/weixincustomer/getProfileInfo');
+}
+
+/** 获取我的订单数量统计 */
+export function getOrderCounts(): Promise<ApiResponse<OrderCounts>> {
+  return request<OrderCounts>('/v1/weixincustomer/getOrderCounts');
+}
+
+/** 获取总资产 */
+export function getAssetSummary(): Promise<ApiResponse<AssetSummary>> {
+  return request<AssetSummary>('/v1/weixincustomer/getAssetSummary');
+}
+
+/** 获取数据统计 */
+export function getBusinessStats(): Promise<ApiResponse<BusinessStats>> {
+  return request<BusinessStats>('/v1/weixincustomer/getBusinessStats');
+}
+
+/** 获取联系我们信息 */
+export function getContactInfo(): Promise<ApiResponse<ContactInfo>> {
+  return request<ContactInfo>('/v1/weixincustomer/getContactInfo');
+}
+
+/** 获取地址列表 */
+export function getAddressList(params: ListRequestParams): Promise<ApiResponse<ListResponseData<AddressItem>>> {
+  return request<ListResponseData<AddressItem>>('/v1/weixincustomer/getAddressList', params);
+}
+
+/** 新增地址 */
+export function createAddress(params: Omit<AddressItem, 'id' | 'updatedAt'>): Promise<ApiResponse<{ id: string }>> {
+  return request<{ id: string }>('/v1/weixincustomer/createAddress', params);
+}
+
+/** 更新地址 */
+export function updateAddress(params: AddressItem): Promise<ApiResponse<{ success: boolean }>> {
+  return request<{ success: boolean }>('/v1/weixincustomer/updateAddress', params);
+}
+
+/** 删除地址 */
+export function deleteAddress(params: { id: string }): Promise<ApiResponse<{ success: boolean }>> {
+  return request<{ success: boolean }>('/v1/weixincustomer/deleteAddress', params);
+}
+
+/** 设置默认地址 */
+export function setDefaultAddress(params: { id: string }): Promise<ApiResponse<{ success: boolean }>> {
+  return request<{ success: boolean }>('/v1/weixincustomer/setDefaultAddress', params);
+}
+
+/** 获取默认地址 */
+export function getDefaultAddress(): Promise<ApiResponse<AddressItem>> {
+  return request<AddressItem>('/v1/weixincustomer/getDefaultAddress');
 }
 
 /** 获取账户余额 */
