@@ -125,7 +125,6 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
           <h2 className="text-sm font-bold mb-3">商品信息</h2>
           <div className="text-xs text-slate-500 space-y-2">
             <div className="flex justify-between"><span>场点</span><span className="text-slate-800 font-bold">{detail.farmName}</span></div>
-            <div className="flex justify-between"><span>场次</span><span className="text-slate-800 font-bold">{detail.sessionName}</span></div>
             <div className="flex justify-between"><span>品种</span><span className="text-slate-800 font-bold">{detail.pigTypeName}</span></div>
             <div className="flex justify-between"><span>体重段</span><span className="text-slate-800 font-bold">{detail.weightRange}</span></div>
             <div className="flex justify-between"><span>数量</span><span className="text-slate-800 font-bold">{detail.quantity}头</span></div>

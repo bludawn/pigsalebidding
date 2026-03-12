@@ -122,7 +122,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({ params, onBack, onNavigat
 
                 <div className="flex flex-col gap-2">
                   <div className="text-sm font-bold text-slate-800">
-                    {item.farmName} · {item.sessionName}
+                    场点：{item.farmName}
                   </div>
                   <div className="text-xs text-slate-500">
                     {item.pigTypeName} · {item.weightRange}

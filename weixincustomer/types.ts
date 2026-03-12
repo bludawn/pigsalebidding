@@ -56,7 +56,6 @@ export interface OrderListItem {
   orderId: string;
   status: OrderStatus;
   farmName: string;
-  sessionName: string;
   pigTypeName: string;
   weightRange: string;
   quantity: number;
@@ -102,7 +101,6 @@ export interface OrderDetailInfo {
   orderId: string;
   status: OrderStatus;
   farmName: string;
-  sessionName: string;
   pigTypeName: string;
   weightRange: string;
   quantity: number;
@@ -179,7 +177,7 @@ export interface AuctionDetailInfo {
   productTags: string[];
   pigTypeName: string;
   weightRanges: string[];
-  sessionName: string;
+  farmName: string;
   price: string;
   remark: string;
   startingCount: number;

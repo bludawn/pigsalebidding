@@ -24,7 +24,7 @@ const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
   productTags: ['挪系A', '白猪'],
   pigTypeName: '育肥猪',
   weightRanges: ['105', '125kg'],
-  sessionName: '2026春季第3场',
+  farmName: '牧原股份·山东五号场',
   price: '15.80',
   remark: '本场支持分批提货，需提前24小时预约。',
   startingCount: 120,
@@ -433,7 +433,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
                     </span>
                   ))}
             </div>
-            <div className="text-xs text-slate-400 mb-2">场次：{detail?.sessionName || params.farmName}</div>
+            <div className="text-xs text-slate-400 mb-2">场点：{detail?.farmName || params.farmName}</div>
           </div>
           <div className="bg-industry-red/5 px-2 py-1 rounded-sm border border-industry-red/20">
             <span className="text-industry-red text-[10px] font-bold">最高价</span>
