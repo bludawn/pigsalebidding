@@ -237,6 +237,30 @@ export interface Message {
   details?: any;
 }
 
+export type VerificationStatus = 'VERIFIED' | 'PENDING' | 'UNVERIFIED';
+
+export interface CompanyVerificationInfo {
+  status: VerificationStatus;
+  companyName?: string;
+  licenseUrls: string[];
+  materialUrls: string[];
+}
+
+export interface PersonalVerificationInfo {
+  status: VerificationStatus;
+  wechatName?: string;
+  verifiedAt?: string;
+}
+
+export interface UserSettingsProfile {
+  userId: string;
+  phone: string;
+  name: string;
+  avatar: string;
+  companyVerification: CompanyVerificationInfo;
+  personalVerification: PersonalVerificationInfo;
+}
+
 /** 筛选条件状态 */
 export interface FilterState {
   bidStatus?: BidStatus;

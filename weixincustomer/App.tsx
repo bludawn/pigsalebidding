@@ -13,6 +13,7 @@ import MyBidsView from './views/MyBidsView';
 import AddressManagementView from './views/AddressManagementView';
 import OrderListView from './views/OrderListView';
 import OrderDetailView from './views/OrderDetailView';
+import SettingsView from './views/SettingsView';
 import { getFarmList, getProductTags } from './AppApi';
 
 /** 全局数据上下文 */
@@ -145,6 +146,7 @@ const App: React.FC = () => {
         <OrderDetailView params={orderDetailParams} onBack={() => setCurrentRoute(orderDetailBackRoute)} />
       )}
       {currentRoute === 'address-management' && <AddressManagementView onBack={() => setCurrentRoute('tabs')} />}
+      {currentRoute === 'settings' && <SettingsView onBack={() => setCurrentRoute('tabs')} />}
     </div>
   );
 
