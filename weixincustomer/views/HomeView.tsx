@@ -87,6 +87,11 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   const yearWheelRef = useRef<HTMLDivElement>(null);
   const monthWheelRef = useRef<HTMLDivElement>(null);
   const dayWheelRef = useRef<HTMLDivElement>(null);
+  const wheelRafRef = useRef<Record<'year' | 'month' | 'day', number | null>>({
+    year: null,
+    month: null,
+    day: null,
+  });
 
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -129,6 +134,13 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
     if (!ref.current) return;
     ref.current.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: 'auto' });
   };
+
+  useEffect(() => () => {
+    (['year', 'month', 'day'] as const).forEach(type => {
+      const rafId = wheelRafRef.current[type];
+      if (rafId) cancelAnimationFrame(rafId);
+    });
+  }, []);
 
   useEffect(() => {
     if (!showFilterDrawer || activeFilterTab !== '日期') return;
@@ -538,10 +550,26 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         ) => {
           const target = ref.current;
           if (!target) return;
+
+          const rafId = wheelRafRef.current[type];
+          if (rafId) cancelAnimationFrame(rafId);
+          wheelRafRef.current[type] = requestAnimationFrame(() => {
+            const index = Math.round(target.scrollTop / WHEEL_ITEM_HEIGHT);
+            const safeIndex = Math.min(Math.max(index, 0), options.length - 1);
+            const value = options[safeIndex];
+            setDatePicker(prev => (prev[type] === value ? prev : { ...prev, [type]: value }));
+          });
+        };
+
+        const handleWheelSnap = (
+          options: number[],
+          ref: React.RefObject<HTMLDivElement>
+        ) => {
+          const target = ref.current;
+          if (!target) return;
           const index = Math.round(target.scrollTop / WHEEL_ITEM_HEIGHT);
           const safeIndex = Math.min(Math.max(index, 0), options.length - 1);
-          const value = options[safeIndex];
-          setDatePicker(prev => (prev[type] === value ? prev : { ...prev, [type]: value }));
+          scrollWheelTo(ref, safeIndex);
         };
 
         const handleWheelClick = (
@@ -574,6 +602,9 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                       <div
                         ref={column.ref}
                         onScroll={() => handleWheelScroll(column.type, column.options, column.ref)}
+                        onTouchEnd={() => handleWheelSnap(column.options, column.ref)}
+                        onMouseUp={() => handleWheelSnap(column.options, column.ref)}
+                        onMouseLeave={() => handleWheelSnap(column.options, column.ref)}
                         className="w-full overflow-y-auto overscroll-contain snap-y snap-mandatory hide-scrollbar"
                         style={{
                           height: WHEEL_CONTAINER_HEIGHT,

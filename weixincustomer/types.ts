@@ -24,7 +24,7 @@ export interface AuctionItem {
 export type BidStatus = 'WAITING' | 'BIDDING' | 'ENDED';
 
 /** 订单状态枚举（用于数量统计） */
-export type OrderStatus = 'ORDER_PAYMENT' | 'ORDER_SHIPMENT' | 'ORDER_RECEIPT' | 'ORDER_COMPLETED';
+export type OrderStatus = 'ORDER_PAYMENT' | 'ORDER_SHIPMENT' | 'ORDER_RECEIPT' | 'ORDER_COMPLETED' | 'ORDER_CANCELLED';
 
 /** 订单列表状态 */
 export type OrderListStatus = OrderStatus | 'ALL';
@@ -47,6 +47,7 @@ export interface OrderCounts {
   shipmentCount: number;
   receiptCount: number;
   completedCount: number;
+  cancelledCount: number;
   allCount: number;
   myBidCount: number;
 }

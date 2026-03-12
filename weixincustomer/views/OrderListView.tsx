@@ -15,6 +15,7 @@ const statusMetaMap: Record<OrderListStatus, { label: string; badgeClass: string
   ORDER_SHIPMENT: { label: '待发货', badgeClass: 'bg-amber-100 text-amber-700', desc: '场点正在安排发货' },
   ORDER_RECEIPT: { label: '待收货', badgeClass: 'bg-blue-100 text-blue-700', desc: '运输途中，请注意查收' },
   ORDER_COMPLETED: { label: '已完成', badgeClass: 'bg-emerald-100 text-emerald-700', desc: '订单已完成' },
+  ORDER_CANCELLED: { label: '已取消', badgeClass: 'bg-slate-200 text-slate-600', desc: '订单已取消' },
   ALL: { label: '全部订单', badgeClass: 'bg-slate-100 text-slate-600', desc: '查看全部订单' },
 };
 

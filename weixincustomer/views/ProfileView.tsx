@@ -208,6 +208,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ onNavigate }) => {
           <OrderItem label="待发货" count={orderCounts?.shipmentCount} onClick={() => onNavigate('order-list', { status: 'ORDER_SHIPMENT' })} />
           <OrderItem label="待收货" count={orderCounts?.receiptCount} onClick={() => onNavigate('order-list', { status: 'ORDER_RECEIPT' })} />
           <OrderItem label="已完成" count={orderCounts?.completedCount} onClick={() => onNavigate('order-list', { status: 'ORDER_COMPLETED' })} />
+          <OrderItem label="已取消" count={orderCounts?.cancelledCount} onClick={() => onNavigate('order-list', { status: 'ORDER_CANCELLED' })} />
           <OrderItem label="全部订单" count={orderCounts?.allCount} onClick={() => onNavigate('order-list', { status: 'ALL' })} />
           <OrderItem label="我的竞拍" count={orderCounts?.myBidCount} onClick={() => onNavigate('my-bids')} />
         </div>

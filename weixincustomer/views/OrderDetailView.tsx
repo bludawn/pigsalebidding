@@ -12,6 +12,7 @@ const statusMetaMap: Record<OrderStatus, { label: string; desc: string; badgeCla
   ORDER_SHIPMENT: { label: '待发货', desc: '场点正在安排发货', badgeClass: 'bg-amber-100 text-amber-700' },
   ORDER_RECEIPT: { label: '待收货', desc: '运输途中，请注意查收', badgeClass: 'bg-blue-100 text-blue-700' },
   ORDER_COMPLETED: { label: '已完成', desc: '订单已完成', badgeClass: 'bg-emerald-100 text-emerald-700' },
+  ORDER_CANCELLED: { label: '已取消', desc: '订单已取消，可重新下单', badgeClass: 'bg-slate-200 text-slate-600' },
 };
 
 const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => {
@@ -251,6 +252,14 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
               className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold"
             >
               再次采购
+            </button>
+          )}
+          {detail.status === 'ORDER_CANCELLED' && (
+            <button
+              onClick={() => alert('重新下单')}
+              className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-custom font-bold"
+            >
+              重新下单
             </button>
           )}
         </div>
