@@ -238,12 +238,14 @@ export interface Message {
 
 /** 筛选条件状态 */
 export interface FilterState {
+  bidStatus?: BidStatus;
   farmId?: string;
   farmName?: string;
   regionCode?: string;
   regionName?: string;
   weightRange?: string;
   tags?: string[];
+  date?: string;
   distance: number;
 }
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { AuctionItem, BidStatus, FilterState, PaginationState } from '../types';
 import { getAuctionList, setRequestHeaders } from '../AppApi';
@@ -20,13 +20,43 @@ const PIG_IMAGES = [
 ];
 
 const PAGE_SIZE = 20;
+const WHEEL_ITEM_HEIGHT = 36;
+const WHEEL_VISIBLE_COUNT = 5;
+const WHEEL_CONTAINER_HEIGHT = WHEEL_ITEM_HEIGHT * WHEEL_VISIBLE_COUNT;
+const WHEEL_PADDING = (WHEEL_CONTAINER_HEIGHT - WHEEL_ITEM_HEIGHT) / 2;
+
+const formatDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getRegionLastName = (name?: string) => {
+  if (!name) return '';
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  const segments = trimmed.split(/[\s\/\-]+/).filter(Boolean);
+  return segments[segments.length - 1] || trimmed;
+};
+
+const getDaysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
 
 const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   const { farms, productTags } = useAppContext();
 
   // 筛选条件状态
   const [filter, setFilter] = useState<FilterState>({
+    bidStatus: 'BIDDING',
     distance: 500,
+  });
+  const [datePicker, setDatePicker] = useState(() => {
+    const now = new Date();
+    return {
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      day: now.getDate(),
+    };
   });
 
   // 分页状态
@@ -54,6 +84,81 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   // 滚动容器引用
   const scrollRef = useRef<HTMLDivElement>(null);
   const pullStartYRef = useRef<number | null>(null);
+  const yearWheelRef = useRef<HTMLDivElement>(null);
+  const monthWheelRef = useRef<HTMLDivElement>(null);
+  const dayWheelRef = useRef<HTMLDivElement>(null);
+
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 11 }, (_, index) => currentYear - 5 + index);
+  }, []);
+  const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, index) => index + 1), []);
+  const dayOptions = useMemo(
+    () => Array.from({ length: getDaysInMonth(datePicker.year, datePicker.month) }, (_, index) => index + 1),
+    [datePicker.year, datePicker.month]
+  );
+
+  const getQueryDate = () => filter.date || formatDate(new Date());
+
+  const applyClientFilters = (records: AuctionItem[]) => {
+    let nextRecords = records;
+    if (filter.bidStatus) {
+      nextRecords = nextRecords.filter(item => item.bidStatus === filter.bidStatus);
+    }
+    const queryDate = getQueryDate();
+    if (queryDate) {
+      nextRecords = nextRecords.filter(item => {
+        const itemDate = item.bidStartTime
+          ? item.bidStartTime.slice(0, 10)
+          : formatDate(item.endTime);
+        return itemDate === queryDate;
+      });
+    }
+    return nextRecords;
+  };
+
+  const getNearestIndex = (options: number[], value: number) => {
+    const exactIndex = options.indexOf(value);
+    if (exactIndex >= 0) return exactIndex;
+    return options.reduce((closestIndex, option, index) =>
+      Math.abs(option - value) < Math.abs(options[closestIndex] - value) ? index : closestIndex
+    , 0);
+  };
+
+  const scrollWheelTo = (ref: React.RefObject<HTMLDivElement>, index: number) => {
+    if (!ref.current) return;
+    ref.current.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: 'auto' });
+  };
+
+  useEffect(() => {
+    if (!showFilterDrawer || activeFilterTab !== '日期') return;
+    const baseDate = filter.date ? new Date(filter.date) : new Date();
+    const safeDate = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
+    setDatePicker({
+      year: safeDate.getFullYear(),
+      month: safeDate.getMonth() + 1,
+      day: safeDate.getDate(),
+    });
+  }, [showFilterDrawer, activeFilterTab, filter.date]);
+
+  useEffect(() => {
+    const maxDay = dayOptions.length;
+    if (datePicker.day > maxDay) {
+      setDatePicker(prev => ({ ...prev, day: maxDay }));
+    }
+  }, [dayOptions.length, datePicker.day]);
+
+  useEffect(() => {
+    if (!showFilterDrawer || activeFilterTab !== '日期') return;
+    const yearIndex = getNearestIndex(yearOptions, datePicker.year);
+    const monthIndex = getNearestIndex(monthOptions, datePicker.month);
+    const dayIndex = getNearestIndex(dayOptions, datePicker.day);
+    requestAnimationFrame(() => {
+      scrollWheelTo(yearWheelRef, yearIndex);
+      scrollWheelTo(monthWheelRef, monthIndex);
+      scrollWheelTo(dayWheelRef, dayIndex);
+    });
+  }, [showFilterDrawer, activeFilterTab, datePicker, yearOptions, monthOptions, dayOptions]);
 
   // 加载竞价列表数据
   const loadAuctionList = useCallback(async (page: number, append: boolean = false) => {
@@ -67,10 +172,12 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         size: PAGE_SIZE,
         searchCount: true,
         search: searchQuery || undefined,
+        bidStatus: filter.bidStatus,
         farmId: filter.farmId,
         regionCode: filter.regionCode,
         weightRange: filter.weightRange,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
+        date: getQueryDate(),
         distance: filter.distance,
       });
 
@@ -79,8 +186,9 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         
         // 模拟数据（实际使用时删除此段）
         const mockRecords = records.length > 0 ? records : generateMockData(page);
+        const filteredRecords = applyClientFilters(mockRecords);
         
-        setAuctionList(prev => append ? [...prev, ...mockRecords] : mockRecords);
+        setAuctionList(prev => append ? [...prev, ...filteredRecords] : filteredRecords);
         setPagination(prev => ({
           ...prev,
           current: page,
@@ -92,7 +200,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
       } else {
         // 使用模拟数据
         const mockRecords = generateMockData(page);
-        setAuctionList(prev => append ? [...prev, ...mockRecords] : mockRecords);
+        const filteredRecords = applyClientFilters(mockRecords);
+        setAuctionList(prev => append ? [...prev, ...filteredRecords] : filteredRecords);
         setPagination(prev => ({
           ...prev,
           current: page,
@@ -104,7 +213,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
       console.error('Failed to load auction list:', error);
       // 使用模拟数据
       const mockRecords = generateMockData(page);
-      setAuctionList(prev => append ? [...prev, ...mockRecords] : mockRecords);
+      const filteredRecords = applyClientFilters(mockRecords);
+      setAuctionList(prev => append ? [...prev, ...filteredRecords] : filteredRecords);
       setPagination(prev => ({
         ...prev,
         current: page,
@@ -233,6 +343,41 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   // 渲染筛选抽屉内容
   const renderFilterContent = () => {
     switch (activeFilterTab) {
+      case '竞价状态':
+        return (
+          <div className="flex flex-col gap-2 pb-6">
+            {[
+              { label: '竞价中', value: 'BIDDING' as BidStatus },
+              { label: '等待竞价', value: 'WAITING' as BidStatus },
+              { label: '竞价结束', value: 'ENDED' as BidStatus },
+            ].map(option => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  setFilter(prev => ({ ...prev, bidStatus: option.value }));
+                  setShowFilterDrawer(false);
+                }}
+                className={`w-full text-left py-3.5 px-4 rounded-custom text-sm font-medium transition-colors ${
+                  filter.bidStatus === option.value
+                    ? 'bg-industry-red/10 text-industry-red'
+                    : 'bg-slate-50 text-slate-700 active:bg-slate-100'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+            <button
+              onClick={() => {
+                setFilter(prev => ({ ...prev, bidStatus: undefined }));
+                setShowFilterDrawer(false);
+              }}
+              className="w-full text-left py-3.5 px-4 rounded-custom bg-slate-50 text-slate-700 text-sm font-medium active:bg-slate-100 transition-colors"
+            >
+              全部状态
+            </button>
+          </div>
+        );
+
       case '场点':
         return (
           <div className="flex flex-col gap-2 pb-6">
@@ -385,6 +530,98 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           </div>
         );
 
+      case '日期':
+        const handleWheelScroll = (
+          type: 'year' | 'month' | 'day',
+          options: number[],
+          ref: React.RefObject<HTMLDivElement>
+        ) => {
+          const target = ref.current;
+          if (!target) return;
+          const index = Math.round(target.scrollTop / WHEEL_ITEM_HEIGHT);
+          const safeIndex = Math.min(Math.max(index, 0), options.length - 1);
+          const value = options[safeIndex];
+          setDatePicker(prev => (prev[type] === value ? prev : { ...prev, [type]: value }));
+        };
+
+        const handleWheelClick = (
+          type: 'year' | 'month' | 'day',
+          value: number,
+          index: number,
+          ref: React.RefObject<HTMLDivElement>
+        ) => {
+          setDatePicker(prev => ({ ...prev, [type]: value }));
+          scrollWheelTo(ref, index);
+        };
+
+        const formattedDate = formatDate(new Date(datePicker.year, datePicker.month - 1, datePicker.day));
+
+        return (
+          <div className="pb-6">
+            <div className="bg-slate-50 rounded-custom p-4">
+              <div className="text-xs text-slate-400 mb-2">选择日期</div>
+              <div className="text-sm font-bold text-slate-800">{formattedDate}</div>
+              <div className="text-[11px] text-slate-400 mt-1">不选择默认查询今天</div>
+              <div className="mt-4 relative">
+                <div className="flex">
+                  {[
+                    { type: 'year' as const, options: yearOptions, ref: yearWheelRef, label: '年' },
+                    { type: 'month' as const, options: monthOptions, ref: monthWheelRef, label: '月' },
+                    { type: 'day' as const, options: dayOptions, ref: dayWheelRef, label: '日' },
+                  ].map(column => (
+                    <div key={column.label} className="flex-1 flex flex-col items-center">
+                      <div className="text-[10px] text-slate-400 mb-2">{column.label}</div>
+                      <div
+                        ref={column.ref}
+                        onScroll={() => handleWheelScroll(column.type, column.options, column.ref)}
+                        className="w-full overflow-y-auto overscroll-contain snap-y snap-mandatory hide-scrollbar"
+                        style={{
+                          height: WHEEL_CONTAINER_HEIGHT,
+                          paddingTop: WHEEL_PADDING,
+                          paddingBottom: WHEEL_PADDING,
+                        }}
+                      >
+                        {column.options.map((value, index) => (
+                          <button
+                            key={`${column.label}-${value}`}
+                            onClick={() => handleWheelClick(column.type, value, index, column.ref)}
+                            className={`w-full flex items-center justify-center text-sm snap-center transition-colors ${
+                              datePicker[column.type] === value ? 'text-industry-red font-bold' : 'text-slate-600'
+                            }`}
+                            style={{ height: WHEEL_ITEM_HEIGHT }}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  setFilter(prev => ({ ...prev, date: undefined }));
+                  setShowFilterDrawer(false);
+                }}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-custom font-bold"
+              >
+                清除日期
+              </button>
+              <button
+                onClick={() => {
+                  setFilter(prev => ({ ...prev, date: formattedDate }));
+                  setShowFilterDrawer(false);
+                }}
+                className="flex-1 py-3 bg-industry-red text-white rounded-custom font-bold"
+              >
+                确定
+              </button>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -393,6 +630,11 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   // 获取筛选条件显示文本
   const getFilterLabel = (type: string): string => {
     switch (type) {
+      case '竞价状态':
+        if (filter.bidStatus === 'WAITING') return '等待竞价';
+        if (filter.bidStatus === 'ENDED') return '竞价结束';
+        if (filter.bidStatus === 'BIDDING') return '竞价中';
+        return '竞价状态';
       case '场点':
         return filter.farmName || '场点';
       case '区域':
@@ -403,6 +645,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         return selectedTags.length > 0 ? `标签(${selectedTags.length})` : '产品标签';
       case '距离':
         return `距离(${filter.distance}km)`;
+      case '日期':
+        return filter.date || '日期';
       default:
         return type;
     }
@@ -470,7 +714,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
 
         {/* Filters Row */}
         <div className="flex items-center gap-3 mt-3 overflow-x-auto hide-scrollbar">
-          {['场点', '区域', '体重段', '产品标签', '距离'].map(f => (
+          {['竞价状态', '区域', '场点', '体重段', '产品标签', '距离', '日期'].map(f => (
             <button
               key={f}
               onClick={() => {
@@ -515,7 +759,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           visible={showRegionPicker}
           onClose={() => setShowRegionPicker(false)}
           onConfirm={(code, name) => {
-            setFilter(prev => ({ ...prev, regionCode: code, regionName: name }));
+            setFilter(prev => ({ ...prev, regionCode: code, regionName: getRegionLastName(name) }));
           }}
         />,
         document.body

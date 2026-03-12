@@ -9,6 +9,7 @@ import {
   AuctionDetailInfo,
   AuctionItem,
   BidRecordItem,
+  BidStatus,
   BusinessStats,
   ContactInfo,
   FarmItem,
@@ -129,10 +130,12 @@ const mapAuctionRecord = (record: AuctionRecordDto): AuctionItem => {
 
 /** 竞价列表请求参数 */
 export interface AuctionListParams extends ListRequestParams {
+  bidStatus?: BidStatus; // 竞价状态
   farmId?: string;       // 场点ID
   regionCode?: string;   // 区域编码
   weightRange?: string;  // 体重段
   tags?: string[];       // 产品标签（多选）
+  date?: string;         // 日期 (YYYY-MM-DD)
   distance?: number;     // 距离
 }
 
