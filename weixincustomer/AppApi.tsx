@@ -16,6 +16,9 @@ import {
   MyBidStatus,
   MyBidStatusCounts,
   OrderCounts,
+  OrderDetailInfo,
+  OrderListItem,
+  OrderListStatus,
   ProductTagItem,
   RegionItem,
   UserProfile,
@@ -411,9 +414,215 @@ export function getOrderStats(): Promise<ApiResponse<OrderStats>> {
   return request<OrderStats>('/v1/weixincustomer/getOrderStats');
 }
 
+const MOCK_ORDER_LIST: OrderListItem[] = [
+  {
+    orderId: 'order-20260308001',
+    status: 'ORDER_PAYMENT',
+    farmName: '牧原股份·山东五号场',
+    sessionName: '2026春季第3场',
+    pigTypeName: '育肥猪',
+    weightRange: '105-125kg',
+    quantity: 120,
+    price: 15.8,
+    totalAmount: 189600,
+    createdAt: '2026-03-08 10:12',
+  },
+  {
+    orderId: 'order-20260308002',
+    status: 'ORDER_SHIPMENT',
+    farmName: '温氏集团·广东清远基地',
+    sessionName: '2026春季第4场',
+    pigTypeName: '育肥猪',
+    weightRange: '110-125kg',
+    quantity: 160,
+    price: 16.2,
+    totalAmount: 259200,
+    createdAt: '2026-03-08 09:40',
+  },
+  {
+    orderId: 'order-20260308003',
+    status: 'ORDER_RECEIPT',
+    farmName: '正邦科技·江西基地',
+    sessionName: '2026春季第2场',
+    pigTypeName: '中猪',
+    weightRange: '95-110kg',
+    quantity: 100,
+    price: 15.2,
+    totalAmount: 152000,
+    createdAt: '2026-03-07 16:30',
+  },
+  {
+    orderId: 'order-20260308004',
+    status: 'ORDER_COMPLETED',
+    farmName: '新希望·四川中心场',
+    sessionName: '2026春季第1场',
+    pigTypeName: '育肥猪',
+    weightRange: '105-125kg',
+    quantity: 140,
+    price: 15.5,
+    totalAmount: 217000,
+    createdAt: '2026-03-06 09:20',
+  },
+];
+
+const MOCK_ORDER_DETAIL: Record<string, OrderDetailInfo> = {
+  'order-20260308001': {
+    orderId: 'order-20260308001',
+    status: 'ORDER_PAYMENT',
+    farmName: '牧原股份·山东五号场',
+    sessionName: '2026春季第3场',
+    pigTypeName: '育肥猪',
+    weightRange: '105-125kg',
+    quantity: 120,
+    price: 15.8,
+    priceInfo: {
+      depositAmount: 20000,
+      goodsAmount: 169600,
+      totalAmount: 189600,
+    },
+    deliveryInfo: {
+      contactName: '张经理',
+      contactPhone: '138-0013-8000',
+      address: '广东省 深圳市 南山区 科技南八路 88 号',
+      deliveryTime: '2026-03-10 09:00-12:00',
+    },
+    timeline: [
+      { label: '订单创建', time: '2026-03-08 10:12' },
+      { label: '等待付款', time: '2026-03-08 10:12', desc: '请在24小时内完成支付' },
+    ],
+    contractName: '2026春季竞拍合同',
+  },
+  'order-20260308002': {
+    orderId: 'order-20260308002',
+    status: 'ORDER_SHIPMENT',
+    farmName: '温氏集团·广东清远基地',
+    sessionName: '2026春季第4场',
+    pigTypeName: '育肥猪',
+    weightRange: '110-125kg',
+    quantity: 160,
+    price: 16.2,
+    priceInfo: {
+      depositAmount: 30000,
+      goodsAmount: 229200,
+      totalAmount: 259200,
+    },
+    deliveryInfo: {
+      contactName: '李主管',
+      contactPhone: '0755-8888-6666',
+      address: '广东省 深圳市 福田区 彩田路 1001 号',
+      deliveryTime: '2026-03-11 14:00-18:00',
+    },
+    timeline: [
+      { label: '订单创建', time: '2026-03-08 09:40' },
+      { label: '支付完成', time: '2026-03-08 10:05' },
+      { label: '等待发货', time: '2026-03-08 10:06', desc: '场点正在安排装猪' },
+    ],
+    contractName: '2026春季竞拍合同',
+  },
+  'order-20260308003': {
+    orderId: 'order-20260308003',
+    status: 'ORDER_RECEIPT',
+    farmName: '正邦科技·江西基地',
+    sessionName: '2026春季第2场',
+    pigTypeName: '中猪',
+    weightRange: '95-110kg',
+    quantity: 100,
+    price: 15.2,
+    priceInfo: {
+      depositAmount: 15000,
+      goodsAmount: 137000,
+      totalAmount: 152000,
+    },
+    deliveryInfo: {
+      contactName: '王主管',
+      contactPhone: '136-0000-9000',
+      address: '广东省 深圳市 罗湖区 人民北路 123 号',
+      deliveryTime: '2026-03-09 08:30-12:00',
+    },
+    shipmentInfo: {
+      driverName: '陈师傅',
+      driverPhone: '138-5555-3322',
+      vehicleNo: '粤B·12345',
+      estimatedArrival: '2026-03-09 10:30',
+      remark: '途中高速畅通',
+    },
+    timeline: [
+      { label: '订单创建', time: '2026-03-07 16:30' },
+      { label: '支付完成', time: '2026-03-07 17:05' },
+      { label: '已发货', time: '2026-03-08 08:00' },
+      { label: '等待收货', time: '2026-03-08 08:00', desc: '司机已出发' },
+    ],
+    contractName: '2026春季竞拍合同',
+  },
+  'order-20260308004': {
+    orderId: 'order-20260308004',
+    status: 'ORDER_COMPLETED',
+    farmName: '新希望·四川中心场',
+    sessionName: '2026春季第1场',
+    pigTypeName: '育肥猪',
+    weightRange: '105-125kg',
+    quantity: 140,
+    price: 15.5,
+    priceInfo: {
+      depositAmount: 20000,
+      goodsAmount: 197000,
+      totalAmount: 217000,
+    },
+    deliveryInfo: {
+      contactName: '赵经理',
+      contactPhone: '139-2222-1111',
+      address: '广东省 深圳市 南山区 深南大道 66 号',
+      deliveryTime: '2026-03-06 09:00-12:00',
+    },
+    shipmentInfo: {
+      driverName: '刘师傅',
+      driverPhone: '136-0000-7777',
+      vehicleNo: '粤B·67890',
+      estimatedArrival: '2026-03-06 11:30',
+      remark: '已完成卸货',
+    },
+    timeline: [
+      { label: '订单创建', time: '2026-03-06 09:20' },
+      { label: '支付完成', time: '2026-03-06 09:45' },
+      { label: '已发货', time: '2026-03-06 10:00' },
+      { label: '确认收货', time: '2026-03-06 12:30' },
+      { label: '订单完成', time: '2026-03-06 12:45' },
+    ],
+    contractName: '2026春季竞拍合同',
+  },
+};
+
 /** 获取订单列表 */
-export function getOrderList(params: ListRequestParams & {
-  status?: string;
-}): Promise<ApiResponse<ListResponseData<any>>> {
-  return request('/v1/weixincustomer/getOrderList', params);
+export async function getOrderList(params: ListRequestParams & {
+  status?: OrderListStatus;
+}): Promise<ApiResponse<ListResponseData<OrderListItem>>> {
+  const result = await request<ListResponseData<OrderListItem>>('/v1/weixincustomer/getOrderList', params);
+  if (result.errcode === 0 && result.data) return result;
+
+  const status = params.status && params.status !== 'ALL' ? params.status : undefined;
+  const records = status ? MOCK_ORDER_LIST.filter(item => item.status === status) : MOCK_ORDER_LIST;
+  return { errcode: 0, errmsg: '', data: buildListResponse(params, records) };
+}
+
+/** 获取订单详情 */
+export async function getOrderDetail(params: { orderId: string }): Promise<ApiResponse<OrderDetailInfo>> {
+  const result = await request<OrderDetailInfo>('/v1/weixincustomer/getOrderDetail', params);
+  if (result.errcode === 0 && result.data) return result;
+  const fallback = MOCK_ORDER_DETAIL[params.orderId] || Object.values(MOCK_ORDER_DETAIL)[0];
+  return { errcode: 0, errmsg: '', data: fallback };
+}
+
+/** 取消订单 */
+export function cancelOrder(params: { orderId: string }): Promise<ApiResponse<{ success: boolean }>> {
+  return request<{ success: boolean }>('/v1/weixincustomer/cancelOrder', params);
+}
+
+/** 支付订单 */
+export function payOrder(params: { orderId: string }): Promise<ApiResponse<{ success: boolean }>> {
+  return request<{ success: boolean }>('/v1/weixincustomer/payOrder', params);
+}
+
+/** 确认收货 */
+export function confirmReceipt(params: { orderId: string }): Promise<ApiResponse<{ success: boolean }>> {
+  return request<{ success: boolean }>('/v1/weixincustomer/confirmReceipt', params);
 }

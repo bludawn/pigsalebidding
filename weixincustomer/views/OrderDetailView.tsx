@@ -1,0 +1,263 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { OrderDetailInfo, OrderStatus } from '../types';
+import { cancelOrder, confirmReceipt, getOrderDetail, payOrder } from '../AppApi';
+
+interface OrderDetailViewProps {
+  params: { orderId: string };
+  onBack: () => void;
+}
+
+const statusMetaMap: Record<OrderStatus, { label: string; desc: string; badgeClass: string }> = {
+  ORDER_PAYMENT: { label: '待付款', desc: '请尽快完成支付', badgeClass: 'bg-industry-red/10 text-industry-red' },
+  ORDER_SHIPMENT: { label: '待发货', desc: '场点正在安排发货', badgeClass: 'bg-amber-100 text-amber-700' },
+  ORDER_RECEIPT: { label: '待收货', desc: '运输途中，请注意查收', badgeClass: 'bg-blue-100 text-blue-700' },
+  ORDER_COMPLETED: { label: '已完成', desc: '订单已完成', badgeClass: 'bg-emerald-100 text-emerald-700' },
+};
+
+const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => {
+  const [detail, setDetail] = useState<OrderDetailInfo | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const loadDetail = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getOrderDetail({ orderId: params.orderId });
+      if (res.errcode === 0 && res.data) {
+        setDetail(res.data);
+      }
+    } catch (error) {
+      console.error('Failed to load order detail:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [params.orderId]);
+
+  useEffect(() => {
+    loadDetail();
+  }, [loadDetail]);
+
+  const statusMeta = useMemo(() => (detail ? statusMetaMap[detail.status] : null), [detail]);
+
+  const handleCancel = async () => {
+    if (!detail) return;
+    setActionLoading(true);
+    try {
+      const res = await cancelOrder({ orderId: detail.orderId });
+      if (res.errcode === 0) {
+        alert('订单已取消');
+        await loadDetail();
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePay = async () => {
+    if (!detail) return;
+    setActionLoading(true);
+    try {
+      const res = await payOrder({ orderId: detail.orderId });
+      if (res.errcode === 0) {
+        alert('支付完成');
+        await loadDetail();
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!detail) return;
+    setActionLoading(true);
+    try {
+      const res = await confirmReceipt({ orderId: detail.orderId });
+      if (res.errcode === 0) {
+        alert('已确认收货');
+        await loadDetail();
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading || !detail || !statusMeta) {
+    return (
+      <div className="bg-slate-50 min-h-screen flex flex-col">
+        <div className="sticky top-0 bg-white px-4 py-4 border-b border-slate-100 flex items-center z-10">
+          <button onClick={onBack} className="absolute left-4">
+            <svg className="w-5 h-5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="flex-1 text-center text-sm font-bold">订单详情</h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-industry-red border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-slate-50 min-h-screen pb-24">
+      <div className="sticky top-0 bg-white px-4 py-4 border-b border-slate-100 flex items-center z-10">
+        <button onClick={onBack} className="absolute left-4">
+          <svg className="w-5 h-5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h1 className="flex-1 text-center text-sm font-bold">订单详情</h1>
+      </div>
+
+      <div className="px-4 py-4">
+        <div className="bg-white rounded-custom p-4 shadow-sm border border-slate-100">
+          <div className="flex justify-between items-center mb-3">
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${statusMeta.badgeClass}`}>
+              {statusMeta.label}
+            </span>
+            <span className="text-[10px] text-slate-400">订单号：{detail.orderId}</span>
+          </div>
+          <div className="text-sm font-bold text-slate-800">{statusMeta.desc}</div>
+        </div>
+
+        <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+          <h2 className="text-sm font-bold mb-3">商品信息</h2>
+          <div className="text-xs text-slate-500 space-y-2">
+            <div className="flex justify-between"><span>场点</span><span className="text-slate-800 font-bold">{detail.farmName}</span></div>
+            <div className="flex justify-between"><span>场次</span><span className="text-slate-800 font-bold">{detail.sessionName}</span></div>
+            <div className="flex justify-between"><span>品种</span><span className="text-slate-800 font-bold">{detail.pigTypeName}</span></div>
+            <div className="flex justify-between"><span>体重段</span><span className="text-slate-800 font-bold">{detail.weightRange}</span></div>
+            <div className="flex justify-between"><span>数量</span><span className="text-slate-800 font-bold">{detail.quantity}头</span></div>
+            <div className="flex justify-between"><span>单价</span><span className="text-slate-800 font-bold">¥{detail.price.toFixed(2)}/kg</span></div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+          <h2 className="text-sm font-bold mb-3">价格明细</h2>
+          <div className="text-xs text-slate-500 space-y-2">
+            <div className="flex justify-between"><span>保证金</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.depositAmount.toLocaleString('zh-CN')}</span></div>
+            <div className="flex justify-between"><span>货款</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.goodsAmount.toLocaleString('zh-CN')}</span></div>
+            {detail.priceInfo.freightAmount !== undefined && (
+              <div className="flex justify-between"><span>运费</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.freightAmount.toLocaleString('zh-CN')}</span></div>
+            )}
+            <div className="flex justify-between"><span>合计</span><span className="text-industry-red font-black">¥{detail.priceInfo.totalAmount.toLocaleString('zh-CN')}</span></div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+          <h2 className="text-sm font-bold mb-3">收货信息</h2>
+          <div className="text-xs text-slate-500 space-y-2">
+            <div className="flex justify-between"><span>联系人</span><span className="text-slate-800 font-bold">{detail.deliveryInfo.contactName}</span></div>
+            <div className="flex justify-between"><span>联系电话</span><span className="text-slate-800 font-bold">{detail.deliveryInfo.contactPhone}</span></div>
+            <div className="flex justify-between"><span>收货地址</span><span className="text-slate-800 font-bold text-right">{detail.deliveryInfo.address}</span></div>
+            {detail.deliveryInfo.deliveryTime && (
+              <div className="flex justify-between"><span>装猪时间</span><span className="text-slate-800 font-bold">{detail.deliveryInfo.deliveryTime}</span></div>
+            )}
+          </div>
+        </div>
+
+        {detail.shipmentInfo && (
+          <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+            <h2 className="text-sm font-bold mb-3">物流信息</h2>
+            <div className="text-xs text-slate-500 space-y-2">
+              {detail.shipmentInfo.vehicleNo && (
+                <div className="flex justify-between"><span>车牌号</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.vehicleNo}</span></div>
+              )}
+              {detail.shipmentInfo.driverName && (
+                <div className="flex justify-between"><span>司机</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.driverName}</span></div>
+              )}
+              {detail.shipmentInfo.driverPhone && (
+                <div className="flex justify-between"><span>联系电话</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.driverPhone}</span></div>
+              )}
+              {detail.shipmentInfo.estimatedArrival && (
+                <div className="flex justify-between"><span>预计到达</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.estimatedArrival}</span></div>
+              )}
+              {detail.shipmentInfo.remark && (
+                <div className="flex justify-between"><span>备注</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.remark}</span></div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {detail.contractName && (
+          <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+            <div className="flex justify-between items-center">
+              <h2 className="text-sm font-bold">合同/协议</h2>
+              <button className="text-xs text-industry-red font-bold" onClick={() => alert('查看合同')}>
+                查看
+              </button>
+            </div>
+            <div className="text-xs text-slate-500 mt-2">{detail.contractName}</div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+          <h2 className="text-sm font-bold mb-3">订单状态</h2>
+          <div className="space-y-3">
+            {detail.timeline.map((node, index) => (
+              <div key={`${node.label}-${index}`} className="flex items-start gap-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-industry-red mt-1.5" />
+                <div>
+                  <div className="text-xs font-bold text-slate-700">{node.label}</div>
+                  {node.time && <div className="text-[10px] text-slate-400 mt-0.5">{node.time}</div>}
+                  {node.desc && <div className="text-[10px] text-slate-500 mt-0.5">{node.desc}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 max-w-md mx-auto">
+        <div className="flex gap-3">
+          {detail.status === 'ORDER_PAYMENT' && (
+            <>
+              <button
+                onClick={handleCancel}
+                disabled={actionLoading}
+                className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-custom font-bold disabled:opacity-60"
+              >
+                取消订单
+              </button>
+              <button
+                onClick={handlePay}
+                disabled={actionLoading}
+                className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
+              >
+                去支付
+              </button>
+            </>
+          )}
+          {detail.status === 'ORDER_SHIPMENT' && (
+            <button
+              onClick={() => alert('联系场点')}
+              className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold"
+            >
+              联系场点
+            </button>
+          )}
+          {detail.status === 'ORDER_RECEIPT' && (
+            <button
+              onClick={handleConfirm}
+              disabled={actionLoading}
+              className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
+            >
+              确认收货
+            </button>
+          )}
+          {detail.status === 'ORDER_COMPLETED' && (
+            <button
+              onClick={() => alert('再次采购')}
+              className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold"
+            >
+              再次采购
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrderDetailView;

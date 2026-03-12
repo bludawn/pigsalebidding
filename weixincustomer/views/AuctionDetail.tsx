@@ -37,7 +37,7 @@ const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
   feedQuality: '一级饲料',
   epidemicStatus: '无疫',
   biddingNotice: '竞价结束后30分钟内确认订单，超时将自动取消。',
-  bidStatus: 'ENDED',
+  bidStatus: 'BIDDING',
   bidStartTime: '2026-03-07 10:00:00',
   customerBidStatus: 'NO_BID',
 };

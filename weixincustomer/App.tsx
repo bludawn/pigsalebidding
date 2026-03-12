@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, createContext, useContext, useRef } from 'react';
-import { TabType, FarmItem, ProductTagItem, AuctionItem } from './types';
+import { TabType, FarmItem, ProductTagItem, AuctionItem, OrderListStatus } from './types';
 import HomeView from './views/HomeView';
 import MessageView from './views/MessageView';
 import ProfileView from './views/ProfileView';
@@ -11,6 +11,8 @@ import PaymentDetail from './views/PaymentDetail';
 import MatchDetail from './views/MatchDetail';
 import MyBidsView from './views/MyBidsView';
 import AddressManagementView from './views/AddressManagementView';
+import OrderListView from './views/OrderListView';
+import OrderDetailView from './views/OrderDetailView';
 import { getFarmList, getProductTags } from './AppApi';
 
 /** 全局数据上下文 */
@@ -34,6 +36,9 @@ const App: React.FC = () => {
   const [routeParams, setRouteParams] = useState<any>(null);
   const [auctionDetailParams, setAuctionDetailParams] = useState<AuctionItem | null>(null);
   const [auctionDetailBackRoute, setAuctionDetailBackRoute] = useState<string>('tabs');
+  const [orderListParams, setOrderListParams] = useState<{ status: OrderListStatus } | null>(null);
+  const [orderDetailParams, setOrderDetailParams] = useState<{ orderId: string } | null>(null);
+  const [orderDetailBackRoute, setOrderDetailBackRoute] = useState<string>('order-list');
   const scrollPositionsRef = useRef<Record<string, number>>({});
   
   // 全局数据
@@ -75,6 +80,15 @@ const App: React.FC = () => {
     if (route === 'auction-detail' && params) {
       setAuctionDetailParams(params as AuctionItem);
       setAuctionDetailBackRoute(currentRoute);
+    }
+
+    if (route === 'order-list' && params) {
+      setOrderListParams(params as { status: OrderListStatus });
+    }
+
+    if (route === 'order-detail' && params) {
+      setOrderDetailParams(params as { orderId: string });
+      setOrderDetailBackRoute(currentRoute);
     }
 
     setCurrentRoute(route);
@@ -122,6 +136,14 @@ const App: React.FC = () => {
       <div className={currentRoute === 'my-bids' ? 'block h-full' : 'hidden h-full'}>
         <MyBidsView onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
       </div>
+      {orderListParams && (
+        <div className={currentRoute === 'order-list' ? 'block h-full' : 'hidden h-full'}>
+          <OrderListView params={orderListParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+        </div>
+      )}
+      {orderDetailParams && currentRoute === 'order-detail' && (
+        <OrderDetailView params={orderDetailParams} onBack={() => setCurrentRoute(orderDetailBackRoute)} />
+      )}
       {currentRoute === 'address-management' && <AddressManagementView onBack={() => setCurrentRoute('tabs')} />}
     </div>
   );

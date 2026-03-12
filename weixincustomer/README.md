@@ -88,6 +88,8 @@ weixincustomer/
 | **PaymentDetail.tsx** | 支付明细，展示账户余额、交易记录 |
 | **MatchDetail.tsx** | 匹配详情，展示报单匹配结果 |
 | **MyBidsView.tsx** | 我的竞拍页，按状态展示竞拍记录 |
+| **OrderListView.tsx** | 订单列表页，按状态展示订单 |
+| **OrderDetailView.tsx** | 订单详情页，展示订单信息与操作 |
 | **AddressManagementView.tsx** | 收货地址管理页，支持增删改查 |
 
 ---
@@ -109,6 +111,8 @@ tabs (主 Tab 页面)
 ├── payment-detail      → PaymentDetail
 ├── match-detail        → MatchDetail
 ├── my-bids             → MyBidsView
+├── order-list          → OrderListView
+├── order-detail        → OrderDetailView
 └── address-management  → AddressManagementView
 ```
 

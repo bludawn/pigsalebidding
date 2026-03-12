@@ -26,6 +26,9 @@ export type BidStatus = 'WAITING' | 'BIDDING' | 'ENDED';
 /** 订单状态枚举（用于数量统计） */
 export type OrderStatus = 'ORDER_PAYMENT' | 'ORDER_SHIPMENT' | 'ORDER_RECEIPT' | 'ORDER_COMPLETED';
 
+/** 订单列表状态 */
+export type OrderListStatus = OrderStatus | 'ALL';
+
 /** 我的竞拍状态  BIDDING 竞拍中，BID_SUCCESS 竞拍成功，BID_FAILED 竞拍失败，NO_BID 没有竞拍  */
 export type MyBidStatus = 'BIDDING' | 'BID_SUCCESS' | 'BID_FAILED' | 'NO_BID';
 
@@ -46,6 +49,69 @@ export interface OrderCounts {
   completedCount: number;
   allCount: number;
   myBidCount: number;
+}
+
+/** 订单列表项 */
+export interface OrderListItem {
+  orderId: string;
+  status: OrderStatus;
+  farmName: string;
+  sessionName: string;
+  pigTypeName: string;
+  weightRange: string;
+  quantity: number;
+  price: number;
+  totalAmount: number;
+  createdAt: string;
+}
+
+/** 价格明细 */
+export interface OrderPriceInfo {
+  depositAmount: number;
+  goodsAmount: number;
+  freightAmount?: number;
+  totalAmount: number;
+}
+
+/** 收货/提货信息 */
+export interface OrderDeliveryInfo {
+  contactName: string;
+  contactPhone: string;
+  address: string;
+  deliveryTime?: string;
+}
+
+/** 物流信息 */
+export interface OrderShipmentInfo {
+  driverName?: string;
+  driverPhone?: string;
+  vehicleNo?: string;
+  estimatedArrival?: string;
+  remark?: string;
+}
+
+/** 订单时间线 */
+export interface OrderTimelineNode {
+  label: string;
+  time?: string;
+  desc?: string;
+}
+
+/** 订单详情 */
+export interface OrderDetailInfo {
+  orderId: string;
+  status: OrderStatus;
+  farmName: string;
+  sessionName: string;
+  pigTypeName: string;
+  weightRange: string;
+  quantity: number;
+  price: number;
+  priceInfo: OrderPriceInfo;
+  deliveryInfo: OrderDeliveryInfo;
+  shipmentInfo?: OrderShipmentInfo;
+  timeline: OrderTimelineNode[];
+  contractName?: string;
 }
 
 /** 总资产 */
