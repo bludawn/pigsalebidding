@@ -8,6 +8,7 @@ import {
   AssetSummary,
   AuctionDetailInfo,
   AuctionItem,
+  AuctionMaintenanceInfo,
   BidRecordItem,
   BidStatus,
   BusinessStats,
@@ -211,6 +212,42 @@ export function getAuctionDetail(params: { auctionId: string }): Promise<ApiResp
   return request<AuctionDetailInfo>('/v1/weixincustomer/getAuctionDetail', params);
 }
 
+/** 获取竞价维护信息 */
+export async function getAuctionMaintenance(params: { auctionId: string }): Promise<ApiResponse<AuctionMaintenanceInfo | null>> {
+  const result = await request<AuctionMaintenanceInfo | null>('/v1/weixincustomer/getAuctionMaintenance', params);
+  if (result.errcode === 0) return result;
+  return { errcode: 0, errmsg: '', data: MOCK_AUCTION_MAINTENANCE[params.auctionId] || null };
+}
+
+/** 保存竞价维护信息 */
+export async function saveAuctionMaintenance(params: {
+  auctionId: string;
+  addressId: string;
+  appointmentTime: string;
+  remark?: string;
+}): Promise<ApiResponse<AuctionMaintenanceInfo>> {
+  const result = await request<AuctionMaintenanceInfo>('/v1/weixincustomer/saveAuctionMaintenance', params);
+  if (result.errcode === 0 && result.data) {
+    MOCK_AUCTION_MAINTENANCE[params.auctionId] = result.data;
+    return result;
+  }
+
+  const address = MOCK_ADDRESS_LIST.find(item => item.id === params.addressId);
+  const fallback: AuctionMaintenanceInfo = {
+    auctionId: params.auctionId,
+    addressId: params.addressId,
+    contactName: address?.contactName || '',
+    contactPhone: address?.contactPhone || '',
+    regionName: address?.regionName || '',
+    detailAddress: address?.detailAddress || '',
+    appointmentTime: params.appointmentTime,
+    remark: params.remark,
+    updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+  };
+  MOCK_AUCTION_MAINTENANCE[params.auctionId] = fallback;
+  return { errcode: 0, errmsg: '', data: fallback };
+}
+
 /** 获取出价明细 */
 export function getBidRecords(
   params: ListRequestParams & { auctionId: string; isMine?: boolean }
@@ -261,14 +298,16 @@ let MOCK_SETTINGS_PROFILE: UserSettingsProfile = {
   name: '广豚食品采购',
   avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=200&h=200&fit=crop',
   companyVerification: {
-    status: 'UNVERIFIED',
-    companyName: '',
+    status: 'VERIFIED',
+    companyName: '广东大广豚食品有限公司附属广东广豚食品有限公司',
     licenseUrls: [],
     materialUrls: [],
   },
   personalVerification: {
     status: 'UNVERIFIED',
   },
+
+  
 };
 
 const MOCK_ORDER_COUNTS: OrderCounts = {
@@ -320,6 +359,8 @@ const MOCK_ADDRESS_LIST: AddressItem[] = [
     updatedAt: '2026-03-06 09:10',
   },
 ];
+
+const MOCK_AUCTION_MAINTENANCE: Record<string, AuctionMaintenanceInfo> = {};
 
 const buildListResponse = <T,>(params: ListRequestParams, records: T[]): ListResponseData<T> => ({
   current: params.current,

@@ -11,6 +11,8 @@ import RegionPicker from './RegionPicker';
 
 interface AddressManagementViewProps {
   onBack: () => void;
+  selectMode?: boolean;
+  onSelect?: (address: AddressItem) => void;
 }
 
 const PAGE_SIZE = 50;
@@ -24,7 +26,7 @@ const EMPTY_FORM: Omit<AddressItem, 'id'> = {
   isDefault: false,
 };
 
-const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack }) => {
+const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, selectMode, onSelect }) => {
   const [addresses, setAddresses] = useState<AddressItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -179,7 +181,7 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack })
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="flex-1 text-center text-sm font-bold">收货地址</h1>
+        <h1 className="flex-1 text-center text-sm font-bold">{selectMode ? '选择收货地址' : '收货地址'}</h1>
         <button onClick={openCreateForm} className="text-xs font-bold text-industry-red">新增</button>
       </div>
 
@@ -205,7 +207,15 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack })
         )}
 
         {displayAddresses.map(address => (
-          <div key={address.id} className="bg-white rounded-custom p-4 shadow-sm border border-slate-100">
+          <div
+            key={address.id}
+            className={`bg-white rounded-custom p-4 shadow-sm border border-slate-100 ${selectMode ? 'cursor-pointer hover:border-industry-red/40' : ''}`}
+            onClick={() => {
+              if (!selectMode || !onSelect) return;
+              onSelect(address);
+              onBack();
+            }}
+          >
             <div className="flex justify-between items-start">
               <div>
                 <div className="flex items-center gap-2">
@@ -219,24 +229,30 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack })
                   {address.regionName} {address.detailAddress}
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <button onClick={() => openEditForm(address)} className="text-[10px] text-slate-500">编辑</button>
-                <button onClick={() => handleDelete(address)} className="text-[10px] text-rose-500">删除</button>
-              </div>
+              {!selectMode && (
+                <div className="flex flex-col gap-2">
+                  <button onClick={() => openEditForm(address)} className="text-[10px] text-slate-500">编辑</button>
+                  <button onClick={() => handleDelete(address)} className="text-[10px] text-rose-500">删除</button>
+                </div>
+              )}
             </div>
 
             <div className="mt-3 flex justify-between items-center text-[10px] text-slate-500">
               <span>{address.updatedAt ? `更新于 ${address.updatedAt}` : ''}</span>
-              <button
-                onClick={() => handleSetDefault(address)}
-                className={`px-3 py-1 rounded-full border text-[10px] font-bold transition-colors ${
-                  address.isDefault || hasSingleAddress
-                    ? 'border-slate-200 text-slate-300'
-                    : 'border-industry-red/40 text-industry-red'
-                }`}
-              >
-                设为默认
-              </button>
+              {selectMode ? (
+                <span className="text-[10px] text-industry-red font-bold">点击选择</span>
+              ) : (
+                <button
+                  onClick={() => handleSetDefault(address)}
+                  className={`px-3 py-1 rounded-full border text-[10px] font-bold transition-colors ${
+                    address.isDefault || hasSingleAddress
+                      ? 'border-slate-200 text-slate-300'
+                      : 'border-industry-red/40 text-industry-red'
+                  }`}
+                >
+                  设为默认
+                </button>
+              )}
             </div>
           </div>
         ))}

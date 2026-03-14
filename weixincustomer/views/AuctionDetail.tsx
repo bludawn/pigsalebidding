@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AddressItem, AuctionDetailInfo, AuctionItem, BidRecordItem, MyBidStatus } from '../types';
-import { getAuctionDetail, getBidRecords, getDefaultAddress, submitBid } from '../AppApi';
+import { AddressItem, AuctionDetailInfo, AuctionItem, AuctionMaintenanceInfo, BidRecordItem, MyBidStatus } from '../types';
+import { getAuctionDetail, getAuctionMaintenance, getBidRecords, getDefaultAddress, submitBid } from '../AppApi';
 
 interface AuctionDetailProps {
   params: AuctionItem;
@@ -82,7 +82,7 @@ const isStepValid = (value: number, step: number) => {
   return Math.abs(ratio - Math.round(ratio)) < 1e-6;
 };
 
-const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigate }) => {
+const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigate, refreshKey = 0 }) => {
   const [detail, setDetail] = useState<AuctionDetailInfo | null>(null);
   const [countdownSeconds, setCountdownSeconds] = useState(0);
   const [bidRecords, setBidRecords] = useState<BidRecordItem[]>([]);
@@ -101,6 +101,8 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
   const [isCurrentVideoPlaying, setIsCurrentVideoPlaying] = useState(false);
   const [defaultAddress, setDefaultAddress] = useState<AddressItem | null>(null);
   const [isAddressLoading, setIsAddressLoading] = useState(false);
+  const [maintenanceInfo, setMaintenanceInfo] = useState<AuctionMaintenanceInfo | null>(null);
+  const [isMaintenanceLoading, setIsMaintenanceLoading] = useState(false);
   const mediaRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const prevMediaIndexRef = useRef(0);
@@ -129,7 +131,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
     };
 
     loadDetail();
-  }, [params.id]);
+  }, [params.id, refreshKey]);
 
   useEffect(() => {
     const loadDefaultAddress = async () => {
@@ -158,6 +160,27 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
     setBidCount(detail.startingCount || params.startingCount);
     initializedRef.current = true;
   }, [detail, displayPriceValue, params.startingCount, params.startingPrice]);
+
+  useEffect(() => {
+    const loadMaintenance = async () => {
+      setIsMaintenanceLoading(true);
+      try {
+        const res = await getAuctionMaintenance({ auctionId: params.id });
+        if (res.errcode === 0) {
+          setMaintenanceInfo(res.data || null);
+          return;
+        }
+        setMaintenanceInfo(null);
+      } catch (error) {
+        console.error('Failed to load maintenance info:', error);
+        setMaintenanceInfo(null);
+      } finally {
+        setIsMaintenanceLoading(false);
+      }
+    };
+
+    loadMaintenance();
+  }, [params.id, refreshKey]);
 
   useEffect(() => {
     if (!detail) return;
@@ -452,29 +475,54 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
       </div>
 
       {/* Info Maintenance */}
-      <div className="p-4 flex items-center justify-between border-b-8 border-slate-100">
-        <div>
+      <div className="p-4 flex items-start justify-between gap-4 border-b-8 border-slate-100">
+        <div className="flex-1">
           <h2 className="text-sm font-bold">信息维护</h2>
           <p className="text-[11px] text-slate-400 mt-0.5">请确认收货地址、装猪时间等基础信息</p>
           <div className="mt-2 text-[11px] text-slate-500">
-            {isAddressLoading ? (
-              <span className="text-slate-400">默认地址加载中...</span>
-            ) : defaultAddress ? (
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] px-1.5 py-0.5 bg-industry-red/10 text-industry-red rounded-sm font-bold">默认地址</span>
-                  <span>{defaultAddress.contactName}</span>
-                  <span>{defaultAddress.contactPhone}</span>
+            {isMaintenanceLoading ? (
+              <span className="text-slate-400">维护信息加载中...</span>
+            ) : maintenanceInfo ? (
+              <div className="space-y-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded-sm font-bold">已维护</span>
+                    <span>{maintenanceInfo.contactName}</span>
+                    <span>{maintenanceInfo.contactPhone}</span>
+                  </div>
+                  <div className="mt-1 text-slate-600">{maintenanceInfo.regionName} {maintenanceInfo.detailAddress}</div>
                 </div>
-                <div className="mt-1 text-slate-600">{defaultAddress.regionName} {defaultAddress.detailAddress}</div>
+                <div>
+                  <span className="text-slate-400">装猪时间：</span>
+                  <span className="text-slate-700 font-medium">{maintenanceInfo.appointmentTime}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400">备注：</span>
+                  <span className="text-slate-700">{maintenanceInfo.remark || '无'}</span>
+                </div>
               </div>
             ) : (
-              <span className="text-slate-400">暂无默认地址</span>
+              <div>
+                {isAddressLoading ? (
+                  <span className="text-slate-400">默认地址加载中...</span>
+                ) : defaultAddress ? (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-industry-red/10 text-industry-red rounded-sm font-bold">默认地址</span>
+                      <span>{defaultAddress.contactName}</span>
+                      <span>{defaultAddress.contactPhone}</span>
+                    </div>
+                    <div className="mt-1 text-slate-600">{defaultAddress.regionName} {defaultAddress.detailAddress}</div>
+                  </div>
+                ) : (
+                  <span className="text-slate-400">暂无维护信息</span>
+                )}
+              </div>
             )}
           </div>
         </div>
         <button
-          onClick={() => onNavigate?.('address-management')}
+          onClick={() => onNavigate?.('auction-maintenance', { auctionId: params.id })}
           className="bg-industry-red text-white px-4 py-1.5 rounded-custom text-xs font-bold shadow-sm shadow-industry-red/20"
         >
           立即维护

@@ -5,6 +5,7 @@ import HomeView from './views/HomeView';
 import MessageView from './views/MessageView';
 import ProfileView from './views/ProfileView';
 import AuctionDetail from './views/AuctionDetail';
+import AuctionMaintenanceView from './views/AuctionMaintenanceView';
 import FreeQuote from './views/FreeQuote';
 import MessageList from './views/MessageList';
 import PaymentDetail from './views/PaymentDetail';
@@ -37,6 +38,10 @@ const App: React.FC = () => {
   const [routeParams, setRouteParams] = useState<any>(null);
   const [auctionDetailParams, setAuctionDetailParams] = useState<AuctionItem | null>(null);
   const [auctionDetailBackRoute, setAuctionDetailBackRoute] = useState<string>('tabs');
+  const [auctionDetailRefreshKey, setAuctionDetailRefreshKey] = useState(0);
+  const [auctionMaintenanceParams, setAuctionMaintenanceParams] = useState<{ auctionId: string } | null>(null);
+  const [auctionMaintenanceKey, setAuctionMaintenanceKey] = useState(0);
+  const [addressBackRoute, setAddressBackRoute] = useState<string>('tabs');
   const [orderListParams, setOrderListParams] = useState<{ status: OrderListStatus } | null>(null);
   const [orderDetailParams, setOrderDetailParams] = useState<{ orderId: string } | null>(null);
   const [orderDetailBackRoute, setOrderDetailBackRoute] = useState<string>('order-list');
@@ -92,6 +97,15 @@ const App: React.FC = () => {
       setOrderDetailBackRoute(currentRoute);
     }
 
+    if (route === 'auction-maintenance' && params) {
+      setAuctionMaintenanceParams(params as { auctionId: string });
+      setAuctionMaintenanceKey(prev => prev + 1);
+    }
+
+    if (route === 'address-management') {
+      setAddressBackRoute(currentRoute);
+    }
+
     setCurrentRoute(route);
     setRouteParams(params);
   };
@@ -125,7 +139,12 @@ const App: React.FC = () => {
     <div className={`absolute inset-0 bg-white ${currentRoute === 'tabs' ? 'hidden' : ''}`}>
       {auctionDetailParams && (
         <div className={currentRoute === 'auction-detail' ? 'block h-full' : 'hidden h-full'}>
-          <AuctionDetail params={auctionDetailParams} onBack={() => setCurrentRoute(auctionDetailBackRoute)} onNavigate={navigate} />
+          <AuctionDetail
+            params={auctionDetailParams}
+            onBack={() => setCurrentRoute(auctionDetailBackRoute)}
+            onNavigate={navigate}
+            refreshKey={auctionDetailRefreshKey}
+          />
         </div>
       )}
       {currentRoute === 'free-quote' && <FreeQuote onBack={() => setCurrentRoute('tabs')} />}
@@ -145,7 +164,30 @@ const App: React.FC = () => {
       {orderDetailParams && currentRoute === 'order-detail' && (
         <OrderDetailView params={orderDetailParams} onBack={() => setCurrentRoute(orderDetailBackRoute)} />
       )}
-      {currentRoute === 'address-management' && <AddressManagementView onBack={() => setCurrentRoute('tabs')} />}
+      {auctionMaintenanceParams && (
+        <div className={currentRoute === 'auction-maintenance' ? 'block h-full' : 'hidden h-full'}>
+          <AuctionMaintenanceView
+            key={auctionMaintenanceKey}
+            auctionId={auctionMaintenanceParams.auctionId}
+            onBack={() => {
+              setAuctionDetailRefreshKey(prev => prev + 1);
+              setCurrentRoute('auction-detail');
+            }}
+            onSaved={() => {
+              setAuctionDetailRefreshKey(prev => prev + 1);
+              setCurrentRoute('auction-detail');
+            }}
+            onNavigate={navigate}
+          />
+        </div>
+      )}
+      {currentRoute === 'address-management' && (
+        <AddressManagementView
+          onBack={() => setCurrentRoute(addressBackRoute)}
+          selectMode={routeParams?.mode === 'select'}
+          onSelect={routeParams?.onSelect}
+        />
+      )}
       {currentRoute === 'settings' && <SettingsView onBack={() => setCurrentRoute('tabs')} />}
     </div>
   );

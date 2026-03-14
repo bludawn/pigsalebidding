@@ -196,6 +196,19 @@ export interface AuctionDetailInfo {
   customerBidStatus: MyBidStatus;
 }
 
+/** 竞价维护信息 */
+export interface AuctionMaintenanceInfo {
+  auctionId: string;
+  addressId: string;
+  contactName: string;
+  contactPhone: string;
+  regionName: string;
+  detailAddress: string;
+  appointmentTime: string;
+  remark?: string;
+  updatedAt?: string;
+}
+
 /** 出价明细 */
 export interface BidRecordItem {
   id: string;
