@@ -6,7 +6,7 @@
 
 ## 文件目录
 - sql   数据库脚本
-  - postgresql.sql 目前只支持postgresql数据库脚本
+  - mysql.sql 目前只支持mysql数据库脚本
 - modeldesign.md 生猪竞拍业务模型设计  
 
 ## 每次调整要完善README.md 文件
