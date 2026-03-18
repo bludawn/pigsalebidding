@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.PigTypeMapper">
+
+    <resultMap type="PigType" id="PigTypeResult">
+        <id property="id" column="f_id" />
+        <result property="pigName" column="f_pigName" />
+        <result property="pigCode" column="f_pigCode" />
+        <result property="pigIntro" column="f_pigIntro" />
+        <result property="pigTagIds" column="f_pigTagIds" />
+        <result property="weightRange" column="f_weightRange" />
+        <result property="pigImages" column="f_pigImages" />
+        <result property="pigVideos" column="f_pigVideos" />
+        <result property="feedQuality" column="f_feedQuality" />
+        <result property="epidemicStatus" column="f_epidemicStatus" />
+        <result property="diseaseFreeRegion" column="f_diseaseFreeRegion" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectPigTypeVo">
+        select f_id, f_pigName, f_pigCode, f_pigIntro, f_pigTagIds, f_weightRange, f_pigImages, f_pigVideos, f_feedQuality, f_epidemicStatus, f_diseaseFreeRegion, f_creator, f_createTime, f_updator, f_updateTime
+        from t_pigType
+    </sql>
+
+    <select id="selectPigTypeList" parameterType="PigType" resultMap="PigTypeResult">
+        <include refid="selectPigTypeVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="pigName != null and pigName != ''">
+                AND f_pigName like concat('%', #{pigName}, '%')
+            </if>
+            <if test="pigCode != null and pigCode != ''">
+                AND f_pigCode like concat('%', #{pigCode}, '%')
+            </if>
+            <if test="pigIntro != null and pigIntro != ''">
+                AND f_pigIntro like concat('%', #{pigIntro}, '%')
+            </if>
+            <if test="pigTagIds != null and pigTagIds != ''">
+                AND f_pigTagIds like concat('%', #{pigTagIds}, '%')
+            </if>
+            <if test="weightRange != null and weightRange != ''">
+                AND f_weightRange like concat('%', #{weightRange}, '%')
+            </if>
+            <if test="pigImages != null and pigImages != ''">
+                AND f_pigImages like concat('%', #{pigImages}, '%')
+            </if>
+            <if test="pigVideos != null and pigVideos != ''">
+                AND f_pigVideos like concat('%', #{pigVideos}, '%')
+            </if>
+            <if test="feedQuality != null and feedQuality != ''">
+                AND f_feedQuality like concat('%', #{feedQuality}, '%')
+            </if>
+            <if test="epidemicStatus != null and epidemicStatus != ''">
+                AND f_epidemicStatus like concat('%', #{epidemicStatus}, '%')
+            </if>
+            <if test="diseaseFreeRegion != null and diseaseFreeRegion != ''">
+                AND f_diseaseFreeRegion like concat('%', #{diseaseFreeRegion}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectPigTypeById" parameterType="Long" resultMap="PigTypeResult">
+        <include refid="selectPigTypeVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertPigType" parameterType="PigType" useGeneratedKeys="true" keyProperty="id">
+        insert into t_pigType(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="pigName != null and pigName != ''">f_pigName,</if>
+<if test="pigCode != null and pigCode != ''">f_pigCode,</if>
+<if test="pigIntro != null and pigIntro != ''">f_pigIntro,</if>
+<if test="pigTagIds != null and pigTagIds != ''">f_pigTagIds,</if>
+<if test="weightRange != null and weightRange != ''">f_weightRange,</if>
+<if test="pigImages != null and pigImages != ''">f_pigImages,</if>
+<if test="pigVideos != null and pigVideos != ''">f_pigVideos,</if>
+<if test="feedQuality != null and feedQuality != ''">f_feedQuality,</if>
+<if test="epidemicStatus != null and epidemicStatus != ''">f_epidemicStatus,</if>
+<if test="diseaseFreeRegion != null and diseaseFreeRegion != ''">f_diseaseFreeRegion,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="pigName != null and pigName != ''">#{pigName},</if>
+<if test="pigCode != null and pigCode != ''">#{pigCode},</if>
+<if test="pigIntro != null and pigIntro != ''">#{pigIntro},</if>
+<if test="pigTagIds != null and pigTagIds != ''">#{pigTagIds},</if>
+<if test="weightRange != null and weightRange != ''">#{weightRange},</if>
+<if test="pigImages != null and pigImages != ''">#{pigImages},</if>
+<if test="pigVideos != null and pigVideos != ''">#{pigVideos},</if>
+<if test="feedQuality != null and feedQuality != ''">#{feedQuality},</if>
+<if test="epidemicStatus != null and epidemicStatus != ''">#{epidemicStatus},</if>
+<if test="diseaseFreeRegion != null and diseaseFreeRegion != ''">#{diseaseFreeRegion},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updatePigType" parameterType="PigType">
+        update t_pigType
+        <set>
+            <if test="pigName != null and pigName != ''">f_pigName = #{pigName},</if>
+            <if test="pigCode != null and pigCode != ''">f_pigCode = #{pigCode},</if>
+            <if test="pigIntro != null and pigIntro != ''">f_pigIntro = #{pigIntro},</if>
+            <if test="pigTagIds != null and pigTagIds != ''">f_pigTagIds = #{pigTagIds},</if>
+            <if test="weightRange != null and weightRange != ''">f_weightRange = #{weightRange},</if>
+            <if test="pigImages != null and pigImages != ''">f_pigImages = #{pigImages},</if>
+            <if test="pigVideos != null and pigVideos != ''">f_pigVideos = #{pigVideos},</if>
+            <if test="feedQuality != null and feedQuality != ''">f_feedQuality = #{feedQuality},</if>
+            <if test="epidemicStatus != null and epidemicStatus != ''">f_epidemicStatus = #{epidemicStatus},</if>
+            <if test="diseaseFreeRegion != null and diseaseFreeRegion != ''">f_diseaseFreeRegion = #{diseaseFreeRegion},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deletePigTypeById" parameterType="Long">
+        delete from t_pigType where f_id = #{id}
+    </delete>
+
+    <delete id="deletePigTypeByIds" parameterType="Long">
+        delete from t_pigType where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

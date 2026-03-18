@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.UserExtMapper">
+
+    <resultMap type="UserExt" id="UserExtResult">
+        <id property="id" column="f_id" />
+        <result property="isRealName" column="f_isRealName" />
+        <result property="enterpriseId" column="f_enterpriseId" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectUserExtVo">
+        select f_id, f_isRealName, f_enterpriseId, f_creator, f_createTime, f_updator, f_updateTime
+        from t_userExt
+    </sql>
+
+    <select id="selectUserExtList" parameterType="UserExt" resultMap="UserExtResult">
+        <include refid="selectUserExtVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="isRealName != null">
+                AND f_isRealName = #{isRealName}
+            </if>
+            <if test="enterpriseId != null">
+                AND f_enterpriseId = #{enterpriseId}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectUserExtById" parameterType="Long" resultMap="UserExtResult">
+        <include refid="selectUserExtVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertUserExt" parameterType="UserExt">
+        insert into t_userExt(
+            f_id,
+<if test="isRealName != null">f_isRealName,</if>
+<if test="enterpriseId != null">f_enterpriseId,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            #{id},
+<if test="isRealName != null">#{isRealName},</if>
+<if test="enterpriseId != null">#{enterpriseId},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updateUserExt" parameterType="UserExt">
+        update t_userExt
+        <set>
+            <if test="isRealName != null">f_isRealName = #{isRealName},</if>
+            <if test="enterpriseId != null">f_enterpriseId = #{enterpriseId},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteUserExtById" parameterType="Long">
+        delete from t_userExt where f_id = #{id}
+    </delete>
+
+    <delete id="deleteUserExtByIds" parameterType="Long">
+        delete from t_userExt where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

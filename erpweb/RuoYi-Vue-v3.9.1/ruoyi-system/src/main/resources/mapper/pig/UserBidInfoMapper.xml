@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.UserBidInfoMapper">
+
+    <resultMap type="UserBidInfo" id="UserBidInfoResult">
+        <id property="id" column="f_id" />
+        <result property="userId" column="f_userId" />
+        <result property="enterpriseId" column="f_enterpriseId" />
+        <result property="bidProductId" column="f_bidProductId" />
+        <result property="addressId" column="f_addressId" />
+        <result property="loadingTime" column="f_loadingTime" />
+        <result property="remark" column="f_remark" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectUserBidInfoVo">
+        select f_id, f_userId, f_enterpriseId, f_bidProductId, f_addressId, f_loadingTime, f_remark, f_creator, f_createTime, f_updator, f_updateTime
+        from t_userBidInfo
+    </sql>
+
+    <select id="selectUserBidInfoList" parameterType="UserBidInfo" resultMap="UserBidInfoResult">
+        <include refid="selectUserBidInfoVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="userId != null">
+                AND f_userId = #{userId}
+            </if>
+            <if test="enterpriseId != null">
+                AND f_enterpriseId = #{enterpriseId}
+            </if>
+            <if test="bidProductId != null">
+                AND f_bidProductId = #{bidProductId}
+            </if>
+            <if test="addressId != null">
+                AND f_addressId = #{addressId}
+            </if>
+            <if test="loadingTime != null">
+                AND f_loadingTime = #{loadingTime}
+            </if>
+            <if test="remark != null and remark != ''">
+                AND f_remark like concat('%', #{remark}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectUserBidInfoById" parameterType="Long" resultMap="UserBidInfoResult">
+        <include refid="selectUserBidInfoVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertUserBidInfo" parameterType="UserBidInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into t_userBidInfo(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="userId != null">f_userId,</if>
+<if test="enterpriseId != null">f_enterpriseId,</if>
+<if test="bidProductId != null">f_bidProductId,</if>
+<if test="addressId != null">f_addressId,</if>
+<if test="loadingTime != null">f_loadingTime,</if>
+<if test="remark != null and remark != ''">f_remark,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="userId != null">#{userId},</if>
+<if test="enterpriseId != null">#{enterpriseId},</if>
+<if test="bidProductId != null">#{bidProductId},</if>
+<if test="addressId != null">#{addressId},</if>
+<if test="loadingTime != null">#{loadingTime},</if>
+<if test="remark != null and remark != ''">#{remark},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updateUserBidInfo" parameterType="UserBidInfo">
+        update t_userBidInfo
+        <set>
+            <if test="userId != null">f_userId = #{userId},</if>
+            <if test="enterpriseId != null">f_enterpriseId = #{enterpriseId},</if>
+            <if test="bidProductId != null">f_bidProductId = #{bidProductId},</if>
+            <if test="addressId != null">f_addressId = #{addressId},</if>
+            <if test="loadingTime != null">f_loadingTime = #{loadingTime},</if>
+            <if test="remark != null and remark != ''">f_remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteUserBidInfoById" parameterType="Long">
+        delete from t_userBidInfo where f_id = #{id}
+    </delete>
+
+    <delete id="deleteUserBidInfoByIds" parameterType="Long">
+        delete from t_userBidInfo where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

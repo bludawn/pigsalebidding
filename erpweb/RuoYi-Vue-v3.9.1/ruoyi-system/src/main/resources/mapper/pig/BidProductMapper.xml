@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.BidProductMapper">
+
+    <resultMap type="BidProduct" id="BidProductResult">
+        <id property="id" column="f_id" />
+        <result property="bidProductCode" column="f_bidProductCode" />
+        <result property="pigResourceId" column="f_pigResourceId" />
+        <result property="enterpriseGroupId" column="f_enterpriseGroupId" />
+        <result property="siteId" column="f_siteId" />
+        <result property="startPrice" column="f_startPrice" />
+        <result property="startTime" column="f_startTime" />
+        <result property="endTime" column="f_endTime" />
+        <result property="currentHighestPrice" column="f_currentHighestPrice" />
+        <result property="bidNotice" column="f_bidNotice" />
+        <result property="remark" column="f_remark" />
+        <result property="totalHeadCount" column="f_totalHeadCount" />
+        <result property="startBidCount" column="f_startBidCount" />
+        <result property="priceStep" column="f_priceStep" />
+        <result property="addPrice" column="f_addPrice" />
+        <result property="bidStatus" column="f_bidStatus" />
+        <result property="approvalStatus" column="f_approvalStatus" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectBidProductVo">
+        select f_id, f_bidProductCode, f_pigResourceId, f_enterpriseGroupId, f_siteId, f_startPrice, f_startTime, f_endTime, f_currentHighestPrice, f_bidNotice, f_remark, f_totalHeadCount, f_startBidCount, f_priceStep, f_addPrice, f_bidStatus, f_approvalStatus, f_creator, f_createTime, f_updator, f_updateTime
+        from t_bidProduct
+    </sql>
+
+    <select id="selectBidProductList" parameterType="BidProduct" resultMap="BidProductResult">
+        <include refid="selectBidProductVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="bidProductCode != null and bidProductCode != ''">
+                AND f_bidProductCode like concat('%', #{bidProductCode}, '%')
+            </if>
+            <if test="pigResourceId != null">
+                AND f_pigResourceId = #{pigResourceId}
+            </if>
+            <if test="enterpriseGroupId != null">
+                AND f_enterpriseGroupId = #{enterpriseGroupId}
+            </if>
+            <if test="siteId != null">
+                AND f_siteId = #{siteId}
+            </if>
+            <if test="startPrice != null">
+                AND f_startPrice = #{startPrice}
+            </if>
+            <if test="startTime != null">
+                AND f_startTime = #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND f_endTime = #{endTime}
+            </if>
+            <if test="currentHighestPrice != null">
+                AND f_currentHighestPrice = #{currentHighestPrice}
+            </if>
+            <if test="bidNotice != null and bidNotice != ''">
+                AND f_bidNotice like concat('%', #{bidNotice}, '%')
+            </if>
+            <if test="remark != null and remark != ''">
+                AND f_remark like concat('%', #{remark}, '%')
+            </if>
+            <if test="totalHeadCount != null">
+                AND f_totalHeadCount = #{totalHeadCount}
+            </if>
+            <if test="startBidCount != null">
+                AND f_startBidCount = #{startBidCount}
+            </if>
+            <if test="priceStep != null">
+                AND f_priceStep = #{priceStep}
+            </if>
+            <if test="addPrice != null">
+                AND f_addPrice = #{addPrice}
+            </if>
+            <if test="bidStatus != null and bidStatus != ''">
+                AND f_bidStatus like concat('%', #{bidStatus}, '%')
+            </if>
+            <if test="approvalStatus != null and approvalStatus != ''">
+                AND f_approvalStatus like concat('%', #{approvalStatus}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectBidProductById" parameterType="Long" resultMap="BidProductResult">
+        <include refid="selectBidProductVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertBidProduct" parameterType="BidProduct" useGeneratedKeys="true" keyProperty="id">
+        insert into t_bidProduct(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="bidProductCode != null and bidProductCode != ''">f_bidProductCode,</if>
+<if test="pigResourceId != null">f_pigResourceId,</if>
+<if test="enterpriseGroupId != null">f_enterpriseGroupId,</if>
+<if test="siteId != null">f_siteId,</if>
+<if test="startPrice != null">f_startPrice,</if>
+<if test="startTime != null">f_startTime,</if>
+<if test="endTime != null">f_endTime,</if>
+<if test="currentHighestPrice != null">f_currentHighestPrice,</if>
+<if test="bidNotice != null and bidNotice != ''">f_bidNotice,</if>
+<if test="remark != null and remark != ''">f_remark,</if>
+<if test="totalHeadCount != null">f_totalHeadCount,</if>
+<if test="startBidCount != null">f_startBidCount,</if>
+<if test="priceStep != null">f_priceStep,</if>
+<if test="addPrice != null">f_addPrice,</if>
+<if test="bidStatus != null and bidStatus != ''">f_bidStatus,</if>
+<if test="approvalStatus != null and approvalStatus != ''">f_approvalStatus,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="bidProductCode != null and bidProductCode != ''">#{bidProductCode},</if>
+<if test="pigResourceId != null">#{pigResourceId},</if>
+<if test="enterpriseGroupId != null">#{enterpriseGroupId},</if>
+<if test="siteId != null">#{siteId},</if>
+<if test="startPrice != null">#{startPrice},</if>
+<if test="startTime != null">#{startTime},</if>
+<if test="endTime != null">#{endTime},</if>
+<if test="currentHighestPrice != null">#{currentHighestPrice},</if>
+<if test="bidNotice != null and bidNotice != ''">#{bidNotice},</if>
+<if test="remark != null and remark != ''">#{remark},</if>
+<if test="totalHeadCount != null">#{totalHeadCount},</if>
+<if test="startBidCount != null">#{startBidCount},</if>
+<if test="priceStep != null">#{priceStep},</if>
+<if test="addPrice != null">#{addPrice},</if>
+<if test="bidStatus != null and bidStatus != ''">#{bidStatus},</if>
+<if test="approvalStatus != null and approvalStatus != ''">#{approvalStatus},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updateBidProduct" parameterType="BidProduct">
+        update t_bidProduct
+        <set>
+            <if test="bidProductCode != null and bidProductCode != ''">f_bidProductCode = #{bidProductCode},</if>
+            <if test="pigResourceId != null">f_pigResourceId = #{pigResourceId},</if>
+            <if test="enterpriseGroupId != null">f_enterpriseGroupId = #{enterpriseGroupId},</if>
+            <if test="siteId != null">f_siteId = #{siteId},</if>
+            <if test="startPrice != null">f_startPrice = #{startPrice},</if>
+            <if test="startTime != null">f_startTime = #{startTime},</if>
+            <if test="endTime != null">f_endTime = #{endTime},</if>
+            <if test="currentHighestPrice != null">f_currentHighestPrice = #{currentHighestPrice},</if>
+            <if test="bidNotice != null and bidNotice != ''">f_bidNotice = #{bidNotice},</if>
+            <if test="remark != null and remark != ''">f_remark = #{remark},</if>
+            <if test="totalHeadCount != null">f_totalHeadCount = #{totalHeadCount},</if>
+            <if test="startBidCount != null">f_startBidCount = #{startBidCount},</if>
+            <if test="priceStep != null">f_priceStep = #{priceStep},</if>
+            <if test="addPrice != null">f_addPrice = #{addPrice},</if>
+            <if test="bidStatus != null and bidStatus != ''">f_bidStatus = #{bidStatus},</if>
+            <if test="approvalStatus != null and approvalStatus != ''">f_approvalStatus = #{approvalStatus},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteBidProductById" parameterType="Long">
+        delete from t_bidProduct where f_id = #{id}
+    </delete>
+
+    <delete id="deleteBidProductByIds" parameterType="Long">
+        delete from t_bidProduct where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

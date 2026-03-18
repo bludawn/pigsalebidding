@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.PigResourceMapper">
+
+    <resultMap type="PigResource" id="PigResourceResult">
+        <id property="id" column="f_id" />
+        <result property="resourceCode" column="f_resourceCode" />
+        <result property="pigTypeId" column="f_pigTypeId" />
+        <result property="siteId" column="f_siteId" />
+        <result property="resourceSource" column="f_resourceSource" />
+        <result property="purchaseOrderId" column="f_purchaseOrderId" />
+        <result property="resourceCount" column="f_resourceCount" />
+        <result property="resourceUnitPrice" column="f_resourceUnitPrice" />
+        <result property="resourceTotalPrice" column="f_resourceTotalPrice" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectPigResourceVo">
+        select f_id, f_resourceCode, f_pigTypeId, f_siteId, f_resourceSource, f_purchaseOrderId, f_resourceCount, f_resourceUnitPrice, f_resourceTotalPrice, f_creator, f_createTime, f_updator, f_updateTime
+        from t_pigResource
+    </sql>
+
+    <select id="selectPigResourceList" parameterType="PigResource" resultMap="PigResourceResult">
+        <include refid="selectPigResourceVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="resourceCode != null and resourceCode != ''">
+                AND f_resourceCode like concat('%', #{resourceCode}, '%')
+            </if>
+            <if test="pigTypeId != null">
+                AND f_pigTypeId = #{pigTypeId}
+            </if>
+            <if test="siteId != null">
+                AND f_siteId = #{siteId}
+            </if>
+            <if test="resourceSource != null and resourceSource != ''">
+                AND f_resourceSource like concat('%', #{resourceSource}, '%')
+            </if>
+            <if test="purchaseOrderId != null">
+                AND f_purchaseOrderId = #{purchaseOrderId}
+            </if>
+            <if test="resourceCount != null">
+                AND f_resourceCount = #{resourceCount}
+            </if>
+            <if test="resourceUnitPrice != null">
+                AND f_resourceUnitPrice = #{resourceUnitPrice}
+            </if>
+            <if test="resourceTotalPrice != null">
+                AND f_resourceTotalPrice = #{resourceTotalPrice}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectPigResourceById" parameterType="Long" resultMap="PigResourceResult">
+        <include refid="selectPigResourceVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertPigResource" parameterType="PigResource" useGeneratedKeys="true" keyProperty="id">
+        insert into t_pigResource(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="resourceCode != null and resourceCode != ''">f_resourceCode,</if>
+<if test="pigTypeId != null">f_pigTypeId,</if>
+<if test="siteId != null">f_siteId,</if>
+<if test="resourceSource != null and resourceSource != ''">f_resourceSource,</if>
+<if test="purchaseOrderId != null">f_purchaseOrderId,</if>
+<if test="resourceCount != null">f_resourceCount,</if>
+<if test="resourceUnitPrice != null">f_resourceUnitPrice,</if>
+<if test="resourceTotalPrice != null">f_resourceTotalPrice,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="resourceCode != null and resourceCode != ''">#{resourceCode},</if>
+<if test="pigTypeId != null">#{pigTypeId},</if>
+<if test="siteId != null">#{siteId},</if>
+<if test="resourceSource != null and resourceSource != ''">#{resourceSource},</if>
+<if test="purchaseOrderId != null">#{purchaseOrderId},</if>
+<if test="resourceCount != null">#{resourceCount},</if>
+<if test="resourceUnitPrice != null">#{resourceUnitPrice},</if>
+<if test="resourceTotalPrice != null">#{resourceTotalPrice},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updatePigResource" parameterType="PigResource">
+        update t_pigResource
+        <set>
+            <if test="resourceCode != null and resourceCode != ''">f_resourceCode = #{resourceCode},</if>
+            <if test="pigTypeId != null">f_pigTypeId = #{pigTypeId},</if>
+            <if test="siteId != null">f_siteId = #{siteId},</if>
+            <if test="resourceSource != null and resourceSource != ''">f_resourceSource = #{resourceSource},</if>
+            <if test="purchaseOrderId != null">f_purchaseOrderId = #{purchaseOrderId},</if>
+            <if test="resourceCount != null">f_resourceCount = #{resourceCount},</if>
+            <if test="resourceUnitPrice != null">f_resourceUnitPrice = #{resourceUnitPrice},</if>
+            <if test="resourceTotalPrice != null">f_resourceTotalPrice = #{resourceTotalPrice},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deletePigResourceById" parameterType="Long">
+        delete from t_pigResource where f_id = #{id}
+    </delete>
+
+    <delete id="deletePigResourceByIds" parameterType="Long">
+        delete from t_pigResource where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

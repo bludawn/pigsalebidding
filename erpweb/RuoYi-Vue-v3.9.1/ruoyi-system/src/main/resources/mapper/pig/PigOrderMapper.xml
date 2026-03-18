@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.PigOrderMapper">
+
+    <resultMap type="PigOrder" id="PigOrderResult">
+        <id property="id" column="f_id" />
+        <result property="orderNo" column="f_orderNo" />
+        <result property="orderStatus" column="f_orderStatus" />
+        <result property="orderSource" column="f_orderSource" />
+        <result property="bidProductId" column="f_bidProductId" />
+        <result property="userBidId" column="f_userBidId" />
+        <result property="addressId" column="f_addressId" />
+        <result property="expectLoadTime" column="f_expectLoadTime" />
+        <result property="remark" column="f_remark" />
+        <result property="pigResourceId" column="f_pigResourceId" />
+        <result property="orderAmount" column="f_orderAmount" />
+        <result property="payChannel" column="f_payChannel" />
+        <result property="payTime" column="f_payTime" />
+        <result property="loadTime" column="f_loadTime" />
+        <result property="shipTime" column="f_shipTime" />
+        <result property="deliveryInfoIds" column="f_deliveryInfoIds" />
+        <result property="receiveTime" column="f_receiveTime" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectPigOrderVo">
+        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_bidProductId, f_userBidId, f_addressId, f_expectLoadTime, f_remark, f_pigResourceId, f_orderAmount, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_creator, f_createTime, f_updator, f_updateTime
+        from t_order
+    </sql>
+
+    <select id="selectPigOrderList" parameterType="PigOrder" resultMap="PigOrderResult">
+        <include refid="selectPigOrderVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                AND f_orderNo like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                AND f_orderStatus like concat('%', #{orderStatus}, '%')
+            </if>
+            <if test="orderSource != null and orderSource != ''">
+                AND f_orderSource like concat('%', #{orderSource}, '%')
+            </if>
+            <if test="bidProductId != null">
+                AND f_bidProductId = #{bidProductId}
+            </if>
+            <if test="userBidId != null">
+                AND f_userBidId = #{userBidId}
+            </if>
+            <if test="addressId != null">
+                AND f_addressId = #{addressId}
+            </if>
+            <if test="expectLoadTime != null">
+                AND f_expectLoadTime = #{expectLoadTime}
+            </if>
+            <if test="remark != null and remark != ''">
+                AND f_remark like concat('%', #{remark}, '%')
+            </if>
+            <if test="pigResourceId != null">
+                AND f_pigResourceId = #{pigResourceId}
+            </if>
+            <if test="orderAmount != null">
+                AND f_orderAmount = #{orderAmount}
+            </if>
+            <if test="payChannel != null and payChannel != ''">
+                AND f_payChannel like concat('%', #{payChannel}, '%')
+            </if>
+            <if test="payTime != null">
+                AND f_payTime = #{payTime}
+            </if>
+            <if test="loadTime != null">
+                AND f_loadTime = #{loadTime}
+            </if>
+            <if test="shipTime != null">
+                AND f_shipTime = #{shipTime}
+            </if>
+            <if test="deliveryInfoIds != null and deliveryInfoIds != ''">
+                AND f_deliveryInfoIds like concat('%', #{deliveryInfoIds}, '%')
+            </if>
+            <if test="receiveTime != null">
+                AND f_receiveTime = #{receiveTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectPigOrderById" parameterType="Long" resultMap="PigOrderResult">
+        <include refid="selectPigOrderVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertPigOrder" parameterType="PigOrder" useGeneratedKeys="true" keyProperty="id">
+        insert into t_order(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="orderNo != null and orderNo != ''">f_orderNo,</if>
+<if test="orderStatus != null and orderStatus != ''">f_orderStatus,</if>
+<if test="orderSource != null and orderSource != ''">f_orderSource,</if>
+<if test="bidProductId != null">f_bidProductId,</if>
+<if test="userBidId != null">f_userBidId,</if>
+<if test="addressId != null">f_addressId,</if>
+<if test="expectLoadTime != null">f_expectLoadTime,</if>
+<if test="remark != null and remark != ''">f_remark,</if>
+<if test="pigResourceId != null">f_pigResourceId,</if>
+<if test="orderAmount != null">f_orderAmount,</if>
+<if test="payChannel != null and payChannel != ''">f_payChannel,</if>
+<if test="payTime != null">f_payTime,</if>
+<if test="loadTime != null">f_loadTime,</if>
+<if test="shipTime != null">f_shipTime,</if>
+<if test="deliveryInfoIds != null and deliveryInfoIds != ''">f_deliveryInfoIds,</if>
+<if test="receiveTime != null">f_receiveTime,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="orderNo != null and orderNo != ''">#{orderNo},</if>
+<if test="orderStatus != null and orderStatus != ''">#{orderStatus},</if>
+<if test="orderSource != null and orderSource != ''">#{orderSource},</if>
+<if test="bidProductId != null">#{bidProductId},</if>
+<if test="userBidId != null">#{userBidId},</if>
+<if test="addressId != null">#{addressId},</if>
+<if test="expectLoadTime != null">#{expectLoadTime},</if>
+<if test="remark != null and remark != ''">#{remark},</if>
+<if test="pigResourceId != null">#{pigResourceId},</if>
+<if test="orderAmount != null">#{orderAmount},</if>
+<if test="payChannel != null and payChannel != ''">#{payChannel},</if>
+<if test="payTime != null">#{payTime},</if>
+<if test="loadTime != null">#{loadTime},</if>
+<if test="shipTime != null">#{shipTime},</if>
+<if test="deliveryInfoIds != null and deliveryInfoIds != ''">#{deliveryInfoIds},</if>
+<if test="receiveTime != null">#{receiveTime},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updatePigOrder" parameterType="PigOrder">
+        update t_order
+        <set>
+            <if test="orderNo != null and orderNo != ''">f_orderNo = #{orderNo},</if>
+            <if test="orderStatus != null and orderStatus != ''">f_orderStatus = #{orderStatus},</if>
+            <if test="orderSource != null and orderSource != ''">f_orderSource = #{orderSource},</if>
+            <if test="bidProductId != null">f_bidProductId = #{bidProductId},</if>
+            <if test="userBidId != null">f_userBidId = #{userBidId},</if>
+            <if test="addressId != null">f_addressId = #{addressId},</if>
+            <if test="expectLoadTime != null">f_expectLoadTime = #{expectLoadTime},</if>
+            <if test="remark != null and remark != ''">f_remark = #{remark},</if>
+            <if test="pigResourceId != null">f_pigResourceId = #{pigResourceId},</if>
+            <if test="orderAmount != null">f_orderAmount = #{orderAmount},</if>
+            <if test="payChannel != null and payChannel != ''">f_payChannel = #{payChannel},</if>
+            <if test="payTime != null">f_payTime = #{payTime},</if>
+            <if test="loadTime != null">f_loadTime = #{loadTime},</if>
+            <if test="shipTime != null">f_shipTime = #{shipTime},</if>
+            <if test="deliveryInfoIds != null and deliveryInfoIds != ''">f_deliveryInfoIds = #{deliveryInfoIds},</if>
+            <if test="receiveTime != null">f_receiveTime = #{receiveTime},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deletePigOrderById" parameterType="Long">
+        delete from t_order where f_id = #{id}
+    </delete>
+
+    <delete id="deletePigOrderByIds" parameterType="Long">
+        delete from t_order where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

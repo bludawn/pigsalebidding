@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.BusinessMessageMapper">
+
+    <resultMap type="BusinessMessage" id="BusinessMessageResult">
+        <id property="id" column="f_id" />
+        <result property="messageType" column="f_messageType" />
+        <result property="messageContent" column="f_messageContent" />
+        <result property="isRead" column="f_isRead" />
+        <result property="userId" column="f_userId" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectBusinessMessageVo">
+        select f_id, f_messageType, f_messageContent, f_isRead, f_userId, f_creator, f_createTime, f_updator, f_updateTime
+        from t_businessMessage
+    </sql>
+
+    <select id="selectBusinessMessageList" parameterType="BusinessMessage" resultMap="BusinessMessageResult">
+        <include refid="selectBusinessMessageVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="messageType != null and messageType != ''">
+                AND f_messageType like concat('%', #{messageType}, '%')
+            </if>
+            <if test="messageContent != null and messageContent != ''">
+                AND f_messageContent like concat('%', #{messageContent}, '%')
+            </if>
+            <if test="isRead != null">
+                AND f_isRead = #{isRead}
+            </if>
+            <if test="userId != null">
+                AND f_userId = #{userId}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectBusinessMessageById" parameterType="Long" resultMap="BusinessMessageResult">
+        <include refid="selectBusinessMessageVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertBusinessMessage" parameterType="BusinessMessage" useGeneratedKeys="true" keyProperty="id">
+        insert into t_businessMessage(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="messageType != null and messageType != ''">f_messageType,</if>
+<if test="messageContent != null and messageContent != ''">f_messageContent,</if>
+<if test="isRead != null">f_isRead,</if>
+<if test="userId != null">f_userId,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="messageType != null and messageType != ''">#{messageType},</if>
+<if test="messageContent != null and messageContent != ''">#{messageContent},</if>
+<if test="isRead != null">#{isRead},</if>
+<if test="userId != null">#{userId},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updateBusinessMessage" parameterType="BusinessMessage">
+        update t_businessMessage
+        <set>
+            <if test="messageType != null and messageType != ''">f_messageType = #{messageType},</if>
+            <if test="messageContent != null and messageContent != ''">f_messageContent = #{messageContent},</if>
+            <if test="isRead != null">f_isRead = #{isRead},</if>
+            <if test="userId != null">f_userId = #{userId},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteBusinessMessageById" parameterType="Long">
+        delete from t_businessMessage where f_id = #{id}
+    </delete>
+
+    <delete id="deleteBusinessMessageByIds" parameterType="Long">
+        delete from t_businessMessage where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

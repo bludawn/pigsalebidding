@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.UserBidMapper">
+
+    <resultMap type="UserBid" id="UserBidResult">
+        <id property="id" column="f_id" />
+        <result property="userId" column="f_userId" />
+        <result property="enterpriseId" column="f_enterpriseId" />
+        <result property="bidProductId" column="f_bidProductId" />
+        <result property="price" column="f_price" />
+        <result property="quantity" column="f_quantity" />
+        <result property="bidTime" column="f_bidTime" />
+        <result property="status" column="f_status" />
+        <result property="totalPrice" column="f_totalPrice" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectUserBidVo">
+        select f_id, f_userId, f_enterpriseId, f_bidProductId, f_price, f_quantity, f_bidTime, f_status, f_totalPrice, f_creator, f_createTime, f_updator, f_updateTime
+        from t_userBid
+    </sql>
+
+    <select id="selectUserBidList" parameterType="UserBid" resultMap="UserBidResult">
+        <include refid="selectUserBidVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="userId != null">
+                AND f_userId = #{userId}
+            </if>
+            <if test="enterpriseId != null">
+                AND f_enterpriseId = #{enterpriseId}
+            </if>
+            <if test="bidProductId != null">
+                AND f_bidProductId = #{bidProductId}
+            </if>
+            <if test="price != null">
+                AND f_price = #{price}
+            </if>
+            <if test="quantity != null">
+                AND f_quantity = #{quantity}
+            </if>
+            <if test="bidTime != null">
+                AND f_bidTime = #{bidTime}
+            </if>
+            <if test="status != null and status != ''">
+                AND f_status like concat('%', #{status}, '%')
+            </if>
+            <if test="totalPrice != null">
+                AND f_totalPrice = #{totalPrice}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectUserBidById" parameterType="Long" resultMap="UserBidResult">
+        <include refid="selectUserBidVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertUserBid" parameterType="UserBid" useGeneratedKeys="true" keyProperty="id">
+        insert into t_userBid(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="userId != null">f_userId,</if>
+<if test="enterpriseId != null">f_enterpriseId,</if>
+<if test="bidProductId != null">f_bidProductId,</if>
+<if test="price != null">f_price,</if>
+<if test="quantity != null">f_quantity,</if>
+<if test="bidTime != null">f_bidTime,</if>
+<if test="status != null and status != ''">f_status,</if>
+<if test="totalPrice != null">f_totalPrice,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="userId != null">#{userId},</if>
+<if test="enterpriseId != null">#{enterpriseId},</if>
+<if test="bidProductId != null">#{bidProductId},</if>
+<if test="price != null">#{price},</if>
+<if test="quantity != null">#{quantity},</if>
+<if test="bidTime != null">#{bidTime},</if>
+<if test="status != null and status != ''">#{status},</if>
+<if test="totalPrice != null">#{totalPrice},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updateUserBid" parameterType="UserBid">
+        update t_userBid
+        <set>
+            <if test="userId != null">f_userId = #{userId},</if>
+            <if test="enterpriseId != null">f_enterpriseId = #{enterpriseId},</if>
+            <if test="bidProductId != null">f_bidProductId = #{bidProductId},</if>
+            <if test="price != null">f_price = #{price},</if>
+            <if test="quantity != null">f_quantity = #{quantity},</if>
+            <if test="bidTime != null">f_bidTime = #{bidTime},</if>
+            <if test="status != null and status != ''">f_status = #{status},</if>
+            <if test="totalPrice != null">f_totalPrice = #{totalPrice},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteUserBidById" parameterType="Long">
+        delete from t_userBid where f_id = #{id}
+    </delete>
+
+    <delete id="deleteUserBidByIds" parameterType="Long">
+        delete from t_userBid where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

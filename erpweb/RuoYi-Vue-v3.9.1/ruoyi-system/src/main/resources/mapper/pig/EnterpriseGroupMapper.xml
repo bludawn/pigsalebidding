@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.EnterpriseGroupMapper">
+
+    <resultMap type="EnterpriseGroup" id="EnterpriseGroupResult">
+        <id property="id" column="f_id" />
+        <result property="groupName" column="f_groupName" />
+        <result property="groupDesc" column="f_groupDesc" />
+        <result property="enterpriseIds" column="f_enterpriseIds" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectEnterpriseGroupVo">
+        select f_id, f_groupName, f_groupDesc, f_enterpriseIds, f_creator, f_createTime, f_updator, f_updateTime
+        from t_enterpriseGroup
+    </sql>
+
+    <select id="selectEnterpriseGroupList" parameterType="EnterpriseGroup" resultMap="EnterpriseGroupResult">
+        <include refid="selectEnterpriseGroupVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="groupName != null and groupName != ''">
+                AND f_groupName like concat('%', #{groupName}, '%')
+            </if>
+            <if test="groupDesc != null and groupDesc != ''">
+                AND f_groupDesc like concat('%', #{groupDesc}, '%')
+            </if>
+            <if test="enterpriseIds != null and enterpriseIds != ''">
+                AND f_enterpriseIds like concat('%', #{enterpriseIds}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectEnterpriseGroupById" parameterType="Long" resultMap="EnterpriseGroupResult">
+        <include refid="selectEnterpriseGroupVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertEnterpriseGroup" parameterType="EnterpriseGroup" useGeneratedKeys="true" keyProperty="id">
+        insert into t_enterpriseGroup(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="groupName != null and groupName != ''">f_groupName,</if>
+<if test="groupDesc != null and groupDesc != ''">f_groupDesc,</if>
+<if test="enterpriseIds != null and enterpriseIds != ''">f_enterpriseIds,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="groupName != null and groupName != ''">#{groupName},</if>
+<if test="groupDesc != null and groupDesc != ''">#{groupDesc},</if>
+<if test="enterpriseIds != null and enterpriseIds != ''">#{enterpriseIds},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updateEnterpriseGroup" parameterType="EnterpriseGroup">
+        update t_enterpriseGroup
+        <set>
+            <if test="groupName != null and groupName != ''">f_groupName = #{groupName},</if>
+            <if test="groupDesc != null and groupDesc != ''">f_groupDesc = #{groupDesc},</if>
+            <if test="enterpriseIds != null and enterpriseIds != ''">f_enterpriseIds = #{enterpriseIds},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteEnterpriseGroupById" parameterType="Long">
+        delete from t_enterpriseGroup where f_id = #{id}
+    </delete>
+
+    <delete id="deleteEnterpriseGroupByIds" parameterType="Long">
+        delete from t_enterpriseGroup where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

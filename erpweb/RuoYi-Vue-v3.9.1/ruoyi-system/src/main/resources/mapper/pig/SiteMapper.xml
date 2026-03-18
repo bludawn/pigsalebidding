@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.SiteMapper">
+
+    <resultMap type="Site" id="SiteResult">
+        <id property="id" column="f_id" />
+        <result property="enterpriseId" column="f_enterpriseId" />
+        <result property="siteName" column="f_siteName" />
+        <result property="siteAddress" column="f_siteAddress" />
+        <result property="siteAddressCode" column="f_siteAddressCode" />
+        <result property="siteLocation" column="f_siteLocation" />
+        <result property="sitePhone" column="f_sitePhone" />
+        <result property="siteIntro" column="f_siteIntro" />
+        <result property="siteImages" column="f_siteImages" />
+        <result property="siteVideos" column="f_siteVideos" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectSiteVo">
+        select f_id, f_enterpriseId, f_siteName, f_siteAddress, f_siteAddressCode, f_siteLocation, f_sitePhone, f_siteIntro, f_siteImages, f_siteVideos, f_creator, f_createTime, f_updator, f_updateTime
+        from t_site
+    </sql>
+
+    <select id="selectSiteList" parameterType="Site" resultMap="SiteResult">
+        <include refid="selectSiteVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="enterpriseId != null">
+                AND f_enterpriseId = #{enterpriseId}
+            </if>
+            <if test="siteName != null and siteName != ''">
+                AND f_siteName like concat('%', #{siteName}, '%')
+            </if>
+            <if test="siteAddress != null and siteAddress != ''">
+                AND f_siteAddress like concat('%', #{siteAddress}, '%')
+            </if>
+            <if test="siteAddressCode != null and siteAddressCode != ''">
+                AND f_siteAddressCode like concat('%', #{siteAddressCode}, '%')
+            </if>
+            <if test="siteLocation != null and siteLocation != ''">
+                AND f_siteLocation like concat('%', #{siteLocation}, '%')
+            </if>
+            <if test="sitePhone != null and sitePhone != ''">
+                AND f_sitePhone like concat('%', #{sitePhone}, '%')
+            </if>
+            <if test="siteIntro != null and siteIntro != ''">
+                AND f_siteIntro like concat('%', #{siteIntro}, '%')
+            </if>
+            <if test="siteImages != null and siteImages != ''">
+                AND f_siteImages like concat('%', #{siteImages}, '%')
+            </if>
+            <if test="siteVideos != null and siteVideos != ''">
+                AND f_siteVideos like concat('%', #{siteVideos}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectSiteById" parameterType="Long" resultMap="SiteResult">
+        <include refid="selectSiteVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertSite" parameterType="Site" useGeneratedKeys="true" keyProperty="id">
+        insert into t_site(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="enterpriseId != null">f_enterpriseId,</if>
+<if test="siteName != null and siteName != ''">f_siteName,</if>
+<if test="siteAddress != null and siteAddress != ''">f_siteAddress,</if>
+<if test="siteAddressCode != null and siteAddressCode != ''">f_siteAddressCode,</if>
+<if test="siteLocation != null and siteLocation != ''">f_siteLocation,</if>
+<if test="sitePhone != null and sitePhone != ''">f_sitePhone,</if>
+<if test="siteIntro != null and siteIntro != ''">f_siteIntro,</if>
+<if test="siteImages != null and siteImages != ''">f_siteImages,</if>
+<if test="siteVideos != null and siteVideos != ''">f_siteVideos,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="enterpriseId != null">#{enterpriseId},</if>
+<if test="siteName != null and siteName != ''">#{siteName},</if>
+<if test="siteAddress != null and siteAddress != ''">#{siteAddress},</if>
+<if test="siteAddressCode != null and siteAddressCode != ''">#{siteAddressCode},</if>
+<if test="siteLocation != null and siteLocation != ''">#{siteLocation},</if>
+<if test="sitePhone != null and sitePhone != ''">#{sitePhone},</if>
+<if test="siteIntro != null and siteIntro != ''">#{siteIntro},</if>
+<if test="siteImages != null and siteImages != ''">#{siteImages},</if>
+<if test="siteVideos != null and siteVideos != ''">#{siteVideos},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updateSite" parameterType="Site">
+        update t_site
+        <set>
+            <if test="enterpriseId != null">f_enterpriseId = #{enterpriseId},</if>
+            <if test="siteName != null and siteName != ''">f_siteName = #{siteName},</if>
+            <if test="siteAddress != null and siteAddress != ''">f_siteAddress = #{siteAddress},</if>
+            <if test="siteAddressCode != null and siteAddressCode != ''">f_siteAddressCode = #{siteAddressCode},</if>
+            <if test="siteLocation != null and siteLocation != ''">f_siteLocation = #{siteLocation},</if>
+            <if test="sitePhone != null and sitePhone != ''">f_sitePhone = #{sitePhone},</if>
+            <if test="siteIntro != null and siteIntro != ''">f_siteIntro = #{siteIntro},</if>
+            <if test="siteImages != null and siteImages != ''">f_siteImages = #{siteImages},</if>
+            <if test="siteVideos != null and siteVideos != ''">f_siteVideos = #{siteVideos},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteSiteById" parameterType="Long">
+        delete from t_site where f_id = #{id}
+    </delete>
+
+    <delete id="deleteSiteByIds" parameterType="Long">
+        delete from t_site where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

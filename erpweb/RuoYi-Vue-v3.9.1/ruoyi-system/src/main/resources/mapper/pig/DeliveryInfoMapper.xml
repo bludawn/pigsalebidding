@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.DeliveryInfoMapper">
+
+    <resultMap type="DeliveryInfo" id="DeliveryInfoResult">
+        <id property="id" column="f_id" />
+        <result property="delivererName" column="f_delivererName" />
+        <result property="delivererPhone" column="f_delivererPhone" />
+        <result property="vehicleNo" column="f_vehicleNo" />
+        <result property="vehicleType" column="f_vehicleType" />
+        <result property="loadCount" column="f_loadCount" />
+        <result property="deliveryStatus" column="f_deliveryStatus" />
+        <result property="remark" column="f_remark" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectDeliveryInfoVo">
+        select f_id, f_delivererName, f_delivererPhone, f_vehicleNo, f_vehicleType, f_loadCount, f_deliveryStatus, f_remark, f_creator, f_createTime, f_updator, f_updateTime
+        from t_deliveryInfo
+    </sql>
+
+    <select id="selectDeliveryInfoList" parameterType="DeliveryInfo" resultMap="DeliveryInfoResult">
+        <include refid="selectDeliveryInfoVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="delivererName != null and delivererName != ''">
+                AND f_delivererName like concat('%', #{delivererName}, '%')
+            </if>
+            <if test="delivererPhone != null and delivererPhone != ''">
+                AND f_delivererPhone like concat('%', #{delivererPhone}, '%')
+            </if>
+            <if test="vehicleNo != null and vehicleNo != ''">
+                AND f_vehicleNo like concat('%', #{vehicleNo}, '%')
+            </if>
+            <if test="vehicleType != null and vehicleType != ''">
+                AND f_vehicleType like concat('%', #{vehicleType}, '%')
+            </if>
+            <if test="loadCount != null">
+                AND f_loadCount = #{loadCount}
+            </if>
+            <if test="deliveryStatus != null and deliveryStatus != ''">
+                AND f_deliveryStatus like concat('%', #{deliveryStatus}, '%')
+            </if>
+            <if test="remark != null and remark != ''">
+                AND f_remark like concat('%', #{remark}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectDeliveryInfoById" parameterType="Long" resultMap="DeliveryInfoResult">
+        <include refid="selectDeliveryInfoVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertDeliveryInfo" parameterType="DeliveryInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into t_deliveryInfo(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="delivererName != null and delivererName != ''">f_delivererName,</if>
+<if test="delivererPhone != null and delivererPhone != ''">f_delivererPhone,</if>
+<if test="vehicleNo != null and vehicleNo != ''">f_vehicleNo,</if>
+<if test="vehicleType != null and vehicleType != ''">f_vehicleType,</if>
+<if test="loadCount != null">f_loadCount,</if>
+<if test="deliveryStatus != null and deliveryStatus != ''">f_deliveryStatus,</if>
+<if test="remark != null and remark != ''">f_remark,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="delivererName != null and delivererName != ''">#{delivererName},</if>
+<if test="delivererPhone != null and delivererPhone != ''">#{delivererPhone},</if>
+<if test="vehicleNo != null and vehicleNo != ''">#{vehicleNo},</if>
+<if test="vehicleType != null and vehicleType != ''">#{vehicleType},</if>
+<if test="loadCount != null">#{loadCount},</if>
+<if test="deliveryStatus != null and deliveryStatus != ''">#{deliveryStatus},</if>
+<if test="remark != null and remark != ''">#{remark},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updateDeliveryInfo" parameterType="DeliveryInfo">
+        update t_deliveryInfo
+        <set>
+            <if test="delivererName != null and delivererName != ''">f_delivererName = #{delivererName},</if>
+            <if test="delivererPhone != null and delivererPhone != ''">f_delivererPhone = #{delivererPhone},</if>
+            <if test="vehicleNo != null and vehicleNo != ''">f_vehicleNo = #{vehicleNo},</if>
+            <if test="vehicleType != null and vehicleType != ''">f_vehicleType = #{vehicleType},</if>
+            <if test="loadCount != null">f_loadCount = #{loadCount},</if>
+            <if test="deliveryStatus != null and deliveryStatus != ''">f_deliveryStatus = #{deliveryStatus},</if>
+            <if test="remark != null and remark != ''">f_remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteDeliveryInfoById" parameterType="Long">
+        delete from t_deliveryInfo where f_id = #{id}
+    </delete>
+
+    <delete id="deleteDeliveryInfoByIds" parameterType="Long">
+        delete from t_deliveryInfo where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

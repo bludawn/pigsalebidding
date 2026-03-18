@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.PigTagMapper">
+
+    <resultMap type="PigTag" id="PigTagResult">
+        <id property="id" column="f_id" />
+        <result property="tagName" column="f_tagName" />
+        <result property="tagDesc" column="f_tagDesc" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectPigTagVo">
+        select f_id, f_tagName, f_tagDesc, f_creator, f_createTime, f_updator, f_updateTime
+        from t_pigTag
+    </sql>
+
+    <select id="selectPigTagList" parameterType="PigTag" resultMap="PigTagResult">
+        <include refid="selectPigTagVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="tagName != null and tagName != ''">
+                AND f_tagName like concat('%', #{tagName}, '%')
+            </if>
+            <if test="tagDesc != null and tagDesc != ''">
+                AND f_tagDesc like concat('%', #{tagDesc}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectPigTagById" parameterType="Long" resultMap="PigTagResult">
+        <include refid="selectPigTagVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertPigTag" parameterType="PigTag" useGeneratedKeys="true" keyProperty="id">
+        insert into t_pigTag(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="tagName != null and tagName != ''">f_tagName,</if>
+<if test="tagDesc != null and tagDesc != ''">f_tagDesc,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime,
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="tagName != null and tagName != ''">#{tagName},</if>
+<if test="tagDesc != null and tagDesc != ''">#{tagDesc},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate(),
+        )
+    </insert>
+
+    <update id="updatePigTag" parameterType="PigTag">
+        update t_pigTag
+        <set>
+            <if test="tagName != null and tagName != ''">f_tagName = #{tagName},</if>
+            <if test="tagDesc != null and tagDesc != ''">f_tagDesc = #{tagDesc},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deletePigTagById" parameterType="Long">
+        delete from t_pigTag where f_id = #{id}
+    </delete>
+
+    <delete id="deletePigTagByIds" parameterType="Long">
+        delete from t_pigTag where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
