@@ -5,8 +5,6 @@
 ## 本工程必须依赖的规范参考当前目录 CODERULE.md 文件
 
 ## 文件目录
-- sql   数据库脚本
-  - mysql.sql 目前只支持mysql数据库脚本
 - modeldesign.md 生猪竞拍业务模型设计  
-
+- RuoYi-Vue-v3.9.1 管理端前后端工程，ruoyi框架
 ## 每次调整要完善README.md 文件

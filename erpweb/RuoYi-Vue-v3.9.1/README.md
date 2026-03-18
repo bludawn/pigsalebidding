@@ -1,0 +1,12 @@
+- ruoyi-admin admin子工程，启动类
+- ruoyi-common 公共模块
+- ruoyi-framework 核心模块
+- ruoyi-system 系统模块，业务代码也写在这里一起
+- ruoyi-quartz 定时任务
+- ruoyi-generator 代码生成器
+- ruoyi-ui 管理端web前端工程
+- sql
+  - business.sql 生猪竞拍业务数据sql
+  - quartz.sql 定时任务sql
+  - ry_20250522.sql ruoyi系统预制sql
+  
