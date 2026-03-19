@@ -75,7 +75,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="status != null and status != ''">f_status,</if>
 <if test="totalPrice != null">f_totalPrice,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="userId != null">#{userId},</if>
@@ -87,7 +87,7 @@ f_createTime,
 <if test="status != null and status != ''">#{status},</if>
 <if test="totalPrice != null">#{totalPrice},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

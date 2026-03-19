@@ -80,7 +80,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="siteImages != null and siteImages != ''">f_siteImages,</if>
 <if test="siteVideos != null and siteVideos != ''">f_siteVideos,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="enterpriseId != null">#{enterpriseId},</if>
@@ -93,7 +93,7 @@ f_createTime,
 <if test="siteImages != null and siteImages != ''">#{siteImages},</if>
 <if test="siteVideos != null and siteVideos != ''">#{siteVideos},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

@@ -65,7 +65,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="detailAddress != null and detailAddress != ''">f_detailAddress,</if>
 <if test="isDefault != null">f_isDefault,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="userId != null">#{userId},</if>
@@ -75,7 +75,7 @@ f_createTime,
 <if test="detailAddress != null and detailAddress != ''">#{detailAddress},</if>
 <if test="isDefault != null">#{isDefault},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

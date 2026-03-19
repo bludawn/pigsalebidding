@@ -95,7 +95,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="depositAmount != null">f_depositAmount,</if>
 <if test="paymentAmount != null">f_paymentAmount,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="enterpriseName != null and enterpriseName != ''">#{enterpriseName},</if>
@@ -111,7 +111,7 @@ f_createTime,
 <if test="depositAmount != null">#{depositAmount},</if>
 <if test="paymentAmount != null">#{paymentAmount},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

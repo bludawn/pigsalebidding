@@ -70,7 +70,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="deliveryStatus != null and deliveryStatus != ''">f_deliveryStatus,</if>
 <if test="remark != null and remark != ''">f_remark,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="delivererName != null and delivererName != ''">#{delivererName},</if>
@@ -81,7 +81,7 @@ f_createTime,
 <if test="deliveryStatus != null and deliveryStatus != ''">#{deliveryStatus},</if>
 <if test="remark != null and remark != ''">#{remark},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

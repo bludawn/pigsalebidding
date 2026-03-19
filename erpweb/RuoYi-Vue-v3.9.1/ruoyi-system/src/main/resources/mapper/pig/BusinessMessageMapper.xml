@@ -55,7 +55,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="isRead != null">f_isRead,</if>
 <if test="userId != null">f_userId,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="messageType != null and messageType != ''">#{messageType},</if>
@@ -63,7 +63,7 @@ f_createTime,
 <if test="isRead != null">#{isRead},</if>
 <if test="userId != null">#{userId},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

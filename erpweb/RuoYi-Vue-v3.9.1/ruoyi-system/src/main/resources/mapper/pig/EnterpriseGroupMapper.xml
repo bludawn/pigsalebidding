@@ -50,14 +50,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="groupDesc != null and groupDesc != ''">f_groupDesc,</if>
 <if test="enterpriseIds != null and enterpriseIds != ''">f_enterpriseIds,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="groupName != null and groupName != ''">#{groupName},</if>
 <if test="groupDesc != null and groupDesc != ''">#{groupDesc},</if>
 <if test="enterpriseIds != null and enterpriseIds != ''">#{enterpriseIds},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

@@ -75,7 +75,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="resourceUnitPrice != null">f_resourceUnitPrice,</if>
 <if test="resourceTotalPrice != null">f_resourceTotalPrice,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="resourceCode != null and resourceCode != ''">#{resourceCode},</if>
@@ -87,7 +87,7 @@ f_createTime,
 <if test="resourceUnitPrice != null">#{resourceUnitPrice},</if>
 <if test="resourceTotalPrice != null">#{resourceTotalPrice},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

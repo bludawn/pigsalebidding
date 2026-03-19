@@ -45,13 +45,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="tagName != null and tagName != ''">f_tagName,</if>
 <if test="tagDesc != null and tagDesc != ''">f_tagDesc,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="tagName != null and tagName != ''">#{tagName},</if>
 <if test="tagDesc != null and tagDesc != ''">#{tagDesc},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

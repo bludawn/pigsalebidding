@@ -45,13 +45,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="isRealName != null">f_isRealName,</if>
 <if test="enterpriseId != null">f_enterpriseId,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             #{id},
 <if test="isRealName != null">#{isRealName},</if>
 <if test="enterpriseId != null">#{enterpriseId},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 

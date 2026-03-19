@@ -115,7 +115,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="bidStatus != null and bidStatus != ''">f_bidStatus,</if>
 <if test="approvalStatus != null and approvalStatus != ''">f_approvalStatus,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
-f_createTime,
+f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
 <if test="bidProductCode != null and bidProductCode != ''">#{bidProductCode},</if>
@@ -135,7 +135,7 @@ f_createTime,
 <if test="bidStatus != null and bidStatus != ''">#{bidStatus},</if>
 <if test="approvalStatus != null and approvalStatus != ''">#{approvalStatus},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
-sysdate(),
+sysdate()
         )
     </insert>
 
