@@ -44,12 +44,21 @@ public interface ISysUserService
     public SysUser selectUserByUserName(String userName);
 
     /**
+     * 通过手机号查询用户
+     *
+     * @param phonenumber 手机号
+     * @return 用户对象信息
+     */
+    public SysUser selectUserByPhoneNumber(String phonenumber);
+
+    /**
      * 通过用户ID查询用户
      * 
      * @param userId 用户ID
      * @return 用户对象信息
      */
     public SysUser selectUserById(Long userId);
+
 
     /**
      * 根据用户ID查询用户所属角色组

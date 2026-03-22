@@ -15,7 +15,8 @@ import AddressManagementView from './views/AddressManagementView';
 import OrderListView from './views/OrderListView';
 import OrderDetailView from './views/OrderDetailView';
 import SettingsView from './views/SettingsView';
-import { getFarmList, getProductTags } from './AppApi';
+import LoginView from './views/LoginView';
+import { getAuthToken, getFarmList, getProductTags } from './AppApi';
 
 /** 全局数据上下文 */
 interface AppContextType {
@@ -35,6 +36,7 @@ export const useAppContext = () => useContext(AppContext);
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [currentRoute, setCurrentRoute] = useState<string>('tabs');
+  const [isAuthed, setIsAuthed] = useState<boolean>(() => Boolean(getAuthToken()));
   const [routeParams, setRouteParams] = useState<any>(null);
   const [auctionDetailParams, setAuctionDetailParams] = useState<AuctionItem | null>(null);
   const [auctionDetailBackRoute, setAuctionDetailBackRoute] = useState<string>('tabs');
@@ -77,6 +79,16 @@ const App: React.FC = () => {
     
     fetchBaseData();
   }, []);
+
+  useEffect(() => {
+    if (!isAuthed) {
+      setCurrentRoute('login');
+      return;
+    }
+    if (currentRoute === 'login') {
+      setCurrentRoute('tabs');
+    }
+  }, [isAuthed, currentRoute]);
 
   const navigate = (route: string, params: any = null) => {
     if (currentRoute === 'tabs') {
@@ -137,6 +149,15 @@ const App: React.FC = () => {
 
   const renderSubPage = () => (
     <div className={`absolute inset-0 bg-white ${currentRoute === 'tabs' ? 'hidden' : ''}`}>
+      {currentRoute === 'login' && (
+        <LoginView
+          onLoginSuccess={() => {
+            setIsAuthed(true);
+            setActiveTab('home');
+            setCurrentRoute('tabs');
+          }}
+        />
+      )}
       {auctionDetailParams && (
         <div className={currentRoute === 'auction-detail' ? 'block h-full' : 'hidden h-full'}>
           <AuctionDetail

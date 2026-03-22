@@ -62,8 +62,28 @@ public class SysLoginService
      */
     public String login(String username, String password, String code, String uuid)
     {
-        // 验证码校验
-        validateCaptcha(username, code, uuid);
+        return loginInternal(username, password, code, uuid, false);
+    }
+
+    /**
+     * 登录验证（跳过验证码）
+     *
+     * @param username 用户名
+     * @param password 密码
+     * @return 结果
+     */
+    public String loginWithoutCaptcha(String username, String password)
+    {
+        return loginInternal(username, password, null, null, true);
+    }
+
+    private String loginInternal(String username, String password, String code, String uuid, boolean skipCaptcha)
+    {
+        if (!skipCaptcha)
+        {
+            // 验证码校验
+            validateCaptcha(username, code, uuid);
+        }
         // 登录前置校验
         loginPreCheck(username, password);
         // 用户验证
@@ -98,6 +118,7 @@ public class SysLoginService
         // 生成token
         return tokenService.createToken(loginUser);
     }
+
 
     /**
      * 校验验证码

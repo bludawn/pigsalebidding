@@ -30,6 +30,7 @@ weixincustomer/
 │   ├── MessageView.tsx      # 消息中心入口
 │   ├── ProfileView.tsx      # 个人中心页
 │   ├── AuctionDetail.tsx    # 竞价详情页
+│   ├── LoginView.tsx        # 登录页
 │   ├── FreeQuote.tsx        # 自由报价页
 │   ├── MessageList.tsx      # 消息列表页
 │   ├── PaymentDetail.tsx    # 支付明细页

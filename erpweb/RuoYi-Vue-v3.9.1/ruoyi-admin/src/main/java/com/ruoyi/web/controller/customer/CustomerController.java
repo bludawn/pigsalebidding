@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -102,7 +103,7 @@ public class CustomerController extends BaseController
     private ServerConfig serverConfig;
 
     @PostMapping("/getFarmList")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getFarmList')")
+//    @PostAuthorize("@ss.hasPermi('pig:weixincustomer:getFarmList')")
     public CustomerApiResult<List<FarmItem>> getFarmList(@RequestBody(required = false) FarmListRequest request)
     {
         Site query = new Site();
@@ -122,7 +123,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getProductTags")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getProductTags')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getProductTags')")
     public CustomerApiResult<List<ProductTagItem>> getProductTags()
     {
         List<PigTag> tags = pigTagService.selectPigTagList(new PigTag());
@@ -136,14 +137,14 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getRegionList")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getRegionList')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getRegionList')")
     public CustomerApiResult<List<RegionItem>> getRegionList(@RequestBody(required = false) RegionListRequest request)
     {
         return ok(Collections.emptyList());
     }
 
     @PostMapping("/getAuctionList")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAuctionList')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAuctionList')")
     public CustomerApiResult<ListResponseData<AuctionItem>> getAuctionList(@RequestBody(required = false) AuctionListParams params)
     {
         int current = getPageCurrent(params);
@@ -165,7 +166,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getMyBidList")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getMyBidList')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getMyBidList')")
     public CustomerApiResult<ListResponseData<MyBidItem>> getMyBidList(@RequestBody(required = false) MyBidListParams params)
     {
         int current = getPageCurrent(params);
@@ -184,7 +185,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getMyBidStatusCounts")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getMyBidStatusCounts')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getMyBidStatusCounts')")
     public CustomerApiResult<MyBidStatusCounts> getMyBidStatusCounts()
     {
         UserBid query = new UserBid();
@@ -198,7 +199,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getAuctionDetail")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAuctionDetail')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAuctionDetail')")
     public CustomerApiResult<AuctionDetailInfo> getAuctionDetail(@RequestBody AuctionIdRequest request)
     {
         BidProduct bidProduct = bidProductService.selectBidProductById(toLong(request.auctionId));
@@ -236,7 +237,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getAuctionMaintenance")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAuctionMaintenance')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAuctionMaintenance')")
     public CustomerApiResult<AuctionMaintenanceInfo> getAuctionMaintenance(@RequestBody AuctionIdRequest request)
     {
         UserBidInfo query = new UserBidInfo();
@@ -263,7 +264,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/saveAuctionMaintenance")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:saveAuctionMaintenance')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:saveAuctionMaintenance')")
     public CustomerApiResult<AuctionMaintenanceInfo> saveAuctionMaintenance(@RequestBody AuctionMaintenanceSaveRequest request)
     {
         UserBidInfo query = new UserBidInfo();
@@ -301,7 +302,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getBidRecords")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getBidRecords')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getBidRecords')")
     public CustomerApiResult<ListResponseData<BidRecordItem>> getBidRecords(@RequestBody BidRecordsRequest request)
     {
         int current = getPageCurrent(request);
@@ -330,7 +331,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/submitBid")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:submitBid')")
+//    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:submitBid')")
     public CustomerApiResult<SimpleResult> submitBid(@RequestBody SubmitBidRequest request)
     {
         UserBid bid = new UserBid();
@@ -362,8 +363,8 @@ public class CustomerController extends BaseController
         return ok(result);
     }
 
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:cancelBidRecord')")
     @PostMapping("/cancelBidRecord")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:cancelBidRecord')")
     public CustomerApiResult<SimpleResult> cancelBidRecord(@RequestBody CancelBidRequest request)
     {
         UserBid bid = userBidService.selectUserBidById(toLong(request.bidRecordId));
@@ -381,7 +382,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getUserInfo")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getUserInfo')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getUserInfo')")
     public CustomerApiResult<UserInfo> getUserInfo()
     {
         SysUser user = sysUserService.selectUserById(getUserId());
@@ -400,7 +401,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getProfileInfo")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getProfileInfo')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getProfileInfo')")
     public CustomerApiResult<UserProfile> getProfileInfo()
     {
         SysUser user = sysUserService.selectUserById(getUserId());
@@ -415,7 +416,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getUserSettings")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getUserSettings')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getUserSettings')")
     public CustomerApiResult<UserSettingsProfile> getUserSettings()
     {
         SysUser user = sysUserService.selectUserById(getUserId());
@@ -441,7 +442,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/uploadImage")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:uploadImage')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:uploadImage')")
     public CustomerApiResult<UploadImageResponse> uploadImage(MultipartFile file, String scene) throws Exception
     {
         String filePath = RuoYiConfig.getUploadPath();
@@ -453,7 +454,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/saveUserProfile")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:saveUserProfile')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:saveUserProfile')")
     public CustomerApiResult<UserSettingsProfile> saveUserProfile(@RequestBody SaveUserProfileRequest request)
     {
         SysUser user = sysUserService.selectUserById(getUserId());
@@ -473,7 +474,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/submitCompanyVerification")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:submitCompanyVerification')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:submitCompanyVerification')")
     public CustomerApiResult<UserSettingsProfile> submitCompanyVerification(@RequestBody SubmitCompanyVerificationRequest request)
     {
         Enterprise enterprise = getEnterpriseByUser();
@@ -489,7 +490,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/verifyPersonalIdentity")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:verifyPersonalIdentity')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:verifyPersonalIdentity')")
     public CustomerApiResult<UserSettingsProfile> verifyPersonalIdentity()
     {
         UserExt userExt = userExtService.selectUserExtById(getUserId());
@@ -510,7 +511,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/logout")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:logout')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:logout')")
     public CustomerApiResult<SimpleResult> logout()
     {
         SimpleResult result = new SimpleResult();
@@ -519,7 +520,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getOrderCounts")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderCounts')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderCounts')")
     public CustomerApiResult<OrderCounts> getOrderCounts()
     {
         List<PigOrder> orders = selectOrdersByUser();
@@ -537,7 +538,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getAssetSummary")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAssetSummary')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAssetSummary')")
     public CustomerApiResult<AssetSummary> getAssetSummary()
     {
         Enterprise enterprise = getEnterpriseByUser();
@@ -549,7 +550,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getBusinessStats")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getBusinessStats')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getBusinessStats')")
     public CustomerApiResult<BusinessStats> getBusinessStats()
     {
         BusinessStats stats = new BusinessStats();
@@ -559,7 +560,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getContactInfo")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getContactInfo')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getContactInfo')")
     public CustomerApiResult<ContactInfo> getContactInfo()
     {
         ContactInfo info = new ContactInfo();
@@ -570,7 +571,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getAddressList")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAddressList')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAddressList')")
     public CustomerApiResult<ListResponseData<AddressItem>> getAddressList(@RequestBody(required = false) ListRequestParams request)
     {
         int current = getPageCurrent(request);
@@ -585,7 +586,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/createAddress")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:createAddress')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:createAddress')")
     public CustomerApiResult<AddressItem> createAddress(@RequestBody AddressCreateRequest request)
     {
         Address address = new Address();
@@ -601,7 +602,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/updateAddress")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:updateAddress')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:updateAddress')")
     public CustomerApiResult<SimpleResult> updateAddress(@RequestBody AddressItem request)
     {
         Address address = addressService.selectAddressById(toLong(request.id));
@@ -623,7 +624,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/deleteAddress")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:deleteAddress')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:deleteAddress')")
     public CustomerApiResult<SimpleResult> deleteAddress(@RequestBody AddressIdRequest request)
     {
         SimpleResult result = new SimpleResult();
@@ -633,7 +634,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/setDefaultAddress")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:setDefaultAddress')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:setDefaultAddress')")
     public CustomerApiResult<SimpleResult> setDefaultAddress(@RequestBody AddressIdRequest request)
     {
         List<Address> list = addressService.selectAddressList(buildUserAddressQuery());
@@ -649,7 +650,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getDefaultAddress")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getDefaultAddress')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getDefaultAddress')")
     public CustomerApiResult<AddressItem> getDefaultAddress()
     {
         Address query = new Address();
@@ -664,7 +665,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getAccountBalance")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAccountBalance')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAccountBalance')")
     public CustomerApiResult<AccountBalance> getAccountBalance()
     {
         AccountBalance balance = new AccountBalance();
@@ -675,7 +676,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getTransactionList")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getTransactionList')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getTransactionList')")
     public CustomerApiResult<ListResponseData<TransactionItem>> getTransactionList(@RequestBody(required = false) ListRequestParams request)
     {
         int current = getPageCurrent(request);
@@ -698,7 +699,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getOrderStats")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderStats')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderStats')")
     public CustomerApiResult<OrderStats> getOrderStats()
     {
         List<PigOrder> orders = selectOrdersByUser();
@@ -712,7 +713,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getOrderList")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderList')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderList')")
     public CustomerApiResult<ListResponseData<OrderListItem>> getOrderList(@RequestBody(required = false) OrderListRequest request)
     {
         int current = getPageCurrent(request);
@@ -731,7 +732,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/getOrderDetail")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderDetail')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderDetail')")
     public CustomerApiResult<OrderDetailInfo> getOrderDetail(@RequestBody OrderDetailRequest request)
     {
         PigOrder order = pigOrderService.selectPigOrderById(toLong(request.orderId));
@@ -744,7 +745,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/cancelOrder")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:cancelOrder')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:cancelOrder')")
     public CustomerApiResult<SimpleResult> cancelOrder(@RequestBody OrderActionRequest request)
     {
         PigOrder order = pigOrderService.selectPigOrderById(toLong(request.orderId));
@@ -762,7 +763,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/payOrder")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:payOrder')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:payOrder')")
     public CustomerApiResult<SimpleResult> payOrder(@RequestBody OrderActionRequest request)
     {
         PigOrder order = pigOrderService.selectPigOrderById(toLong(request.orderId));
@@ -781,7 +782,7 @@ public class CustomerController extends BaseController
     }
 
     @PostMapping("/confirmReceipt")
-    @PreAuthorize("@ss.hasPermi('pig:weixincustomer:confirmReceipt')")
+    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:confirmReceipt')")
     public CustomerApiResult<SimpleResult> confirmReceipt(@RequestBody OrderActionRequest request)
     {
         PigOrder order = pigOrderService.selectPigOrderById(toLong(request.orderId));

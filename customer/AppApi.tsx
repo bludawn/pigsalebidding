@@ -36,6 +36,14 @@ interface ApiResponse<T = any> {
   data: T;
 }
 
+/** RuoYi 通用返回格式 */
+interface RuoyiAjaxResult<T = any> {
+  code: number;
+  msg: string;
+  data?: T;
+  token?: string;
+}
+
 /** 列表请求入参 */
 interface ListRequestParams {
   current: number;
@@ -56,6 +64,8 @@ interface ListResponseData<T> {
 // ============ 请求基础配置 ============
 
 const API_BASE_URL = '/api'; // 可根据环境配置
+const AUTH_TOKEN_KEY = 'Admin-Token';
+const CUSTOMER_HEADER_KEY = 'customer';
 
 /**
  * 通用请求方法
@@ -63,6 +73,46 @@ const API_BASE_URL = '/api'; // 可根据环境配置
  * @param payload 请求参数
  */
 let extraHeaders: Record<string, string> = {};
+
+const setCookie = (key: string, value: string, days = 7) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${key}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
+};
+
+const getCookie = (key: string) => {
+  const match = document.cookie.match(new RegExp(`(^| )${key}=([^;]+)`));
+  return match ? decodeURIComponent(match[2]) : '';
+};
+
+const removeCookie = (key: string) => {
+  document.cookie = `${key}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+};
+
+export const setAuthToken = (token: string) => {
+  setCookie(AUTH_TOKEN_KEY, token);
+};
+
+export const getAuthToken = () => getCookie(AUTH_TOKEN_KEY);
+
+export const clearAuthToken = () => removeCookie(AUTH_TOKEN_KEY);
+
+const buildRequestHeaders = (options?: { withToken?: boolean; extra?: Record<string, string> }) => {
+  const headers: Record<string, string> = {
+    [CUSTOMER_HEADER_KEY]: '1',
+    ...extraHeaders,
+    ...(options?.extra || {}),
+  };
+
+  if (options?.withToken !== false) {
+    const token = getAuthToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+};
 
 /** 设置请求头（例如地理位置） */
 export function setRequestHeaders(headers: Record<string, string>) {
@@ -75,7 +125,7 @@ async function request<T>(url: string, payload: object = {}): Promise<ApiRespons
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...extraHeaders,
+        ...buildRequestHeaders({ withToken: url !== '/login' }),
       },
       body: JSON.stringify(payload),
     });
@@ -270,6 +320,37 @@ export function cancelBidRecord(params: { auctionId: string; bidRecordId: string
   return request<{ success: boolean }>('/v1/weixincustomer/cancelBidRecord', params);
 }
 
+/** 手机号密码登录（RuoYi） */
+export async function loginByPhonePassword(params: {
+  phone: string;
+  password: string;
+}): Promise<ApiResponse<{ token: string }>> {
+  try {
+    console.log('Login Params:', params)
+    const response = await fetch(`/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...buildRequestHeaders({ withToken: false }),
+      },
+      body: JSON.stringify({
+        username: params.phone,
+        password: params.password,
+      }),
+    });
+
+    const result: RuoyiAjaxResult = await response.json();
+    if (result.code === 200 && result.token) {
+      return { errcode: 0, errmsg: '', data: { token: result.token } };
+    }
+
+    return { errcode: result.code || -1, errmsg: result.msg || '登录失败', data: null as any };
+  } catch (error) {
+    console.error('Login Error:', error);
+    return { errcode: -1, errmsg: '网络请求失败', data: null as any };
+  }
+}
+
 /** 用户信息 */
 export interface UserInfo {
   userId: string;
@@ -403,7 +484,7 @@ export async function uploadImage(params: {
     const response = await fetch(`${API_BASE_URL}/v1/weixincustomer/uploadImage`, {
       method: 'POST',
       headers: {
-        ...extraHeaders,
+        ...buildRequestHeaders(),
       },
       body: formData,
     });

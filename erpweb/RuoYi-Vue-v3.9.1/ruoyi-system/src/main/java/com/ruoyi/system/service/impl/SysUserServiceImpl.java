@@ -118,6 +118,18 @@ public class SysUserServiceImpl implements ISysUserService
     }
 
     /**
+     * 通过手机号查询用户
+     *
+     * @param phonenumber 手机号
+     * @return 用户对象信息
+     */
+    @Override
+    public SysUser selectUserByPhoneNumber(String phonenumber)
+    {
+        return userMapper.selectUserByPhoneNumber(phonenumber);
+    }
+
+    /**
      * 通过用户ID查询用户
      * 
      * @param userId 用户ID
@@ -128,6 +140,7 @@ public class SysUserServiceImpl implements ISysUserService
     {
         return userMapper.selectUserById(userId);
     }
+
 
     /**
      * 查询用户所属角色组

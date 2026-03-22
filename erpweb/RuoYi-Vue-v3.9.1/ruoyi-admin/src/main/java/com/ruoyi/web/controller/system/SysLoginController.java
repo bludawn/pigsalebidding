@@ -3,6 +3,7 @@ package com.ruoyi.web.controller.system;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,8 @@ import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ISysMenuService;
+import com.ruoyi.system.service.ISysUserService;
+
 
 /**
  * 登录验证
@@ -39,7 +42,11 @@ public class SysLoginController
     private ISysMenuService menuService;
 
     @Autowired
+    private ISysUserService userService;
+
+    @Autowired
     private SysPermissionService permissionService;
+
 
     @Autowired
     private TokenService tokenService;
@@ -54,15 +61,27 @@ public class SysLoginController
      * @return 结果
      */
     @PostMapping("/login")
-    public AjaxResult login(@RequestBody LoginBody loginBody)
+    public AjaxResult login(@RequestBody LoginBody loginBody, HttpServletRequest request)
     {
         AjaxResult ajax = AjaxResult.success();
+        boolean isCustomer = StringUtils.isNotEmpty(request.getHeader("customer"));
+        String username = loginBody.getUsername();
+        if (isCustomer && StringUtils.isNotEmpty(username))
+        {
+            SysUser phoneUser = userService.selectUserByPhoneNumber(username);
+            if (phoneUser != null && StringUtils.isNotEmpty(phoneUser.getUserName()))
+            {
+                username = phoneUser.getUserName();
+            }
+        }
         // 生成令牌
-        String token = loginService.login(loginBody.getUsername(), loginBody.getPassword(), loginBody.getCode(),
-                loginBody.getUuid());
+        String token = isCustomer
+                ? loginService.loginWithoutCaptcha(username, loginBody.getPassword())
+                : loginService.login(username, loginBody.getPassword(), loginBody.getCode(), loginBody.getUuid());
         ajax.put(Constants.TOKEN, token);
         return ajax;
     }
+
 
     /**
      * 获取用户信息
