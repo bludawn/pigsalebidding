@@ -7,6 +7,5 @@
 * 采购端是给企业内部采购人员的管理软件，从企业上有养猪场采购、竞标生猪，并将生猪资源入库。
 
 ### 文件夹
-- erpweb 管理端，ruoyi框架，含前后端，前后端分离
+- erpweb 管理端，ruoyi框架，含前后端，前后端分离。customer后端。
 - customer H5客户端
-- appbackend customer的后端

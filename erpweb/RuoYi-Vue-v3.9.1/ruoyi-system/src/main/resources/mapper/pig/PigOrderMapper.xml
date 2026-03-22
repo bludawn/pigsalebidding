@@ -63,6 +63,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="remark != null and remark != ''">
                 AND f_remark like concat('%', #{remark}, '%')
             </if>
+            <if test="createBy != null and createBy != ''">
+                AND f_creator = #{createBy}
+            </if>
             <if test="pigResourceId != null">
                 AND f_pigResourceId = #{pigResourceId}
             </if>

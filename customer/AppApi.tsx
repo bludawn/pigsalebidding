@@ -80,8 +80,9 @@ async function request<T>(url: string, payload: object = {}): Promise<ApiRespons
       body: JSON.stringify(payload),
     });
 
+    console.log('response', response)
     const result: ApiResponse<T> = await response.json();
-    
+    console.log('result', result)
     if (result.errcode !== 0) {
       console.error(`API Error [${url}]:`, result.errmsg);
     }
