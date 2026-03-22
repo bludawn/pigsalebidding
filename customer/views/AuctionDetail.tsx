@@ -11,49 +11,6 @@ interface AuctionDetailProps {
 const DEFAULT_BID_RECORD_SIZE = 10;
 const ALL_BID_RECORD_SIZE = 9999;
 
-const MOCK_AUCTION_DETAIL: AuctionDetailInfo = {
-  id: 'mock-auction-1',
-  mediaUrls: [
-  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-  'https://images.unsplash.com/photo-1544216717-3bbf52512659?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1605001011156-cbf0b0f67a51?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1597113366853-fea190b6cd82?w=400&h=300&fit=crop',
-],
-  endCountdownSeconds: 3600,
-  productTags: ['挪系A', '白猪'],
-  pigTypeName: '育肥猪',
-  weightRanges: ['105', '125kg'],
-  farmName: '牧原股份·山东五号场',
-  price: '15.80',
-  remark: '本场支持分批提货，需提前24小时预约。',
-  startingCount: 120,
-  bidStep: 0.05,
-  addPrice: 0.1,
-  quantity: 260,
-  quarantineRegion: '山东·济宁',
-  invoiceScope: '增值税专用发票增值税专用发票增值税专用发票增值税专用发票增值税专用发票增值税专用发票增值税专用发票',
-  deliverySupport: '支持配送',
-  feedQuality: '一级饲料',
-  epidemicStatus: '无疫',
-  biddingNotice: '竞价结束后30分钟内确认订单，超时将自动取消。',
-  bidStatus: 'BIDDING',
-  bidStartTime: '2026-03-07 10:00:00',
-  customerBidStatus: 'NO_BID',
-};
-
-const MOCK_BID_RECORDS: BidRecordItem[] = Array.from({ length: 16 }, (_, index) => ({
-  id: `mock-bid-${index + 1}`,
-  customerName: `采购*****购商${index + 1}`,
-  price: 15.5 + index * 0.05,
-  quantity: 100 + index * 5,
-  time: `今天 ${10 + index}:0${index}`,
-  isCurrentCustomer: index % 4 === 0,
-  isCancelled: index % 7 === 0 && index % 4 === 0,
-}));
-
-const getMockBidRecords = (onlyMine: boolean) =>
-  onlyMine ? MOCK_BID_RECORDS.filter(record => record.isCurrentCustomer) : MOCK_BID_RECORDS;
 
 const formatCountdown = (seconds: number) => {
   const safe = Math.max(0, seconds);
@@ -130,8 +87,8 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
         setCountdownSeconds(res.data.endCountdownSeconds || 0);
         return;
       }
-      setDetail(MOCK_AUCTION_DETAIL);
-      setCountdownSeconds(MOCK_AUCTION_DETAIL.endCountdownSeconds || 0);
+      setDetail(null);
+      setCountdownSeconds(0);
     };
 
     loadDetail();
@@ -205,17 +162,15 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
       searchCount: true,
       isMine: onlyMine,
     });
-    const mockRecords = getMockBidRecords(onlyMine);
     if (res.errcode === 0 && res.data) {
       const records = res.data.records || [];
-      const finalRecords = records.length ? records : mockRecords;
-      setBidRecords(finalRecords);
-      setBidRecordsTotal(res.data.total || finalRecords.length);
+      setBidRecords(records);
+      setBidRecordsTotal(res.data.total || records.length);
       setIsBidRecordsLoading(false);
       return;
     }
-    setBidRecords(mockRecords);
-    setBidRecordsTotal(mockRecords.length);
+    setBidRecords([]);
+    setBidRecordsTotal(0);
     setIsBidRecordsLoading(false);
   };
 

@@ -45,7 +45,7 @@ const MyBidsView: React.FC<MyBidsViewProps> = ({ onBack, onNavigate }) => {
 
       if (res.errcode === 0 && res.data) {
         const { records, total, pages } = res.data;
-        const list = records.length > 0 ? records : generateMockData(page, activeStatus);
+        const list = records || [];
 
         setBidList(prev => (append ? [...prev, ...list] : list));
         setPagination(prev => ({
@@ -57,56 +57,29 @@ const MyBidsView: React.FC<MyBidsViewProps> = ({ onBack, onNavigate }) => {
           loading: false,
         }));
       } else {
-        const list = generateMockData(page, activeStatus);
-        setBidList(prev => (append ? [...prev, ...list] : list));
+        setBidList(prev => (append ? prev : []));
         setPagination(prev => ({
           ...prev,
           current: page,
-          hasMore: page < 3,
+          total: 0,
+          pages: 0,
+          hasMore: false,
           loading: false,
         }));
       }
     } catch (error) {
       console.error('Failed to load my bids:', error);
-      const list = generateMockData(page, activeStatus);
-      setBidList(prev => (append ? [...prev, ...list] : list));
+      setBidList(prev => (append ? prev : []));
       setPagination(prev => ({
         ...prev,
         current: page,
-        hasMore: page < 3,
+        total: 0,
+        pages: 0,
+        hasMore: false,
         loading: false,
       }));
     }
   }, [activeStatus, pagination.loading]);
-
-  const generateMockData = (page: number, status: MyBidStatus): MyBidItem[] => {
-    const startIndex = (page - 1) * PAGE_SIZE;
-    return Array.from({ length: PAGE_SIZE }, (_, i) => {
-      const endTime = new Date(Date.now() + 1000 * 60 * (30 + Math.floor(Math.random() * 90)));
-      return {
-        id: `bid-${status}-${startIndex + i + 1}`,
-        auctionId: `${startIndex + i + 1}`,
-        farmId: `farm-${(startIndex + i) % 5 + 1}`,
-        farmName: ['牧原股份·山东五号场', '温氏集团·广东清远基地', '正邦科技·江西基地', '新希望·四川中心场', '天邦股份·江苏基地'][(startIndex + i) % 5],
-        farmIcon: 'https://images.unsplash.com/photo-1544216717-3bbf52512659?w=400&h=300&fit=crop',
-        breed: ['挪系 A', '三元 A', '法系 A', '杜洛克', '长白'][i % 5],
-        quantity: 150 + Math.floor(Math.random() * 100),
-        weightRange: ['育肥猪 105-125kg', '大猪 125-140kg', '中猪 90-110kg'][i % 3],
-        tags: [
-          ['挪系A', '白猪'],
-          ['三元A', '黑猪'],
-          ['法系A', '白猪'],
-          ['杜洛克', '黑猪'],
-          ['长白', '白猪'],
-        ][i % 5],
-        startingPrice: 15 + Math.random() * 3,
-        startingCount: 100 + Math.floor(Math.random() * 100),
-        endTime,
-        imageUrl: 'https://images.unsplash.com/photo-1597113366853-fea190b6cd82?w=400&h=300&fit=crop',
-        bidStatus: status,
-      };
-    });
-  };
 
   useEffect(() => {
     const loadCounts = async () => {

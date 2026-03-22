@@ -12,13 +12,6 @@ interface HomeViewProps {
   onNavigate: (route: string, params?: any) => void;
 }
 
-const PIG_IMAGES = [
-  'https://images.unsplash.com/photo-1544216717-3bbf52512659?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1605001011156-cbf0b0f67a51?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1597113366853-fea190b6cd82?w=400&h=300&fit=crop',
-];
-
 const PAGE_SIZE = 20;
 const WHEEL_ITEM_HEIGHT = 36;
 const WHEEL_VISIBLE_COUNT = 5;
@@ -195,11 +188,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
 
       if (res.errcode === 0 && res.data) {
         const { records, total, pages } = res.data;
-        
-        // 模拟数据（实际使用时删除此段）
-        const mockRecords = records.length > 0 ? records : generateMockData(page);
-        const filteredRecords = applyClientFilters(mockRecords);
-        
+        const filteredRecords = applyClientFilters(records || []);
+
         setAuctionList(prev => append ? [...prev, ...filteredRecords] : filteredRecords);
         setPagination(prev => ({
           ...prev,
@@ -210,66 +200,29 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           loading: false,
         }));
       } else {
-        // 使用模拟数据
-        const mockRecords = generateMockData(page);
-        const filteredRecords = applyClientFilters(mockRecords);
-        setAuctionList(prev => append ? [...prev, ...filteredRecords] : filteredRecords);
+        setAuctionList(prev => (append ? prev : []));
         setPagination(prev => ({
           ...prev,
           current: page,
-          hasMore: page < 3, // 模拟3页数据
+          total: 0,
+          pages: 0,
+          hasMore: false,
           loading: false,
         }));
       }
     } catch (error) {
       console.error('Failed to load auction list:', error);
-      // 使用模拟数据
-      const mockRecords = generateMockData(page);
-      const filteredRecords = applyClientFilters(mockRecords);
-      setAuctionList(prev => append ? [...prev, ...filteredRecords] : filteredRecords);
+      setAuctionList(prev => (append ? prev : []));
       setPagination(prev => ({
         ...prev,
         current: page,
-        hasMore: page < 3,
+        total: 0,
+        pages: 0,
+        hasMore: false,
         loading: false,
       }));
     }
   }, [searchQuery, filter, selectedTags, pagination.loading]);
-
-  // 生成模拟数据
-  const generateMockData = (page: number): AuctionItem[] => {
-    const startIndex = (page - 1) * PAGE_SIZE;
-    const statusPool: BidStatus[] = ['WAITING', 'BIDDING', 'ENDED'];
-    return Array.from({ length: PAGE_SIZE }, (_, i) => {
-      const bidStatus = statusPool[(startIndex + i) % statusPool.length];
-      const endTime = new Date(Date.now() + 1000 * 60 * (30 + Math.floor(Math.random() * 90)));
-      const startTime = new Date(Date.now() + 1000 * 60 * (5 + Math.floor(Math.random() * 120)));
-      const bidStartTime = `${startTime.getFullYear()}-${String(startTime.getMonth() + 1).padStart(2, '0')}-${String(startTime.getDate()).padStart(2, '0')} ${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}:${String(startTime.getSeconds()).padStart(2, '0')}`;
-
-      return {
-        id: `${startIndex + i + 1}`,
-        farmId: `farm-${(startIndex + i) % 5 + 1}`,
-        farmName: ['牧原股份·山东五号场', '温氏集团·广东清远基地', '正邦科技·江西基地', '新希望·四川中心场', '天邦股份·江苏基地'][(startIndex + i) % 5],
-        farmIcon: PIG_IMAGES[(startIndex + i) % 4],
-        breed: ['挪系 A', '三元 A', '法系 A', '杜洛克', '长白'][i % 5],
-        quantity: 150 + Math.floor(Math.random() * 100),
-        weightRange: ['育肥猪 105-125kg', '大猪 125-140kg', '中猪 90-110kg'][i % 3],
-        tags: [
-          ['挪系A', '白猪'],
-          ['三元A', '黑猪'],
-          ['法系A', '白猪'],
-          ['杜洛克', '黑猪'],
-          ['长白', '白猪'],
-        ][i % 5],
-        startingPrice: 15 + Math.random() * 3,
-        startingCount: 100 + Math.floor(Math.random() * 100),
-        endTime: bidStatus === 'ENDED' ? new Date(Date.now() - 1000 * 60 * 10) : endTime,
-        imageUrl: PIG_IMAGES[(startIndex + i) % 4],
-        bidStatus,
-        bidStartTime,
-      };
-    });
-  };
 
   // 初始加载
   useEffect(() => {
