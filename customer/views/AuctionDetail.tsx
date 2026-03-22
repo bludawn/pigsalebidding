@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AddressItem, AuctionDetailInfo, AuctionItem, AuctionMaintenanceInfo, BidRecordItem, MyBidStatus } from '../types';
-import { getAuctionDetail, getAuctionMaintenance, getBidRecords, getDefaultAddress, submitBid } from '../AppApi';
+import { cancelBidRecord, getAuctionDetail, getAuctionMaintenance, getBidRecords, getDefaultAddress, submitBid } from '../AppApi';
 
 interface AuctionDetailProps {
   params: AuctionItem;
@@ -49,6 +49,7 @@ const MOCK_BID_RECORDS: BidRecordItem[] = Array.from({ length: 16 }, (_, index) 
   quantity: 100 + index * 5,
   time: `今天 ${10 + index}:0${index}`,
   isCurrentCustomer: index % 4 === 0,
+  isCancelled: index % 7 === 0 && index % 4 === 0,
 }));
 
 const getMockBidRecords = (onlyMine: boolean) =>
@@ -95,6 +96,9 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
   const [bidCount, setBidCount] = useState(params.startingCount);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<BidRecordItem | null>(null);
+  const [isCancelSubmitting, setIsCancelSubmitting] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
   const [currentVideoDuration, setCurrentVideoDuration] = useState(0);
@@ -295,6 +299,26 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
       await loadBidRecords(isExpanded, isMineOnly);
     }
     setIsSubmitting(false);
+  };
+
+  const handleOpenCancel = (record: BidRecordItem) => {
+    setCancelTarget(record);
+    setIsCancelDialogOpen(true);
+  };
+
+  const handleCancelBid = async () => {
+    if (!cancelTarget || isCancelSubmitting || !isBidding) return;
+    setIsCancelSubmitting(true);
+    const res = await cancelBidRecord({
+      auctionId: params.id,
+      bidRecordId: cancelTarget.id,
+    });
+    if (res.errcode === 0) {
+      setBidRecords(prev => prev.map(item => (item.id === cancelTarget.id ? { ...item, isCancelled: true } : item)));
+      setIsCancelDialogOpen(false);
+      setCancelTarget(null);
+    }
+    setIsCancelSubmitting(false);
   };
 
   const totalPrice = useMemo(() => {
@@ -565,16 +589,17 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
           </div>
         </div>
         <div className="bg-slate-50 rounded-custom overflow-hidden">
-          <div className="grid grid-cols-4 text-[10px] text-slate-400 px-3 py-2 border-b border-slate-100">
+          <div className="grid grid-cols-5 text-[10px] text-slate-400 px-3 py-2 border-b border-slate-100">
             <span>客户名称</span>
             <span>价格</span>
             <span>数量</span>
             <span>时间</span>
+            <span className="text-right">是否取消</span>
           </div>
           {bidRecords.map(record => {
             const rowClassName = record.isCurrentCustomer
-              ? 'grid grid-cols-4 text-[11px] text-industry-red px-3 py-2 border-b border-industry-red/10 bg-industry-red/5 last:border-b-0'
-              : 'grid grid-cols-4 text-[11px] text-slate-700 px-3 py-2 border-b border-slate-100 last:border-b-0';
+              ? 'grid grid-cols-5 text-[11px] text-industry-red px-3 py-2 border-b border-industry-red/10 bg-industry-red/5 last:border-b-0'
+              : 'grid grid-cols-5 text-[11px] text-slate-700 px-3 py-2 border-b border-slate-100 last:border-b-0';
 
             return (
               <div key={record.id} className={rowClassName}>
@@ -582,6 +607,24 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
                 <span>¥{record.price.toFixed(2)}</span>
                 <span>{record.quantity}头</span>
                 <span>{record.time}</span>
+                <span className="text-right">
+                  {record.isCurrentCustomer ? (
+                    record.isCancelled ? (
+                      <span className="text-[10px] text-slate-400">已取消</span>
+                    ) : isBidding ? (
+                      <button
+                        onClick={() => handleOpenCancel(record)}
+                        className="text-[10px] font-bold text-industry-red bg-white/80 border border-industry-red/30 px-2 py-0.5 rounded-full"
+                      >
+                        取消
+                      </button>
+                    ) : (
+                      <span className="text-[10px] text-slate-400">-</span>
+                    )
+                  ) : (
+                    <span className="text-[10px] text-slate-400"> </span>
+                  )}
+                </span>
               </div>
             );
           })}
@@ -715,6 +758,38 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
                 className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
               >
                 {isSubmitting ? '提交中...' : '确认出价'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Bid Dialog */}
+      {isCancelDialogOpen && cancelTarget && (
+        <div className="fixed inset-0 bg-black/40 z-[120] flex items-center justify-center px-6" onClick={() => setIsCancelDialogOpen(false)}>
+          <div className="bg-white rounded-xl w-full max-w-sm p-4" onClick={e => e.stopPropagation()}>
+            <div className="text-center mb-4">
+              <h3 className="text-base font-bold text-slate-800">确认取消出价</h3>
+              <p className="text-[11px] text-slate-400 mt-1">取消后将保留记录并标记为已取消</p>
+            </div>
+            <div className="space-y-2 text-sm text-slate-600">
+              <div className="flex justify-between"><span>出价时间</span><span className="text-slate-800 font-bold">{cancelTarget.time}</span></div>
+              <div className="flex justify-between"><span>出价价格</span><span className="text-slate-800 font-bold">¥{cancelTarget.price.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>出价数量</span><span className="text-slate-800 font-bold">{cancelTarget.quantity}头</span></div>
+            </div>
+            <div className="mt-5 flex gap-3">
+              <button
+                onClick={() => setIsCancelDialogOpen(false)}
+                className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-custom font-bold"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleCancelBid}
+                disabled={isCancelSubmitting || !isBidding}
+                className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
+              >
+                {isCancelSubmitting ? '处理中...' : '确认取消'}
               </button>
             </div>
           </div>

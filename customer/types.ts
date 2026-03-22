@@ -217,6 +217,7 @@ export interface BidRecordItem {
   quantity: number;
   time: string;
   isCurrentCustomer?: boolean;
+  isCancelled?: boolean;
 }
 
 /** 场点数据 */

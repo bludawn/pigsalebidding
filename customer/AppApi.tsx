@@ -264,6 +264,11 @@ export function submitBid(params: {
   return request<{ success: boolean; bidId: string }>('/v1/weixincustomer/submitBid', params);
 }
 
+/** 取消出价明细 */
+export function cancelBidRecord(params: { auctionId: string; bidRecordId: string }): Promise<ApiResponse<{ success: boolean }>> {
+  return request<{ success: boolean }>('/v1/weixincustomer/cancelBidRecord', params);
+}
+
 /** 用户信息 */
 export interface UserInfo {
   userId: string;
