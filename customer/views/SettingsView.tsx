@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { UserSettingsProfile, VerificationStatus } from '../types';
 import {
+  clearAuthToken,
   getUserSettings,
   logout,
   saveUserProfile,
@@ -11,6 +12,7 @@ import {
 
 interface SettingsViewProps {
   onBack: () => void;
+  onLogout: () => void;
 }
 
 const statusMeta: Record<VerificationStatus, { label: string; badgeClass: string }> = {
@@ -19,7 +21,7 @@ const statusMeta: Record<VerificationStatus, { label: string; badgeClass: string
   UNVERIFIED: { label: '未认证', badgeClass: 'bg-slate-100 text-slate-500' },
 };
 
-const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
+const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onLogout }) => {
   const [profile, setProfile] = useState<UserSettingsProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [companySubmitting, setCompanySubmitting] = useState(false);
@@ -199,11 +201,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
       const res = await logout();
       if (res.errcode === 0) {
         alert('已退出登录');
-        onBack();
       }
     } catch (error) {
       console.error('Failed to logout:', error);
     } finally {
+      clearAuthToken();
+      onLogout();
       setLogoutLoading(false);
     }
   };

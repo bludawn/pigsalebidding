@@ -16,7 +16,7 @@ import OrderListView from './views/OrderListView';
 import OrderDetailView from './views/OrderDetailView';
 import SettingsView from './views/SettingsView';
 import LoginView from './views/LoginView';
-import { getAuthToken, getFarmList, getProductTags } from './AppApi';
+import { clearAuthToken, getAuthToken, getFarmList, getProductTags } from './AppApi';
 
 /** 全局数据上下文 */
 interface AppContextType {
@@ -54,9 +54,17 @@ const App: React.FC = () => {
   const [productTags, setProductTags] = useState<ProductTagItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 应用启动时获取基础数据
+  // 登录后获取基础数据
   useEffect(() => {
+    if (!isAuthed) {
+      setFarms([]);
+      setProductTags([]);
+      setLoading(false);
+      return;
+    }
+
     const fetchBaseData = async () => {
+      setLoading(true);
       try {
         const [farmRes, tagRes] = await Promise.all([
           getFarmList(),
@@ -78,7 +86,7 @@ const App: React.FC = () => {
     };
     
     fetchBaseData();
-  }, []);
+  }, [isAuthed]);
 
   useEffect(() => {
     if (!isAuthed) {
@@ -122,6 +130,18 @@ const App: React.FC = () => {
     setRouteParams(params);
   };
 
+  const handleLogout = () => {
+    clearAuthToken();
+    setIsAuthed(false);
+    setActiveTab('home');
+    setCurrentRoute('login');
+    setRouteParams(null);
+    setAuctionDetailParams(null);
+    setAuctionMaintenanceParams(null);
+    setOrderListParams(null);
+    setOrderDetailParams(null);
+  };
+
   useEffect(() => {
     if (currentRoute === 'tabs') {
       const savedScrollTop = scrollPositionsRef.current[`tabs-${activeTab}`];
@@ -133,85 +153,103 @@ const App: React.FC = () => {
     }
   }, [currentRoute, activeTab]);
 
-  const renderTabContent = () => (
-    <div className={`flex-1 ${currentRoute === 'tabs' ? '' : 'hidden'}`}>
-      <div className={activeTab === 'home' ? 'block' : 'hidden'}>
-        <HomeView onNavigate={navigate} />
-      </div>
-      <div className={activeTab === 'message' ? 'block' : 'hidden'}>
-        <MessageView onNavigate={navigate} />
-      </div>
-      <div className={activeTab === 'profile' ? 'block' : 'hidden'}>
-        <ProfileView onNavigate={navigate} />
-      </div>
-    </div>
-  );
+  const renderTabContent = () => {
+    if (!isAuthed) return null;
 
-  const renderSubPage = () => (
-    <div className={`absolute inset-0 bg-white ${currentRoute === 'tabs' ? 'hidden' : ''}`}>
-      {currentRoute === 'login' && (
-        <LoginView
-          onLoginSuccess={() => {
-            setIsAuthed(true);
-            setActiveTab('home');
-            setCurrentRoute('tabs');
-          }}
-        />
-      )}
-      {auctionDetailParams && (
-        <div className={currentRoute === 'auction-detail' ? 'block h-full' : 'hidden h-full'}>
-          <AuctionDetail
-            params={auctionDetailParams}
-            onBack={() => setCurrentRoute(auctionDetailBackRoute)}
-            onNavigate={navigate}
-            refreshKey={auctionDetailRefreshKey}
-          />
+    return (
+      <div className={`flex-1 ${currentRoute === 'tabs' ? '' : 'hidden'}`}>
+        <div className={activeTab === 'home' ? 'block' : 'hidden'}>
+          <HomeView onNavigate={navigate} />
         </div>
-      )}
-      {currentRoute === 'free-quote' && <FreeQuote onBack={() => setCurrentRoute('tabs')} />}
-      {currentRoute === 'msg-list' && (
-        <MessageList params={routeParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
-      )}
-      {currentRoute === 'payment-detail' && <PaymentDetail onBack={() => setCurrentRoute('msg-list')} />}
-      {currentRoute === 'match-detail' && <MatchDetail onBack={() => setCurrentRoute('msg-list')} />}
-      <div className={currentRoute === 'my-bids' ? 'block h-full' : 'hidden h-full'}>
-        <MyBidsView onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+        <div className={activeTab === 'message' ? 'block' : 'hidden'}>
+          <MessageView onNavigate={navigate} />
+        </div>
+        <div className={activeTab === 'profile' ? 'block' : 'hidden'}>
+          <ProfileView onNavigate={navigate} />
+        </div>
       </div>
-      {orderListParams && (
-        <div className={currentRoute === 'order-list' ? 'block h-full' : 'hidden h-full'}>
-          <OrderListView params={orderListParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
-        </div>
-      )}
-      {orderDetailParams && currentRoute === 'order-detail' && (
-        <OrderDetailView params={orderDetailParams} onBack={() => setCurrentRoute(orderDetailBackRoute)} />
-      )}
-      {auctionMaintenanceParams && (
-        <div className={currentRoute === 'auction-maintenance' ? 'block h-full' : 'hidden h-full'}>
-          <AuctionMaintenanceView
-            key={auctionMaintenanceKey}
-            auctionId={auctionMaintenanceParams.auctionId}
-            onBack={() => {
-              setAuctionDetailRefreshKey(prev => prev + 1);
-              setCurrentRoute('auction-detail');
+    );
+  };
+
+  const renderSubPage = () => {
+    if (!isAuthed) {
+      return (
+        <div className="absolute inset-0 bg-white">
+          <LoginView
+            onLoginSuccess={() => {
+              setIsAuthed(true);
+              setActiveTab('home');
+              setCurrentRoute('tabs');
             }}
-            onSaved={() => {
-              setAuctionDetailRefreshKey(prev => prev + 1);
-              setCurrentRoute('auction-detail');
-            }}
-            onNavigate={navigate}
           />
         </div>
-      )}
-      {currentRoute === 'address-management' && (
-        <AddressManagementView
-          onBack={() => setCurrentRoute(addressBackRoute)}
-          selectMode={routeParams?.mode === 'select'}
-          onSelect={routeParams?.onSelect}
-        />
-      )}
-      {currentRoute === 'settings' && <SettingsView onBack={() => setCurrentRoute('tabs')} />}
-    </div>
-  );
+      );
+    }
+
+    return (
+      <div className={`absolute inset-0 bg-white ${currentRoute === 'tabs' ? 'hidden' : ''}`}>
+        {auctionDetailParams && (
+          <div className={currentRoute === 'auction-detail' ? 'block h-full' : 'hidden h-full'}>
+            <AuctionDetail
+              params={auctionDetailParams}
+              onBack={() => setCurrentRoute(auctionDetailBackRoute)}
+              onNavigate={navigate}
+              refreshKey={auctionDetailRefreshKey}
+            />
+          </div>
+        )}
+        {currentRoute === 'free-quote' && <FreeQuote onBack={() => setCurrentRoute('tabs')} />}
+        {currentRoute === 'msg-list' && (
+          <MessageList params={routeParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+        )}
+        {currentRoute === 'payment-detail' && <PaymentDetail onBack={() => setCurrentRoute('msg-list')} />}
+        {currentRoute === 'match-detail' && <MatchDetail onBack={() => setCurrentRoute('msg-list')} />}
+        {currentRoute === 'my-bids' && (
+          <div className="block h-full">
+            <MyBidsView onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+          </div>
+        )}
+        {orderListParams && currentRoute === 'order-list' && (
+          <div className="block h-full">
+            <OrderListView params={orderListParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+          </div>
+        )}
+        {orderDetailParams && currentRoute === 'order-detail' && (
+          <OrderDetailView params={orderDetailParams} onBack={() => setCurrentRoute(orderDetailBackRoute)} />
+        )}
+        {auctionMaintenanceParams && currentRoute === 'auction-maintenance' && (
+          <div className="block h-full">
+            <AuctionMaintenanceView
+              key={auctionMaintenanceKey}
+              auctionId={auctionMaintenanceParams.auctionId}
+              onBack={() => {
+                setAuctionDetailRefreshKey(prev => prev + 1);
+                setCurrentRoute('auction-detail');
+              }}
+              onSaved={() => {
+                setAuctionDetailRefreshKey(prev => prev + 1);
+                setCurrentRoute('auction-detail');
+              }}
+              onNavigate={navigate}
+            />
+          </div>
+        )}
+        {currentRoute === 'address-management' && (
+          <AddressManagementView
+            onBack={() => setCurrentRoute(addressBackRoute)}
+            selectMode={routeParams?.mode === 'select'}
+            onSelect={routeParams?.onSelect}
+          />
+        )}
+        {currentRoute === 'settings' && (
+          <SettingsView
+            onBack={() => setCurrentRoute('tabs')}
+            onLogout={handleLogout}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <AppContext.Provider value={{ farms, productTags, loading }}>
