@@ -91,6 +91,16 @@ public class PigResourceController extends BaseController
     }
 
     /**
+     * 获取生猪资源编码
+     */
+    @PreAuthorize("@ss.hasPermi('pig:pigResource:add')")
+    @GetMapping("/nextCode")
+    public AjaxResult nextCode()
+    {
+        return success(pigResourceService.generatePigResourceCode());
+    }
+
+    /**
      * 新增生猪资源
      */
     @PreAuthorize("@ss.hasPermi('pig:pigResource:add')")

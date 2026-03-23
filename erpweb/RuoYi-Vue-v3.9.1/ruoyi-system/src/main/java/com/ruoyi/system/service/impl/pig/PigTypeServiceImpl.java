@@ -36,6 +36,7 @@ public class PigTypeServiceImpl implements IPigTypeService
     @Override
     public int insertPigType(PigType pigType)
     {
+        pigType.setPigCode(generatePigTypeCode());
         return pigTypeMapper.insertPigType(pigType);
     }
 
@@ -55,6 +56,14 @@ public class PigTypeServiceImpl implements IPigTypeService
     public int deletePigTypeByIds(Long[] ids)
     {
         return pigTypeMapper.deletePigTypeByIds(ids);
+    }
+
+    @Override
+    public String generatePigTypeCode()
+    {
+        Long maxId = pigTypeMapper.selectMaxId();
+        long nextId = maxId == null ? 1L : maxId + 1L;
+        return "PT-" + nextId;
     }
 
     @Override

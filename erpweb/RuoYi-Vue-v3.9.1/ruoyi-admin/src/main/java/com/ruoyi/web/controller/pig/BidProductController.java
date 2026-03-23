@@ -91,6 +91,16 @@ public class BidProductController extends BaseController
     }
 
     /**
+     * 获取竞价商品编码
+     */
+    @PreAuthorize("@ss.hasPermi('pig:bidProduct:add')")
+    @GetMapping("/nextCode")
+    public AjaxResult nextCode()
+    {
+        return success(bidProductService.generateBidProductCode());
+    }
+
+    /**
      * 新增竞价商品
      */
     @PreAuthorize("@ss.hasPermi('pig:bidProduct:add')")

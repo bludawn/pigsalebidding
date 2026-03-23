@@ -168,6 +168,9 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          if (this.form.isRealName !== undefined && this.form.isRealName !== null && this.form.isRealName !== "") {
+            this.form.isRealName = Number(this.form.isRealName)
+          }
           if (this.form.id != undefined) {
             updateUserExt(this.form).then(() => {
               this.$modal.msgSuccess("修改成功")

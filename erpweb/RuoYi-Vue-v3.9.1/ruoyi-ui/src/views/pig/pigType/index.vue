@@ -37,6 +37,28 @@
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
       <el-table-column label="生猪名称" align="center" prop="pigName" v-if="columns.pigName.visible" :show-overflow-tooltip="true" />
       <el-table-column label="生猪编码" align="center" prop="pigCode" v-if="columns.pigCode.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="生猪图片" align="center" prop="pigImages" v-if="columns.pigImages.visible">
+        <template slot-scope="scope">
+          <el-image
+            v-if="getFirstUrl(scope.row.pigImages)"
+            :src="getFirstUrl(scope.row.pigImages)"
+            :preview-src-list="getUrlList(scope.row.pigImages)"
+            style="width: 40px; height: 40px"
+            fit="cover"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column label="生猪视频" align="center" prop="pigVideos" v-if="columns.pigVideos.visible">
+        <template slot-scope="scope">
+          <video
+            v-if="getFirstUrl(scope.row.pigVideos)"
+            :src="getFirstUrl(scope.row.pigVideos)"
+            style="width: 120px; height: 80px"
+            controls
+            preload="metadata"
+          ></video>
+        </template>
+      </el-table-column>
       <el-table-column label="体重区间" align="center" prop="weightRange" v-if="columns.weightRange.visible" />
       <el-table-column label="食料品质" align="center" prop="feedQuality" v-if="columns.feedQuality.visible" />
       <el-table-column label="防疫状态" align="center" prop="epidemicStatus" v-if="columns.epidemicStatus.visible" />
@@ -147,6 +169,8 @@ export default {
         id: { label: '编号', visible: true },
         pigName: { label: '生猪名称', visible: true },
         pigCode: { label: '生猪编码', visible: true },
+        pigImages: { label: '生猪图片', visible: true },
+        pigVideos: { label: '生猪视频', visible: true },
         weightRange: { label: '体重区间', visible: true },
         feedQuality: { label: '食料品质', visible: true },
         epidemicStatus: { label: '防疫状态', visible: true },
@@ -168,6 +192,14 @@ export default {
     this.getList()
   },
   methods: {
+    getUrlList(value) {
+      if (!value) return []
+      return value.split(',').map(item => item.trim()).filter(Boolean)
+    },
+    getFirstUrl(value) {
+      const list = this.getUrlList(value)
+      return list.length ? list[0] : ""
+    },
     getList() {
       this.loading = true
       listPigType(this.queryParams).then(response => {

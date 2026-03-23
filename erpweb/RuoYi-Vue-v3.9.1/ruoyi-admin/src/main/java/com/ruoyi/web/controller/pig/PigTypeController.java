@@ -91,6 +91,16 @@ public class PigTypeController extends BaseController
     }
 
     /**
+     * 获取生猪类型编码
+     */
+    @PreAuthorize("@ss.hasPermi('pig:pigType:add')")
+    @GetMapping("/nextCode")
+    public AjaxResult nextCode()
+    {
+        return success(pigTypeService.generatePigTypeCode());
+    }
+
+    /**
      * 新增生猪类型
      */
     @PreAuthorize("@ss.hasPermi('pig:pigType:add')")

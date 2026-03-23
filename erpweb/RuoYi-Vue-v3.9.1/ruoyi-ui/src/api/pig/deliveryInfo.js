@@ -17,6 +17,14 @@ export function getDeliveryInfo(id) {
   })
 }
 
+// 获取运输编码
+export function getNextTransportCode() {
+  return request({
+    url: '/pig/deliveryInfo/nextCode',
+    method: 'get'
+  })
+}
+
 // 新增送货信息
 export function addDeliveryInfo(data) {
   return request({

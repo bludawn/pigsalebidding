@@ -17,6 +17,18 @@ public class DeliveryInfo extends BaseEntity
     /** 主键 */
     private Long id;
 
+    /** 运输编码 */
+    @Excel(name = "运输编码")
+    private String transportCode;
+
+    /** 当前位置经度 */
+    @Excel(name = "当前位置经度")
+    private String currentLongitude;
+
+    /** 当前位置纬度 */
+    @Excel(name = "当前位置纬度")
+    private String currentLatitude;
+
     /** 送货人姓名 */
     @Excel(name = "送货人姓名")
     private String delivererName;
@@ -53,6 +65,36 @@ public class DeliveryInfo extends BaseEntity
     public Long getId()
     {
         return id;
+    }
+
+    public void setTransportCode(String transportCode)
+    {
+        this.transportCode = transportCode;
+    }
+
+    public String getTransportCode()
+    {
+        return transportCode;
+    }
+
+    public void setCurrentLongitude(String currentLongitude)
+    {
+        this.currentLongitude = currentLongitude;
+    }
+
+    public String getCurrentLongitude()
+    {
+        return currentLongitude;
+    }
+
+    public void setCurrentLatitude(String currentLatitude)
+    {
+        this.currentLatitude = currentLatitude;
+    }
+
+    public String getCurrentLatitude()
+    {
+        return currentLatitude;
     }
 
     public void setDelivererName(String delivererName)
@@ -130,6 +172,9 @@ public class DeliveryInfo extends BaseEntity
     {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
             .append("id", getId())
+            .append("transportCode", getTransportCode())
+            .append("currentLongitude", getCurrentLongitude())
+            .append("currentLatitude", getCurrentLatitude())
             .append("delivererName", getDelivererName())
             .append("delivererPhone", getDelivererPhone())
             .append("vehicleNo", getVehicleNo())

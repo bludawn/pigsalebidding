@@ -58,6 +58,14 @@ public class BidProductServiceImpl implements IBidProductService
     }
 
     @Override
+    public String generateBidProductCode()
+    {
+        Long maxId = bidProductMapper.selectMaxId();
+        long nextId = maxId == null ? 1L : maxId + 1L;
+        return "GD-" + nextId;
+    }
+
+    @Override
     public String importBidProduct(List<BidProduct> bidProductList, Boolean updateSupport, String operName)
     {
         if (StringUtils.isNull(bidProductList) || bidProductList.size() == 0)

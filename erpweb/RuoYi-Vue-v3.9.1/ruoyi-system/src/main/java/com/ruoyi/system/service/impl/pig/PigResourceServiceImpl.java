@@ -36,6 +36,7 @@ public class PigResourceServiceImpl implements IPigResourceService
     @Override
     public int insertPigResource(PigResource pigResource)
     {
+        pigResource.setResourceCode(generatePigResourceCode());
         return pigResourceMapper.insertPigResource(pigResource);
     }
 
@@ -55,6 +56,14 @@ public class PigResourceServiceImpl implements IPigResourceService
     public int deletePigResourceByIds(Long[] ids)
     {
         return pigResourceMapper.deletePigResourceByIds(ids);
+    }
+
+    @Override
+    public String generatePigResourceCode()
+    {
+        Long maxId = pigResourceMapper.selectMaxId();
+        long nextId = maxId == null ? 1L : maxId + 1L;
+        return "RS-" + nextId;
     }
 
     @Override

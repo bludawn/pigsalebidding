@@ -57,4 +57,11 @@ public interface BidProductMapper
      * @return 结果
      */
     public int deleteBidProductByIds(Long[] ids);
+
+    /**
+     * 获取最大主键
+     *
+     * @return 最大主键
+     */
+    public Long selectMaxId();
 }

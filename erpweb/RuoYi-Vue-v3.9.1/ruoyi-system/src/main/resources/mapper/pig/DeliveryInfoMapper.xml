@@ -6,6 +6,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <resultMap type="DeliveryInfo" id="DeliveryInfoResult">
         <id property="id" column="f_id" />
+        <result property="transportCode" column="f_transportCode" />
+        <result property="currentLongitude" column="f_currentLongitude" />
+        <result property="currentLatitude" column="f_currentLatitude" />
         <result property="delivererName" column="f_delivererName" />
         <result property="delivererPhone" column="f_delivererPhone" />
         <result property="vehicleNo" column="f_vehicleNo" />
@@ -20,7 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectDeliveryInfoVo">
-        select f_id, f_delivererName, f_delivererPhone, f_vehicleNo, f_vehicleType, f_loadCount, f_deliveryStatus, f_remark, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_transportCode, f_currentLongitude, f_currentLatitude, f_delivererName, f_delivererPhone, f_vehicleNo, f_vehicleType, f_loadCount, f_deliveryStatus, f_remark, f_creator, f_createTime, f_updator, f_updateTime
         from t_deliveryInfo
     </sql>
 
@@ -29,6 +32,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <where>
             <if test="id != null">
                 AND f_id = #{id}
+            </if>
+            <if test="transportCode != null and transportCode != ''">
+                AND f_transportCode like concat('%', #{transportCode}, '%')
             </if>
             <if test="delivererName != null and delivererName != ''">
                 AND f_delivererName like concat('%', #{delivererName}, '%')
@@ -62,6 +68,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <insert id="insertDeliveryInfo" parameterType="DeliveryInfo" useGeneratedKeys="true" keyProperty="id">
         insert into t_deliveryInfo(
             <if test="id != null and id != 0">f_id,</if>
+<if test="transportCode != null and transportCode != ''">f_transportCode,</if>
+<if test="currentLongitude != null and currentLongitude != ''">f_currentLongitude,</if>
+<if test="currentLatitude != null and currentLatitude != ''">f_currentLatitude,</if>
 <if test="delivererName != null and delivererName != ''">f_delivererName,</if>
 <if test="delivererPhone != null and delivererPhone != ''">f_delivererPhone,</if>
 <if test="vehicleNo != null and vehicleNo != ''">f_vehicleNo,</if>
@@ -73,6 +82,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 f_createTime
         ) values (
             <if test="id != null and id != 0">#{id},</if>
+<if test="transportCode != null and transportCode != ''">#{transportCode},</if>
+<if test="currentLongitude != null and currentLongitude != ''">#{currentLongitude},</if>
+<if test="currentLatitude != null and currentLatitude != ''">#{currentLatitude},</if>
 <if test="delivererName != null and delivererName != ''">#{delivererName},</if>
 <if test="delivererPhone != null and delivererPhone != ''">#{delivererPhone},</if>
 <if test="vehicleNo != null and vehicleNo != ''">#{vehicleNo},</if>
@@ -88,6 +100,9 @@ sysdate()
     <update id="updateDeliveryInfo" parameterType="DeliveryInfo">
         update t_deliveryInfo
         <set>
+            <if test="transportCode != null and transportCode != ''">f_transportCode = #{transportCode},</if>
+            <if test="currentLongitude != null and currentLongitude != ''">f_currentLongitude = #{currentLongitude},</if>
+            <if test="currentLatitude != null and currentLatitude != ''">f_currentLatitude = #{currentLatitude},</if>
             <if test="delivererName != null and delivererName != ''">f_delivererName = #{delivererName},</if>
             <if test="delivererPhone != null and delivererPhone != ''">f_delivererPhone = #{delivererPhone},</if>
             <if test="vehicleNo != null and vehicleNo != ''">f_vehicleNo = #{vehicleNo},</if>
@@ -111,5 +126,9 @@ sysdate()
             #{id}
         </foreach>
     </delete>
+
+    <select id="selectMaxId" resultType="java.lang.Long">
+        select max(f_id) from t_deliveryInfo
+    </select>
 
 </mapper>

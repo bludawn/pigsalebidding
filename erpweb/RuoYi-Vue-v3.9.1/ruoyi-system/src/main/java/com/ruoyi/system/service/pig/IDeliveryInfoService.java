@@ -16,4 +16,11 @@ public interface IDeliveryInfoService
     public int updateDeliveryInfo(DeliveryInfo deliveryInfo);
     public int deleteDeliveryInfoById(Long id);
     public int deleteDeliveryInfoByIds(Long[] ids);
+
+    /**
+     * 生成运输编码
+     *
+     * @return 运输编码
+     */
+    public String generateTransportCode();
 }

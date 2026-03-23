@@ -70,6 +70,16 @@ public class DeliveryInfoController extends BaseController
     }
 
     /**
+     * 获取运输编码
+     */
+    @PreAuthorize("@ss.hasPermi('pig:deliveryInfo:add')")
+    @GetMapping("/nextCode")
+    public AjaxResult nextCode()
+    {
+        return success(deliveryInfoService.generateTransportCode());
+    }
+
+    /**
      * 新增送货信息
      */
     @PreAuthorize("@ss.hasPermi('pig:deliveryInfo:add')")

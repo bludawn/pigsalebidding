@@ -70,6 +70,16 @@ public class PigOrderController extends BaseController
     }
 
     /**
+     * 获取订单编号
+     */
+    @PreAuthorize("@ss.hasPermi('pig:pigOrder:add')")
+    @GetMapping("/nextCode")
+    public AjaxResult nextCode()
+    {
+        return success(pigOrderService.generateOrderNo());
+    }
+
+    /**
      * 新增订单
      */
     @PreAuthorize("@ss.hasPermi('pig:pigOrder:add')")

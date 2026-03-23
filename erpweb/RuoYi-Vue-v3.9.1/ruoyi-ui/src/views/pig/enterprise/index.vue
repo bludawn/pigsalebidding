@@ -39,6 +39,17 @@
       <el-table-column label="法定代表人" align="center" prop="legalPerson" v-if="columns.legalPerson.visible" />
       <el-table-column label="联系人" align="center" prop="contactPerson" v-if="columns.contactPerson.visible" />
       <el-table-column label="联系电话" align="center" prop="contactPhone" v-if="columns.contactPhone.visible" />
+      <el-table-column label="营业执照" align="center" prop="businessLicenseUrl" v-if="columns.businessLicenseUrl.visible">
+        <template slot-scope="scope">
+          <el-image
+            v-if="getFirstUrl(scope.row.businessLicenseUrl)"
+            :src="getFirstUrl(scope.row.businessLicenseUrl)"
+            :preview-src-list="getUrlList(scope.row.businessLicenseUrl)"
+            style="width: 40px; height: 40px"
+            fit="cover"
+          />
+        </template>
+      </el-table-column>
       <el-table-column label="是否认证" align="center" prop="isVerified" v-if="columns.isVerified.visible">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isVerified" />
@@ -158,6 +169,7 @@ export default {
         legalPerson: { label: '法定代表人', visible: true },
         contactPerson: { label: '联系人', visible: true },
         contactPhone: { label: '联系电话', visible: true },
+        businessLicenseUrl: { label: '营业执照', visible: true },
         isVerified: { label: '是否认证', visible: true },
         canBid: { label: '是否可竞价', visible: true },
         hasDeposit: { label: '是否缴纳保证金', visible: true },
@@ -172,6 +184,14 @@ export default {
     this.getList()
   },
   methods: {
+    getUrlList(value) {
+      if (!value) return []
+      return value.split(',').map(item => item.trim()).filter(Boolean)
+    },
+    getFirstUrl(value) {
+      const list = this.getUrlList(value)
+      return list.length ? list[0] : ""
+    },
     getList() {
       this.loading = true
       listEnterprise(this.queryParams).then(response => {
@@ -233,6 +253,12 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          const boolFields = ["isVerified", "canBid", "hasDeposit"]
+          boolFields.forEach(field => {
+            if (this.form[field] !== undefined && this.form[field] !== null && this.form[field] !== "") {
+              this.form[field] = Number(this.form[field])
+            }
+          })
           if (this.form.id != undefined) {
             updateEnterprise(this.form).then(() => {
               this.$modal.msgSuccess("修改成功")

@@ -37,7 +37,11 @@
       <el-table-column label="用户id" align="center" prop="userId" v-if="columns.userId.visible" />
       <el-table-column label="联系人姓名" align="center" prop="contactName" v-if="columns.contactName.visible" />
       <el-table-column label="联系人电话" align="center" prop="contactPhone" v-if="columns.contactPhone.visible" />
-      <el-table-column label="地址code" align="center" prop="addressCode" v-if="columns.addressCode.visible" />
+      <el-table-column label="地区" align="center" prop="addressCode" v-if="columns.addressCode.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ formatAddressCode(scope.row.addressCode) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="详细地址" align="center" prop="detailAddress" v-if="columns.detailAddress.visible" :show-overflow-tooltip="true" />
       <el-table-column label="默认地址" align="center" prop="isDefault" v-if="columns.isDefault.visible">
         <template slot-scope="scope">
@@ -71,8 +75,15 @@
         <el-form-item label="联系人电话" prop="contactPhone">
           <el-input v-model="form.contactPhone" placeholder="请输入联系人电话" />
         </el-form-item>
-        <el-form-item label="地址code" prop="addressCode">
-          <el-input v-model="form.addressCode" placeholder="请输入地址code" />
+        <el-form-item label="地区" prop="addressCodeList">
+          <el-cascader
+            v-model="form.addressCodeList"
+            :options="pcasOptions"
+            :props="pcasProps"
+            clearable
+            filterable
+            placeholder="请选择地区"
+          />
         </el-form-item>
         <el-form-item label="详细地址" prop="detailAddress">
           <el-input v-model="form.detailAddress" placeholder="请输入详细地址" />
@@ -96,6 +107,7 @@
 
 <script>
 import { listAddress, getAddress, delAddress, addAddress, updateAddress } from "@/api/pig/address"
+import pcasData from "@/assets/pcas-code.json"
 
 export default {
   name: "Address",
@@ -122,18 +134,56 @@ export default {
         userId: { label: '用户id', visible: true },
         contactName: { label: '联系人姓名', visible: true },
         contactPhone: { label: '联系人电话', visible: true },
-        addressCode: { label: '地址code', visible: true },
+        addressCode: { label: '地区', visible: true },
         detailAddress: { label: '详细地址', visible: true },
         isDefault: { label: '是否默认', visible: true },
         createTime: { label: '创建时间', visible: true }
+      },
+      pcasOptions: [],
+      pcasCodeMap: {},
+      pcasProps: {
+        value: 'value',
+        label: 'label',
+        children: 'children'
       },
       form: {}
     }
   },
   created() {
+    this.initPcasOptions()
     this.getList()
   },
   methods: {
+    initPcasOptions() {
+      const rawList = Object.keys(pcasData)
+        .sort((a, b) => Number(a) - Number(b))
+        .map(key => pcasData[key])
+      this.pcasCodeMap = {}
+      this.pcasOptions = this.normalizePcasTree(rawList, [], [])
+    },
+    normalizePcasTree(list, parentCodes, parentLabels) {
+      return list.map(item => {
+        const currentCodes = [...parentCodes, item.code]
+        const currentLabels = [...parentLabels, item.name]
+        this.pcasCodeMap[item.code] = {
+          codes: currentCodes,
+          labels: currentLabels
+        }
+        const children = item.children ? this.normalizePcasTree(item.children, currentCodes, currentLabels) : undefined
+        return {
+          value: item.code,
+          label: item.name,
+          children: children
+        }
+      })
+    },
+    getCodePath(code) {
+      return this.pcasCodeMap[code] ? this.pcasCodeMap[code].codes : []
+    },
+    formatAddressCode(code) {
+      if (!code) return ""
+      return this.pcasCodeMap[code] ? this.pcasCodeMap[code].labels.join("/") : code
+    },
     getList() {
       this.loading = true
       listAddress(this.queryParams).then(response => {
@@ -153,6 +203,7 @@ export default {
         contactName: undefined,
         contactPhone: undefined,
         addressCode: undefined,
+        addressCodeList: [],
         detailAddress: undefined,
         isDefault: undefined,
         remark: undefined
@@ -182,6 +233,7 @@ export default {
       const id = row.id || this.ids
       getAddress(id).then(response => {
         this.form = response.data
+        this.form.addressCodeList = this.getCodePath(this.form.addressCode)
         this.open = true
         this.title = "修改地址管理"
       })
@@ -189,6 +241,14 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          if (this.form.addressCodeList && this.form.addressCodeList.length) {
+            this.form.addressCode = this.form.addressCodeList[this.form.addressCodeList.length - 1]
+          } else {
+            this.form.addressCode = undefined
+          }
+          if (this.form.isDefault !== undefined && this.form.isDefault !== null && this.form.isDefault !== "") {
+            this.form.isDefault = Number(this.form.isDefault)
+          }
           if (this.form.id != undefined) {
             updateAddress(this.form).then(() => {
               this.$modal.msgSuccess("修改成功")

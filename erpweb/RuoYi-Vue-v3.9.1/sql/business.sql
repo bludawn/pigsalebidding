@@ -151,6 +151,7 @@ CREATE TABLE t_order (
   f_orderNo varchar(100) DEFAULT '' COMMENT '订单编号',
   f_orderStatus varchar(32) DEFAULT NULL COMMENT '订单状态',
   f_orderSource varchar(32) DEFAULT NULL COMMENT '订单来源',
+  f_enterpriseId bigint(20) DEFAULT NULL COMMENT '归属企业',
   f_bidProductId bigint(20) DEFAULT NULL COMMENT '竞价商品id',
   f_userBidId bigint(20) DEFAULT NULL COMMENT '用户出价id',
   f_addressId bigint(20) DEFAULT NULL COMMENT '收货地址id',
@@ -174,6 +175,9 @@ CREATE TABLE t_order (
 DROP TABLE IF EXISTS t_deliveryInfo;
 CREATE TABLE t_deliveryInfo (
   f_id bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  f_transportCode varchar(100) DEFAULT '' COMMENT '运输编码',
+  f_currentLongitude varchar(50) DEFAULT NULL COMMENT '当前位置经度',
+  f_currentLatitude varchar(50) DEFAULT NULL COMMENT '当前位置纬度',
   f_delivererName varchar(100) DEFAULT '' COMMENT '送货人姓名',
   f_delivererPhone varchar(50) DEFAULT NULL COMMENT '送货人电话',
   f_vehicleNo varchar(50) DEFAULT NULL COMMENT '车牌号',

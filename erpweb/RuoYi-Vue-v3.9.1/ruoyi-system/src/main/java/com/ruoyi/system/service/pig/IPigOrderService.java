@@ -16,4 +16,11 @@ public interface IPigOrderService
     public int updatePigOrder(PigOrder pigOrder);
     public int deletePigOrderById(Long id);
     public int deletePigOrderByIds(Long[] ids);
+
+    /**
+     * 生成订单编号
+     *
+     * @return 订单编号
+     */
+    public String generateOrderNo();
 }

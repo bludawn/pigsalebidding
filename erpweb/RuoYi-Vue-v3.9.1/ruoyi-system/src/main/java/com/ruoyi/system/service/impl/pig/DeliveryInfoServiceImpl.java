@@ -33,6 +33,7 @@ public class DeliveryInfoServiceImpl implements IDeliveryInfoService
     @Override
     public int insertDeliveryInfo(DeliveryInfo deliveryInfo)
     {
+        deliveryInfo.setTransportCode(generateTransportCode());
         return deliveryInfoMapper.insertDeliveryInfo(deliveryInfo);
     }
 
@@ -52,6 +53,14 @@ public class DeliveryInfoServiceImpl implements IDeliveryInfoService
     public int deleteDeliveryInfoByIds(Long[] ids)
     {
         return deliveryInfoMapper.deleteDeliveryInfoByIds(ids);
+    }
+
+    @Override
+    public String generateTransportCode()
+    {
+        Long maxId = deliveryInfoMapper.selectMaxId();
+        long nextId = maxId == null ? 1L : maxId + 1L;
+        return "TS-" + String.format("%012d", nextId);
     }
 
 }

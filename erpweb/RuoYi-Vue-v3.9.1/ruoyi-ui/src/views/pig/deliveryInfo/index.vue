@@ -1,6 +1,9 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="80px">
+      <el-form-item label="运输编码" prop="transportCode">
+        <el-input v-model="queryParams.transportCode" placeholder="请输入运输编码" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
+      </el-form-item>
       <el-form-item label="送货人" prop="delivererName">
         <el-input v-model="queryParams.delivererName" placeholder="请输入送货人姓名" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
       </el-form-item>
@@ -28,12 +31,24 @@
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['pig:deliveryInfo:export']">导出</el-button>
       </el-col>
+      <el-col :span="3">
+        <el-radio-group v-model="viewMode" size="mini">
+          <el-radio-button label="table">列表</el-radio-button>
+          <el-radio-button label="card">卡片</el-radio-button>
+        </el-radio-group>
+      </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="deliveryInfoList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="deliveryInfoList" v-if="viewMode === 'table'" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
+      <el-table-column label="运输编码" align="center" prop="transportCode" v-if="columns.transportCode.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="当前位置" align="center" v-if="columns.currentLocation.visible">
+        <template slot-scope="scope">
+          <span>{{ scope.row.currentLongitude || '-' }}, {{ scope.row.currentLatitude || '-' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="送货人姓名" align="center" prop="delivererName" v-if="columns.delivererName.visible" />
       <el-table-column label="送货人电话" align="center" prop="delivererPhone" v-if="columns.delivererPhone.visible" />
       <el-table-column label="车牌号" align="center" prop="vehicleNo" v-if="columns.vehicleNo.visible" />
@@ -44,9 +59,17 @@
           <dict-tag :options="dict.type.pig_delivery_status" :value="scope.row.deliveryStatus" />
         </template>
       </el-table-column>
+      <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="创建人" align="center" prop="createBy" v-if="columns.createBy.visible" />
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="更新人" align="center" prop="updateBy" v-if="columns.updateBy.visible" />
+      <el-table-column label="更新时间" align="center" prop="updateTime" v-if="columns.updateTime.visible" width="160">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.updateTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -57,11 +80,51 @@
       </el-table-column>
     </el-table>
 
+    <el-row v-if="viewMode === 'card'" :gutter="12">
+      <el-col :span="8" v-for="item in deliveryInfoList" :key="item.id" class="mb8">
+        <el-card shadow="hover">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-weight: 600;">{{ item.delivererName || ('送货#' + item.id) }}</span>
+            <dict-tag :options="dict.type.pig_delivery_status" :value="item.deliveryStatus" />
+          </div>
+          <div style="line-height: 1.8;">
+            <div>运输编码：{{ item.transportCode }}</div>
+            <div>送货人电话：{{ item.delivererPhone }}</div>
+            <div>车牌号：{{ item.vehicleNo }}</div>
+            <div>车辆类型：{{ item.vehicleType }}</div>
+            <div>装猪数量：{{ item.loadCount }}</div>
+            <div>当前位置：{{ item.currentLongitude || '-' }}, {{ item.currentLatitude || '-' }}</div>
+            <div>备注：{{ item.remark }}</div>
+          </div>
+          <div v-if="item.currentLongitude && item.currentLatitude" style="margin-top: 8px;">
+            <iframe
+              :src="getMapEmbedUrl(item.currentLatitude, item.currentLongitude)"
+              style="width: 100%; height: 180px; border: 0; border-radius: 4px;"
+            ></iframe>
+          </div>
+          <div style="margin-top: 8px; text-align: right;">
+            <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(item)" v-hasPermi="['pig:deliveryInfo:edit']">修改</el-button>
+            <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(item)" v-hasPermi="['pig:deliveryInfo:remove']">删除</el-button>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
 
     <!-- 添加或修改送货信息对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" label-width="120px">
+        <el-form-item label="运输编码" prop="transportCode">
+          <el-input v-model="form.transportCode" placeholder="自动生成" :disabled="true" />
+        </el-form-item>
+        <el-form-item label="当前位置" prop="currentLongitude">
+          <div style="display: flex; gap: 8px;">
+            <el-input v-model="form.currentLongitude" placeholder="经度" style="width: 45%;" />
+            <el-input v-model="form.currentLatitude" placeholder="纬度" style="width: 45%;" />
+            <el-button size="mini" @click="openMapPicker('deliveryForm')">地图选点</el-button>
+          </div>
+        </el-form-item>
         <el-form-item label="送货人姓名" prop="delivererName">
           <el-input v-model="form.delivererName" placeholder="请输入送货人姓名" />
         </el-form-item>
@@ -91,11 +154,21 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog title="地图选点" :visible.sync="mapDialogVisible" width="700px" append-to-body>
+      <div v-loading="mapLoading" style="height: 360px;">
+        <div :id="mapContainerId" style="height: 360px;"></div>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="mapDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmMapPicker">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { listDeliveryInfo, getDeliveryInfo, delDeliveryInfo, addDeliveryInfo, updateDeliveryInfo } from "@/api/pig/deliveryInfo"
+import { listDeliveryInfo, getDeliveryInfo, delDeliveryInfo, addDeliveryInfo, updateDeliveryInfo, getNextTransportCode } from "@/api/pig/deliveryInfo"
 
 export default {
   name: "DeliveryInfo",
@@ -111,22 +184,38 @@ export default {
       deliveryInfoList: [],
       title: "",
       open: false,
+      viewMode: "table",
       queryParams: {
         pageNum: 1,
         pageSize: 10,
+        transportCode: undefined,
         delivererName: undefined,
         deliveryStatus: undefined
       },
       columns: {
         id: { label: '编号', visible: true },
+        transportCode: { label: '运输编码', visible: true },
+        currentLocation: { label: '当前位置', visible: true },
         delivererName: { label: '送货人姓名', visible: true },
         delivererPhone: { label: '送货人电话', visible: true },
         vehicleNo: { label: '车牌号', visible: true },
         vehicleType: { label: '车辆类型', visible: true },
         loadCount: { label: '装猪数量', visible: true },
         deliveryStatus: { label: '送货状态', visible: true },
-        createTime: { label: '创建时间', visible: true }
+        remark: { label: '备注', visible: true },
+        createBy: { label: '创建人', visible: true },
+        createTime: { label: '创建时间', visible: true },
+        updateBy: { label: '更新人', visible: true },
+        updateTime: { label: '更新时间', visible: true }
       },
+      mapDialogVisible: false,
+      mapTarget: 'deliveryForm',
+      mapContainerId: 'delivery-map-picker',
+      mapInstance: null,
+      mapMarker: null,
+      mapLoading: false,
+      mapSelectedLat: undefined,
+      mapSelectedLng: undefined,
       form: {}
     }
   },
@@ -149,6 +238,9 @@ export default {
     reset() {
       this.form = {
         id: undefined,
+        transportCode: undefined,
+        currentLongitude: undefined,
+        currentLatitude: undefined,
         delivererName: undefined,
         delivererPhone: undefined,
         vehicleNo: undefined,
@@ -176,6 +268,9 @@ export default {
       this.reset()
       this.open = true
       this.title = "添加送货信息"
+      getNextTransportCode().then(response => {
+        this.$set(this.form, 'transportCode', response.data)
+      })
     },
     handleUpdate(row) {
       this.reset()
@@ -185,6 +280,95 @@ export default {
         this.open = true
         this.title = "修改送货信息"
       })
+    },
+    openMapPicker(target) {
+      this.mapTarget = target
+      this.mapDialogVisible = true
+      this.mapSelectedLng = this.form.currentLongitude ? Number(this.form.currentLongitude) : undefined
+      this.mapSelectedLat = this.form.currentLatitude ? Number(this.form.currentLatitude) : undefined
+      this.$nextTick(() => {
+        this.initMap()
+      })
+    },
+    ensureLeaflet() {
+      if (window.L) {
+        return Promise.resolve()
+      }
+      if (window._leafletLoading) {
+        return window._leafletLoading
+      }
+      window._leafletLoading = new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+        document.head.appendChild(link)
+        const script = document.createElement('script')
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('Leaflet 加载失败'))
+        document.body.appendChild(script)
+      })
+      return window._leafletLoading
+    },
+    initMap() {
+      this.mapLoading = true
+      const defaultLat = this.mapSelectedLat || 31.2304
+      const defaultLng = this.mapSelectedLng || 121.4737
+      this.ensureLeaflet().then(() => {
+        if (!this.mapInstance) {
+          this.mapInstance = window.L.map(this.mapContainerId).setView([defaultLat, defaultLng], 12)
+          window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+          }).addTo(this.mapInstance)
+          this.mapInstance.on('click', event => {
+            this.mapSelectedLat = Number(event.latlng.lat.toFixed(6))
+            this.mapSelectedLng = Number(event.latlng.lng.toFixed(6))
+            if (!this.mapMarker) {
+              this.mapMarker = window.L.marker([this.mapSelectedLat, this.mapSelectedLng]).addTo(this.mapInstance)
+            } else {
+              this.mapMarker.setLatLng([this.mapSelectedLat, this.mapSelectedLng])
+            }
+          })
+        }
+        this.mapInstance.setView([defaultLat, defaultLng], 12)
+        if (this.mapSelectedLat && this.mapSelectedLng) {
+          if (!this.mapMarker) {
+            this.mapMarker = window.L.marker([this.mapSelectedLat, this.mapSelectedLng]).addTo(this.mapInstance)
+          } else {
+            this.mapMarker.setLatLng([this.mapSelectedLat, this.mapSelectedLng])
+          }
+        }
+        this.$nextTick(() => {
+          this.mapInstance.invalidateSize()
+        })
+      }).catch(() => {
+        this.$modal.msgError('地图加载失败，请稍后重试')
+      }).finally(() => {
+        this.mapLoading = false
+      })
+    },
+    confirmMapPicker() {
+      if (!this.mapSelectedLat || !this.mapSelectedLng) {
+        this.$modal.msgWarning('请在地图上选择位置')
+        return
+      }
+      this.form.currentLongitude = String(this.mapSelectedLng)
+      this.form.currentLatitude = String(this.mapSelectedLat)
+      this.mapDialogVisible = false
+    },
+    getMapEmbedUrl(lat, lng) {
+      const latNum = Number(lat)
+      const lngNum = Number(lng)
+      if (!latNum || !lngNum) {
+        return ''
+      }
+      const delta = 0.02
+      const left = lngNum - delta
+      const right = lngNum + delta
+      const top = latNum + delta
+      const bottom = latNum - delta
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${latNum}%2C${lngNum}`
     },
     submitForm() {
       this.$refs["form"].validate(valid => {

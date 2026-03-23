@@ -17,4 +17,11 @@ public interface IPigResourceService
     public int deletePigResourceById(Long id);
     public int deletePigResourceByIds(Long[] ids);
     public String importPigResource(List<PigResource> pigResourceList, Boolean updateSupport, String operName);
+
+    /**
+     * 生成生猪资源编码
+     *
+     * @return 生猪资源编码
+     */
+    public String generatePigResourceCode();
 }

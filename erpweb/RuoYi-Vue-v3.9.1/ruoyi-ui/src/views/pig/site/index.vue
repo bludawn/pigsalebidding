@@ -37,7 +37,34 @@
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
       <el-table-column label="场点名称" align="center" prop="siteName" v-if="columns.siteName.visible" :show-overflow-tooltip="true" />
       <el-table-column label="场点电话" align="center" prop="sitePhone" v-if="columns.sitePhone.visible" />
+      <el-table-column label="场点地区" align="center" prop="siteAddressCode" v-if="columns.siteAddressCode.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ formatSiteAddressCode(scope.row.siteAddressCode) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="场点地址" align="center" prop="siteAddress" v-if="columns.siteAddress.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="场点图片" align="center" prop="siteImages" v-if="columns.siteImages.visible">
+        <template slot-scope="scope">
+          <el-image
+            v-if="getFirstUrl(scope.row.siteImages)"
+            :src="getFirstUrl(scope.row.siteImages)"
+            :preview-src-list="getUrlList(scope.row.siteImages)"
+            style="width: 40px; height: 40px"
+            fit="cover"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column label="场点视频" align="center" prop="siteVideos" v-if="columns.siteVideos.visible">
+        <template slot-scope="scope">
+          <video
+            v-if="getFirstUrl(scope.row.siteVideos)"
+            :src="getFirstUrl(scope.row.siteVideos)"
+            style="width: 120px; height: 80px"
+            controls
+            preload="metadata"
+          ></video>
+        </template>
+      </el-table-column>
       <el-table-column label="经纬度" align="center" prop="siteLocation" v-if="columns.siteLocation.visible" />
       <el-table-column label="所属企业" align="center" prop="enterpriseId" v-if="columns.enterpriseId.visible" />
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
@@ -64,11 +91,18 @@
         <el-form-item label="场点名称" prop="siteName">
           <el-input v-model="form.siteName" placeholder="请输入场点名称" />
         </el-form-item>
-        <el-form-item label="场点地址" prop="siteAddress">
-          <el-input v-model="form.siteAddress" placeholder="请输入场点地址" />
+        <el-form-item label="场点地区" prop="siteAddressCodeList">
+          <el-cascader
+            v-model="form.siteAddressCodeList"
+            :options="pcasOptions"
+            :props="pcasProps"
+            clearable
+            filterable
+            placeholder="请选择场点地区"
+          />
         </el-form-item>
-        <el-form-item label="地址code" prop="siteAddressCode">
-          <el-input v-model="form.siteAddressCode" placeholder="请输入地址code" />
+        <el-form-item label="场点地址" prop="siteAddress">
+          <el-input v-model="form.siteAddress" placeholder="请输入详细地址" />
         </el-form-item>
         <el-form-item label="经纬度" prop="siteLocation">
           <el-input v-model="form.siteLocation" placeholder="请输入经纬度坐标" />
@@ -119,6 +153,7 @@
 <script>
 import { listSite, getSite, delSite, addSite, updateSite } from "@/api/pig/site"
 import { getToken } from "@/utils/auth"
+import pcasData from "@/assets/pcas-code.json"
 
 export default {
   name: "Site",
@@ -143,10 +178,20 @@ export default {
         id: { label: '编号', visible: true },
         siteName: { label: '场点名称', visible: true },
         sitePhone: { label: '场点电话', visible: true },
+        siteAddressCode: { label: '场点地区', visible: true },
         siteAddress: { label: '场点地址', visible: true },
+        siteImages: { label: '场点图片', visible: true },
+        siteVideos: { label: '场点视频', visible: true },
         siteLocation: { label: '经纬度', visible: true },
         enterpriseId: { label: '所属企业', visible: true },
         createTime: { label: '创建时间', visible: true }
+      },
+      pcasOptions: [],
+      pcasCodeMap: {},
+      pcasProps: {
+        value: 'value',
+        label: 'label',
+        children: 'children'
       },
       form: {},
       upload: {
@@ -160,9 +205,48 @@ export default {
     }
   },
   created() {
+    this.initPcasOptions()
     this.getList()
   },
   methods: {
+    getUrlList(value) {
+      if (!value) return []
+      return value.split(',').map(item => item.trim()).filter(Boolean)
+    },
+    getFirstUrl(value) {
+      const list = this.getUrlList(value)
+      return list.length ? list[0] : ""
+    },
+    initPcasOptions() {
+      const rawList = Object.keys(pcasData)
+        .sort((a, b) => Number(a) - Number(b))
+        .map(key => pcasData[key])
+      this.pcasCodeMap = {}
+      this.pcasOptions = this.normalizePcasTree(rawList, [], [])
+    },
+    normalizePcasTree(list, parentCodes, parentLabels) {
+      return list.map(item => {
+        const currentCodes = [...parentCodes, item.code]
+        const currentLabels = [...parentLabels, item.name]
+        this.pcasCodeMap[item.code] = {
+          codes: currentCodes,
+          labels: currentLabels
+        }
+        const children = item.children ? this.normalizePcasTree(item.children, currentCodes, currentLabels) : undefined
+        return {
+          value: item.code,
+          label: item.name,
+          children: children
+        }
+      })
+    },
+    getCodePath(code) {
+      return this.pcasCodeMap[code] ? this.pcasCodeMap[code].codes : []
+    },
+    formatSiteAddressCode(code) {
+      if (!code) return ""
+      return this.pcasCodeMap[code] ? this.pcasCodeMap[code].labels.join("/") : code
+    },
     getList() {
       this.loading = true
       listSite(this.queryParams).then(response => {
@@ -182,6 +266,7 @@ export default {
         siteName: undefined,
         siteAddress: undefined,
         siteAddressCode: undefined,
+        siteAddressCodeList: [],
         siteLocation: undefined,
         sitePhone: undefined,
         siteIntro: undefined,
@@ -214,6 +299,7 @@ export default {
       const id = row.id || this.ids
       getSite(id).then(response => {
         this.form = response.data
+        this.form.siteAddressCodeList = this.getCodePath(this.form.siteAddressCode)
         this.open = true
         this.title = "修改场点"
       })
@@ -221,6 +307,11 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          if (this.form.siteAddressCodeList && this.form.siteAddressCodeList.length) {
+            this.form.siteAddressCode = this.form.siteAddressCodeList[this.form.siteAddressCodeList.length - 1]
+          } else {
+            this.form.siteAddressCode = undefined
+          }
           if (this.form.id != undefined) {
             updateSite(this.form).then(() => {
               this.$modal.msgSuccess("修改成功")

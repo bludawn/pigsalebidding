@@ -17,6 +17,14 @@ export function getPigOrder(id) {
   })
 }
 
+// 获取订单编号
+export function getNextOrderNo() {
+  return request({
+    url: '/pig/pigOrder/nextCode',
+    method: 'get'
+  })
+}
+
 // 新增订单
 export function addPigOrder(data) {
   return request({

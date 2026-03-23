@@ -17,4 +17,11 @@ public interface IPigTypeService
     public int deletePigTypeById(Long id);
     public int deletePigTypeByIds(Long[] ids);
     public String importPigType(List<PigType> pigTypeList, Boolean updateSupport, String operName);
+
+    /**
+     * 生成生猪类型编码
+     *
+     * @return 生猪类型编码
+     */
+    public String generatePigTypeCode();
 }

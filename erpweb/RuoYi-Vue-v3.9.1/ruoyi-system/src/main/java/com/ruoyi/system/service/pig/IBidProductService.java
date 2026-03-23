@@ -17,4 +17,11 @@ public interface IBidProductService
     public int deleteBidProductById(Long id);
     public int deleteBidProductByIds(Long[] ids);
     public String importBidProduct(List<BidProduct> bidProductList, Boolean updateSupport, String operName);
+
+    /**
+     * 生成竞价商品编码
+     *
+     * @return 竞价商品编码
+     */
+    public String generateBidProductCode();
 }

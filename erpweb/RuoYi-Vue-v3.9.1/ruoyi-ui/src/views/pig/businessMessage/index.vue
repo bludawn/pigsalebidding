@@ -189,6 +189,9 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          if (this.form.isRead !== undefined && this.form.isRead !== null && this.form.isRead !== "") {
+            this.form.isRead = Number(this.form.isRead)
+          }
           if (this.form.id != undefined) {
             updateBusinessMessage(this.form).then(() => {
               this.$modal.msgSuccess("修改成功")

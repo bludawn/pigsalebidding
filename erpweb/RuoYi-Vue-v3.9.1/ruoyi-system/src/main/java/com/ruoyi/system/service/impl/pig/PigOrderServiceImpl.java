@@ -33,6 +33,7 @@ public class PigOrderServiceImpl implements IPigOrderService
     @Override
     public int insertPigOrder(PigOrder pigOrder)
     {
+        pigOrder.setOrderNo(generateOrderNo());
         return pigOrderMapper.insertPigOrder(pigOrder);
     }
 
@@ -52,6 +53,14 @@ public class PigOrderServiceImpl implements IPigOrderService
     public int deletePigOrderByIds(Long[] ids)
     {
         return pigOrderMapper.deletePigOrderByIds(ids);
+    }
+
+    @Override
+    public String generateOrderNo()
+    {
+        Long maxId = pigOrderMapper.selectMaxId();
+        long nextId = maxId == null ? 1L : maxId + 1L;
+        return "ORDER-" + String.format("%012d", nextId);
     }
 
 }

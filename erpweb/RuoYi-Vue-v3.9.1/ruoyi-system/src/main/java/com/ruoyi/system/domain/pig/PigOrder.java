@@ -32,6 +32,10 @@ public class PigOrder extends BaseEntity
     @Excel(name = "订单来源")
     private String orderSource;
 
+    /** 归属企业 */
+    @Excel(name = "归属企业")
+    private Long enterpriseId;
+
     /** 竞价商品id */
     @Excel(name = "竞价商品id")
     private Long bidProductId;
@@ -127,6 +131,16 @@ public class PigOrder extends BaseEntity
     public String getOrderSource()
     {
         return orderSource;
+    }
+
+    public void setEnterpriseId(Long enterpriseId)
+    {
+        this.enterpriseId = enterpriseId;
+    }
+
+    public Long getEnterpriseId()
+    {
+        return enterpriseId;
     }
 
     public void setBidProductId(Long bidProductId)
@@ -267,6 +281,7 @@ public class PigOrder extends BaseEntity
             .append("orderNo", getOrderNo())
             .append("orderStatus", getOrderStatus())
             .append("orderSource", getOrderSource())
+            .append("enterpriseId", getEnterpriseId())
             .append("bidProductId", getBidProductId())
             .append("userBidId", getUserBidId())
             .append("addressId", getAddressId())

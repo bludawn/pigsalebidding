@@ -9,6 +9,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="orderNo" column="f_orderNo" />
         <result property="orderStatus" column="f_orderStatus" />
         <result property="orderSource" column="f_orderSource" />
+        <result property="enterpriseId" column="f_enterpriseId" />
         <result property="bidProductId" column="f_bidProductId" />
         <result property="userBidId" column="f_userBidId" />
         <result property="addressId" column="f_addressId" />
@@ -29,7 +30,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectPigOrderVo">
-        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_bidProductId, f_userBidId, f_addressId, f_expectLoadTime, f_remark, f_pigResourceId, f_orderAmount, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_enterpriseId, f_bidProductId, f_userBidId, f_addressId, f_expectLoadTime, f_remark, f_pigResourceId, f_orderAmount, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_creator, f_createTime, f_updator, f_updateTime
         from t_order
     </sql>
 
@@ -47,6 +48,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
             <if test="orderSource != null and orderSource != ''">
                 AND f_orderSource like concat('%', #{orderSource}, '%')
+            </if>
+            <if test="enterpriseId != null">
+                AND f_enterpriseId = #{enterpriseId}
             </if>
             <if test="bidProductId != null">
                 AND f_bidProductId = #{bidProductId}
@@ -104,6 +108,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="orderNo != null and orderNo != ''">f_orderNo,</if>
 <if test="orderStatus != null and orderStatus != ''">f_orderStatus,</if>
 <if test="orderSource != null and orderSource != ''">f_orderSource,</if>
+<if test="enterpriseId != null">f_enterpriseId,</if>
 <if test="bidProductId != null">f_bidProductId,</if>
 <if test="userBidId != null">f_userBidId,</if>
 <if test="addressId != null">f_addressId,</if>
@@ -124,6 +129,7 @@ f_createTime
 <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
 <if test="orderStatus != null and orderStatus != ''">#{orderStatus},</if>
 <if test="orderSource != null and orderSource != ''">#{orderSource},</if>
+<if test="enterpriseId != null">#{enterpriseId},</if>
 <if test="bidProductId != null">#{bidProductId},</if>
 <if test="userBidId != null">#{userBidId},</if>
 <if test="addressId != null">#{addressId},</if>
@@ -148,6 +154,7 @@ sysdate()
             <if test="orderNo != null and orderNo != ''">f_orderNo = #{orderNo},</if>
             <if test="orderStatus != null and orderStatus != ''">f_orderStatus = #{orderStatus},</if>
             <if test="orderSource != null and orderSource != ''">f_orderSource = #{orderSource},</if>
+            <if test="enterpriseId != null">f_enterpriseId = #{enterpriseId},</if>
             <if test="bidProductId != null">f_bidProductId = #{bidProductId},</if>
             <if test="userBidId != null">f_userBidId = #{userBidId},</if>
             <if test="addressId != null">f_addressId = #{addressId},</if>
@@ -177,5 +184,9 @@ sysdate()
             #{id}
         </foreach>
     </delete>
+
+    <select id="selectMaxId" resultType="java.lang.Long">
+        select max(f_id) from t_order
+    </select>
 
 </mapper>
