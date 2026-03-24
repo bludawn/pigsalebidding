@@ -17,6 +17,14 @@ export function getPigType(id) {
   })
 }
 
+// 获取生猪类型编码
+export function getNextPigTypeCode() {
+  return request({
+    url: '/pig/pigType/nextCode',
+    method: 'get'
+  })
+}
+
 // 新增生猪类型
 export function addPigType(data) {
   return request({

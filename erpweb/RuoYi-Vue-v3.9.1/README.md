@@ -1,3 +1,4 @@
+### 工程目录
 - ruoyi-admin admin子工程，启动类
 - ruoyi-common 公共模块
 - ruoyi-framework 核心模块
@@ -9,4 +10,447 @@
   - business.sql 生猪竞拍业务数据sql
   - quartz.sql 定时任务sql
   - ry_20250522.sql ruoyi系统预制sql
-  
+
+### 子工程 `src` 结构与接口说明
+- **`ruoyi-admin/src`**：应用入口与 Web 接口层
+  - **入口类**：`RuoYiApplication.java`、`RuoYiServletInitializer.java`
+  - **`main/resources`**：`application.yml`、`application-druid.yml`、`logback.xml`、`banner.txt`、`mybatis/mybatis-config.xml`、`i18n/messages.properties`
+  - **`com.ruoyi.web.controller`**（接口层）
+    - **`common`**：`CaptchaController`（验证码）、`CommonController`（通用上传/下载）
+    - **`customer`**：`CustomerController`、`CustomerModels`、`CustomerApiResult`（客户侧接口）
+    - **`monitor`**：`CacheController`、`ServerController`、`SysLogininforController`、`SysOperlogController`、`SysUserOnlineController`
+    - **`pig`**：`PigTypeController`、`PigTagController`、`PigResourceController`、`PigOrderController`、`BidProductController`、`DeliveryInfoController`、`EnterpriseController`、`EnterpriseGroupController`、`UserBidController`、`UserBidInfoController`、`UserExtController`、`AddressController`、`SiteController`、`BusinessMessageController`
+    - **`system`**：`SysLoginController`、`SysUserController`、`SysRoleController`、`SysDeptController`、`SysPostController`、`SysMenuController`、`SysDictTypeController`、`SysDictDataController`、`SysConfigController`、`SysNoticeController`、`SysOperlogController`、`SysLogininforController`、`SysRegisterController`、`SysProfileController`、`SysIndexController`
+    - **`tool`**：`TestController`
+  - **`com.ruoyi.web.core.config`**：`SwaggerConfig`（接口文档配置）
+
+- **`ruoyi-common/src`**：公共能力与基础设施
+  - **`annotation`**：`@Log`、`@DataScope`、`@Excel`、`@RepeatSubmit`、`@RateLimiter`、`@Sensitive` 等
+  - **`config`**：`RuoYiConfig`、序列化配置
+  - **`constant`**：`Constants`、`HttpStatus`、`GenConstants`、`ScheduleConstants`、`UserConstants`
+  - **`core`**：基础控制器、通用实体、分页、Redis、文本处理
+  - **`enums`**：业务状态/类型、数据源、脱敏、限流等枚举
+  - **`exception`**：`ServiceException`、`GlobalException`、`DemoModeException` 等
+  - **`filter`**：XSS、重复读写、Referer 等过滤器
+  - **`utils`**：`StringUtils`、`DateUtils`、`SecurityUtils`、`ServletUtils`、`PageUtils` 等工具
+  - **`xss`**：`Xss` 注解与校验
+
+- **`ruoyi-framework/src`**：框架层与安全、拦截、AOP
+  - **`aspectj`**：`LogAspect`、`DataScopeAspect`、`DataSourceAspect`、`RateLimiterAspect`
+  - **`config`**：系统核心配置（拦截器、安全、序列化等）
+  - **`datasource`**：`DynamicDataSource`、`DynamicDataSourceContextHolder`
+  - **`interceptor`**：`RepeatSubmitInterceptor`、`SameUrlDataInterceptor`
+  - **`manager`**：`AsyncManager`、`ShutdownManager`
+  - **`security`**：`JwtAuthenticationTokenFilter`、`AuthenticationEntryPointImpl`、`LogoutSuccessHandlerImpl`、上下文与权限处理
+  - **`web`**：`GlobalExceptionHandler`、`Server`、`PermissionService`、`SysLoginService`、`TokenService` 等
+
+- **`ruoyi-generator/src`**：代码生成器
+  - **接口**：`GenController`
+  - **实体**：`GenTable`、`GenTableColumn`
+  - **Mapper**：`GenTableMapper`、`GenTableColumnMapper`（对应 `resources/mapper/generator/*.xml`）
+  - **Service**：`IGenTableService`、`IGenTableColumnService` 与 `*ServiceImpl`
+  - **模板**：`resources/vm/*.vm`、`generator.yml`
+
+- **`ruoyi-quartz/src`**：定时任务
+  - **接口**：`SysJobController`、`SysJobLogController`
+  - **实体**：`SysJob`、`SysJobLog`
+  - **Mapper**：`SysJobMapper`、`SysJobLogMapper`（对应 `resources/mapper/quartz/*.xml`）
+  - **Service**：`ISysJobService`、`ISysJobLogService` 与 `*ServiceImpl`
+  - **任务**：`RyTask`
+  - **工具**：`CronUtils`、`ScheduleUtils`、`JobInvokeUtil`、`AbstractQuartzJob`
+
+- **`ruoyi-system/src`**：系统与业务核心
+  - **领域模型**：系统基础实体 + `domain/pig`（`PigType`、`PigResource`、`PigOrder`、`PigTag`、`BidProduct`、`DeliveryInfo`、`Enterprise` 等）
+  - **Mapper**：`mapper/system`（系统基础表）与 `mapper/pig`（业务表），对应 `resources/mapper/system/*.xml` 与 `resources/mapper/pig/*.xml`
+  - **Service**：系统基础服务接口 + `service/pig` 业务接口，具体实现位于 `service/impl`
+
+### 文件级说明（按模块）
+## `ruoyi-admin/src`
+- **`main/java/com/ruoyi/RuoYiApplication.java`**: Spring Boot 启动入口。
+- **`main/java/com/ruoyi/RuoYiServletInitializer.java`**: 外置容器部署初始化。
+- **`main/java/com/ruoyi/web/core/config/SwaggerConfig.java`**: Swagger 接口文档配置。
+- **`main/java/com/ruoyi/web/controller/common/CaptchaController.java`**: 验证码接口。
+- **`main/java/com/ruoyi/web/controller/common/CommonController.java`**: 通用上传/下载等公共接口。
+- **`main/java/com/ruoyi/web/controller/customer/CustomerApiResult.java`**: 客户侧统一响应模型。
+- **`main/java/com/ruoyi/web/controller/customer/CustomerController.java`**: 客户侧业务接口聚合。
+- **`main/java/com/ruoyi/web/controller/customer/CustomerModels.java`**: 客户侧请求/响应模型。
+- **`main/java/com/ruoyi/web/controller/monitor/CacheController.java`**: 缓存监控接口。
+- **`main/java/com/ruoyi/web/controller/monitor/ServerController.java`**: 服务器运行信息接口。
+- **`main/java/com/ruoyi/web/controller/monitor/SysLogininforController.java`**: 登录日志接口。
+- **`main/java/com/ruoyi/web/controller/monitor/SysOperlogController.java`**: 操作日志接口。
+- **`main/java/com/ruoyi/web/controller/monitor/SysUserOnlineController.java`**: 在线用户接口。
+- **`main/java/com/ruoyi/web/controller/pig/AddressController.java`**: 地址管理接口。
+- **`main/java/com/ruoyi/web/controller/pig/BidProductController.java`**: 竞价商品接口。
+- **`main/java/com/ruoyi/web/controller/pig/BusinessMessageController.java`**: 业务消息接口。
+- **`main/java/com/ruoyi/web/controller/pig/DeliveryInfoController.java`**: 送货信息接口。
+- **`main/java/com/ruoyi/web/controller/pig/EnterpriseController.java`**: 企业信息接口。
+- **`main/java/com/ruoyi/web/controller/pig/EnterpriseGroupController.java`**: 企业分组接口。
+- **`main/java/com/ruoyi/web/controller/pig/PigOrderController.java`**: 生猪订单接口。
+- **`main/java/com/ruoyi/web/controller/pig/PigResourceController.java`**: 生猪资源接口。
+- **`main/java/com/ruoyi/web/controller/pig/PigTagController.java`**: 生猪标签接口。
+- **`main/java/com/ruoyi/web/controller/pig/PigTypeController.java`**: 生猪类型接口。
+- **`main/java/com/ruoyi/web/controller/pig/SiteController.java`**: 场地信息接口。
+- **`main/java/com/ruoyi/web/controller/pig/UserBidController.java`**: 用户出价接口。
+- **`main/java/com/ruoyi/web/controller/pig/UserBidInfoController.java`**: 用户出价详情接口。
+- **`main/java/com/ruoyi/web/controller/pig/UserExtController.java`**: 用户扩展信息接口。
+- **`main/java/com/ruoyi/web/controller/system/SysConfigController.java`**: 系统配置接口。
+- **`main/java/com/ruoyi/web/controller/system/SysDeptController.java`**: 部门管理接口。
+- **`main/java/com/ruoyi/web/controller/system/SysDictDataController.java`**: 字典数据接口。
+- **`main/java/com/ruoyi/web/controller/system/SysDictTypeController.java`**: 字典类型接口。
+- **`main/java/com/ruoyi/web/controller/system/SysIndexController.java`**: 首页/菜单路由接口。
+- **`main/java/com/ruoyi/web/controller/system/SysLoginController.java`**: 登录接口。
+- **`main/java/com/ruoyi/web/controller/system/SysMenuController.java`**: 菜单管理接口。
+- **`main/java/com/ruoyi/web/controller/system/SysNoticeController.java`**: 通知公告接口。
+- **`main/java/com/ruoyi/web/controller/system/SysPostController.java`**: 岗位管理接口。
+- **`main/java/com/ruoyi/web/controller/system/SysProfileController.java`**: 个人中心接口。
+- **`main/java/com/ruoyi/web/controller/system/SysRegisterController.java`**: 注册接口。
+- **`main/java/com/ruoyi/web/controller/system/SysRoleController.java`**: 角色管理接口。
+- **`main/java/com/ruoyi/web/controller/system/SysUserController.java`**: 用户管理接口。
+- **`main/java/com/ruoyi/web/controller/tool/TestController.java`**: 测试接口。
+- **`main/resources/application.yml`**: 主配置。
+- **`main/resources/application-druid.yml`**: 数据源配置。
+- **`main/resources/logback.xml`**: 日志配置。
+- **`main/resources/banner.txt`**: 启动 Banner。
+- **`main/resources/mybatis/mybatis-config.xml`**: MyBatis 全局配置。
+- **`main/resources/i18n/messages.properties`**: 国际化文案。
+- **`main/resources/META-INF/spring-devtools.properties`**: DevTools 配置。
+
+## `ruoyi-common/src`
+- **`main/java/com/ruoyi/common/annotation/Anonymous.java`**: 匿名访问标注。
+- **`main/java/com/ruoyi/common/annotation/DataScope.java`**: 数据权限标注。
+- **`main/java/com/ruoyi/common/annotation/DataSource.java`**: 数据源切换标注。
+- **`main/java/com/ruoyi/common/annotation/Excel.java`**: Excel 导入导出标注。
+- **`main/java/com/ruoyi/common/annotation/Excels.java`**: Excel 多注解组合。
+- **`main/java/com/ruoyi/common/annotation/Log.java`**: 操作日志标注。
+- **`main/java/com/ruoyi/common/annotation/RateLimiter.java`**: 限流标注。
+- **`main/java/com/ruoyi/common/annotation/RepeatSubmit.java`**: 防重复提交标注。
+- **`main/java/com/ruoyi/common/annotation/Sensitive.java`**: 脱敏标注。
+- **`main/java/com/ruoyi/common/config/RuoYiConfig.java`**: 全局配置读取。
+- **`main/java/com/ruoyi/common/config/serializer/SensitiveJsonSerializer.java`**: 脱敏序列化器。
+- **`main/java/com/ruoyi/common/constant/CacheConstants.java`**: 缓存常量。
+- **`main/java/com/ruoyi/common/constant/Constants.java`**: 通用常量。
+- **`main/java/com/ruoyi/common/constant/GenConstants.java`**: 代码生成常量。
+- **`main/java/com/ruoyi/common/constant/HttpStatus.java`**: HTTP 状态常量。
+- **`main/java/com/ruoyi/common/constant/ScheduleConstants.java`**: 定时任务常量。
+- **`main/java/com/ruoyi/common/constant/UserConstants.java`**: 用户相关常量。
+- **`main/java/com/ruoyi/common/core/controller/BaseController.java`**: 控制器基类。
+- **`main/java/com/ruoyi/common/core/domain/AjaxResult.java`**: 通用响应体。
+- **`main/java/com/ruoyi/common/core/domain/BaseEntity.java`**: 实体基类。
+- **`main/java/com/ruoyi/common/core/domain/R.java`**: 通用响应包装。
+- **`main/java/com/ruoyi/common/core/domain/TreeEntity.java`**: 树形实体基类。
+- **`main/java/com/ruoyi/common/core/domain/TreeSelect.java`**: 树选择器模型。
+- **`main/java/com/ruoyi/common/core/domain/entity/SysDept.java`**: 部门实体。
+- **`main/java/com/ruoyi/common/core/domain/entity/SysDictData.java`**: 字典数据实体。
+- **`main/java/com/ruoyi/common/core/domain/entity/SysDictType.java`**: 字典类型实体。
+- **`main/java/com/ruoyi/common/core/domain/entity/SysMenu.java`**: 菜单实体。
+- **`main/java/com/ruoyi/common/core/domain/entity/SysRole.java`**: 角色实体。
+- **`main/java/com/ruoyi/common/core/domain/entity/SysUser.java`**: 用户实体。
+- **`main/java/com/ruoyi/common/core/domain/model/LoginBody.java`**: 登录请求体。
+- **`main/java/com/ruoyi/common/core/domain/model/LoginUser.java`**: 登录用户模型。
+- **`main/java/com/ruoyi/common/core/domain/model/RegisterBody.java`**: 注册请求体。
+- **`main/java/com/ruoyi/common/core/page/PageDomain.java`**: 分页参数模型。
+- **`main/java/com/ruoyi/common/core/page/TableDataInfo.java`**: 表格分页响应。
+- **`main/java/com/ruoyi/common/core/page/TableSupport.java`**: 分页辅助。
+- **`main/java/com/ruoyi/common/core/redis/RedisCache.java`**: Redis 缓存封装。
+- **`main/java/com/ruoyi/common/core/text/CharsetKit.java`**: 字符集工具。
+- **`main/java/com/ruoyi/common/core/text/Convert.java`**: 类型转换工具。
+- **`main/java/com/ruoyi/common/core/text/StrFormatter.java`**: 字符串格式化工具。
+- **`main/java/com/ruoyi/common/enums/BusinessStatus.java`**: 业务状态枚举。
+- **`main/java/com/ruoyi/common/enums/BusinessType.java`**: 业务类型枚举。
+- **`main/java/com/ruoyi/common/enums/DataSourceType.java`**: 数据源枚举。
+- **`main/java/com/ruoyi/common/enums/DesensitizedType.java`**: 脱敏类型枚举。
+- **`main/java/com/ruoyi/common/enums/HttpMethod.java`**: HTTP 方法枚举。
+- **`main/java/com/ruoyi/common/enums/LimitType.java`**: 限流类型枚举。
+- **`main/java/com/ruoyi/common/enums/OperatorType.java`**: 操作人类型枚举。
+- **`main/java/com/ruoyi/common/enums/UserStatus.java`**: 用户状态枚举。
+- **`main/java/com/ruoyi/common/exception/DemoModeException.java`**: 演示模式异常。
+- **`main/java/com/ruoyi/common/exception/GlobalException.java`**: 全局异常。
+- **`main/java/com/ruoyi/common/exception/ServiceException.java`**: 业务异常。
+- **`main/java/com/ruoyi/common/exception/UtilException.java`**: 工具异常。
+- **`main/java/com/ruoyi/common/exception/base/BaseException.java`**: 异常基类。
+- **`main/java/com/ruoyi/common/exception/file/FileException.java`**: 文件异常基类。
+- **`main/java/com/ruoyi/common/exception/file/FileNameLengthLimitExceededException.java`**: 文件名过长异常。
+- **`main/java/com/ruoyi/common/exception/file/FileSizeLimitExceededException.java`**: 文件大小超限异常。
+- **`main/java/com/ruoyi/common/exception/file/FileUploadException.java`**: 文件上传异常。
+- **`main/java/com/ruoyi/common/exception/file/InvalidExtensionException.java`**: 文件扩展名异常。
+- **`main/java/com/ruoyi/common/exception/job/TaskException.java`**: 定时任务异常。
+- **`main/java/com/ruoyi/common/exception/user/BlackListException.java`**: 黑名单异常。
+- **`main/java/com/ruoyi/common/exception/user/CaptchaException.java`**: 验证码异常。
+- **`main/java/com/ruoyi/common/exception/user/CaptchaExpireException.java`**: 验证码过期异常。
+- **`main/java/com/ruoyi/common/exception/user/UserException.java`**: 用户异常。
+- **`main/java/com/ruoyi/common/exception/user/UserNotExistsException.java`**: 用户不存在异常。
+- **`main/java/com/ruoyi/common/exception/user/UserPasswordNotMatchException.java`**: 密码不匹配异常。
+- **`main/java/com/ruoyi/common/exception/user/UserPasswordRetryLimitExceedException.java`**: 密码重试超限异常。
+- **`main/java/com/ruoyi/common/filter/PropertyPreExcludeFilter.java`**: JSON 序列化预排除。
+- **`main/java/com/ruoyi/common/filter/RefererFilter.java`**: Referer 过滤。
+- **`main/java/com/ruoyi/common/filter/RepeatableFilter.java`**: 可重复读过滤器。
+- **`main/java/com/ruoyi/common/filter/RepeatedlyRequestWrapper.java`**: 请求体重复读包装。
+- **`main/java/com/ruoyi/common/filter/XssFilter.java`**: XSS 过滤器。
+- **`main/java/com/ruoyi/common/filter/XssHttpServletRequestWrapper.java`**: XSS 请求包装。
+- **`main/java/com/ruoyi/common/utils/Arith.java`**: 算术工具。
+- **`main/java/com/ruoyi/common/utils/DateUtils.java`**: 日期工具。
+- **`main/java/com/ruoyi/common/utils/DesensitizedUtil.java`**: 脱敏工具。
+- **`main/java/com/ruoyi/common/utils/DictUtils.java`**: 字典工具。
+- **`main/java/com/ruoyi/common/utils/ExceptionUtil.java`**: 异常工具。
+- **`main/java/com/ruoyi/common/utils/LogUtils.java`**: 日志工具。
+- **`main/java/com/ruoyi/common/utils/MessageUtils.java`**: 国际化文案工具。
+- **`main/java/com/ruoyi/common/utils/PageUtils.java`**: 分页工具。
+- **`main/java/com/ruoyi/common/utils/SecurityUtils.java`**: 安全工具。
+- **`main/java/com/ruoyi/common/utils/ServletUtils.java`**: Servlet 工具。
+- **`main/java/com/ruoyi/common/utils/StringUtils.java`**: 字符串工具。
+- **`main/java/com/ruoyi/common/utils/Threads.java`**: 线程工具。
+- **`main/java/com/ruoyi/common/utils/bean/BeanUtils.java`**: Bean 拷贝工具。
+- **`main/java/com/ruoyi/common/utils/bean/BeanValidators.java`**: Bean 校验工具。
+- **`main/java/com/ruoyi/common/utils/file/FileTypeUtils.java`**: 文件类型工具。
+- **`main/java/com/ruoyi/common/utils/file/FileUploadUtils.java`**: 文件上传工具。
+- **`main/java/com/ruoyi/common/utils/file/FileUtils.java`**: 文件处理工具。
+- **`main/java/com/ruoyi/common/utils/file/ImageUtils.java`**: 图片处理工具。
+- **`main/java/com/ruoyi/common/utils/file/MimeTypeUtils.java`**: MIME 类型工具。
+- **`main/java/com/ruoyi/common/utils/html/EscapeUtil.java`**: HTML 转义工具。
+- **`main/java/com/ruoyi/common/utils/html/HTMLFilter.java`**: HTML/XSS 过滤工具。
+- **`main/java/com/ruoyi/common/utils/http/HttpHelper.java`**: HTTP 请求解析辅助。
+- **`main/java/com/ruoyi/common/utils/http/HttpUtils.java`**: HTTP 工具。
+- **`main/java/com/ruoyi/common/utils/http/UserAgentUtils.java`**: UserAgent 解析工具。
+- **`main/java/com/ruoyi/common/utils/ip/AddressUtils.java`**: IP 地理解析工具。
+- **`main/java/com/ruoyi/common/utils/ip/IpUtils.java`**: IP 工具。
+- **`main/java/com/ruoyi/common/utils/poi/ExcelHandlerAdapter.java`**: Excel 导出处理适配。
+- **`main/java/com/ruoyi/common/utils/poi/ExcelUtil.java`**: Excel 工具。
+- **`main/java/com/ruoyi/common/utils/reflect/ReflectUtils.java`**: 反射工具。
+- **`main/java/com/ruoyi/common/utils/sign/Base64.java`**: Base64 工具。
+- **`main/java/com/ruoyi/common/utils/sign/Md5Utils.java`**: MD5 工具。
+- **`main/java/com/ruoyi/common/utils/spring/SpringUtils.java`**: Spring 工具。
+- **`main/java/com/ruoyi/common/utils/sql/SqlUtil.java`**: SQL 工具。
+- **`main/java/com/ruoyi/common/utils/uuid/IdUtils.java`**: ID 工具。
+- **`main/java/com/ruoyi/common/utils/uuid/Seq.java`**: 序列号工具。
+- **`main/java/com/ruoyi/common/utils/uuid/UUID.java`**: UUID 工具。
+- **`main/java/com/ruoyi/common/xss/Xss.java`**: XSS 注解。
+- **`main/java/com/ruoyi/common/xss/XssValidator.java`**: XSS 校验器。
+
+## `ruoyi-framework/src`
+- **`main/java/com/ruoyi/framework/config/ApplicationConfig.java`**: Spring MVC 基础配置。
+- **`main/java/com/ruoyi/framework/config/CaptchaConfig.java`**: 验证码配置。
+- **`main/java/com/ruoyi/framework/config/DruidConfig.java`**: Druid 数据源配置。
+- **`main/java/com/ruoyi/framework/config/FastJson2JsonRedisSerializer.java`**: Redis 序列化器。
+- **`main/java/com/ruoyi/framework/config/FilterConfig.java`**: 过滤器配置。
+- **`main/java/com/ruoyi/framework/config/I18nConfig.java`**: 国际化配置。
+- **`main/java/com/ruoyi/framework/config/KaptchaTextCreator.java`**: 验证码文案生成。
+- **`main/java/com/ruoyi/framework/config/MyBatisConfig.java`**: MyBatis 配置。
+- **`main/java/com/ruoyi/framework/config/RedisConfig.java`**: Redis 配置。
+- **`main/java/com/ruoyi/framework/config/ResourcesConfig.java`**: 静态资源配置。
+- **`main/java/com/ruoyi/framework/config/SecurityConfig.java`**: Spring Security 配置。
+- **`main/java/com/ruoyi/framework/config/ServerConfig.java`**: 服务器配置。
+- **`main/java/com/ruoyi/framework/config/ThreadPoolConfig.java`**: 线程池配置。
+- **`main/java/com/ruoyi/framework/config/properties/DruidProperties.java`**: Druid 配置项模型。
+- **`main/java/com/ruoyi/framework/config/properties/PermitAllUrlProperties.java`**: 放行 URL 配置项。
+- **`main/java/com/ruoyi/framework/datasource/DynamicDataSource.java`**: 动态数据源。
+- **`main/java/com/ruoyi/framework/datasource/DynamicDataSourceContextHolder.java`**: 数据源上下文。
+- **`main/java/com/ruoyi/framework/aspectj/DataScopeAspect.java`**: 数据权限切面。
+- **`main/java/com/ruoyi/framework/aspectj/DataSourceAspect.java`**: 数据源切面。
+- **`main/java/com/ruoyi/framework/aspectj/LogAspect.java`**: 操作日志切面。
+- **`main/java/com/ruoyi/framework/aspectj/RateLimiterAspect.java`**: 限流切面。
+- **`main/java/com/ruoyi/framework/interceptor/RepeatSubmitInterceptor.java`**: 防重复提交拦截器。
+- **`main/java/com/ruoyi/framework/interceptor/impl/SameUrlDataInterceptor.java`**: 相同 URL 重复提交拦截。
+- **`main/java/com/ruoyi/framework/manager/AsyncManager.java`**: 异步任务管理。
+- **`main/java/com/ruoyi/framework/manager/ShutdownManager.java`**: 应用关闭管理。
+- **`main/java/com/ruoyi/framework/manager/factory/AsyncFactory.java`**: 异步任务工厂。
+- **`main/java/com/ruoyi/framework/security/context/AuthenticationContextHolder.java`**: 认证上下文。
+- **`main/java/com/ruoyi/framework/security/context/PermissionContextHolder.java`**: 权限上下文。
+- **`main/java/com/ruoyi/framework/security/filter/JwtAuthenticationTokenFilter.java`**: JWT 认证过滤器。
+- **`main/java/com/ruoyi/framework/security/handle/AuthenticationEntryPointImpl.java`**: 未认证处理器。
+- **`main/java/com/ruoyi/framework/security/handle/LogoutSuccessHandlerImpl.java`**: 登出成功处理器。
+- **`main/java/com/ruoyi/framework/web/exception/GlobalExceptionHandler.java`**: 全局异常处理。
+- **`main/java/com/ruoyi/framework/web/service/PermissionService.java`**: 权限校验服务。
+- **`main/java/com/ruoyi/framework/web/service/SysLoginService.java`**: 登录服务。
+- **`main/java/com/ruoyi/framework/web/service/SysPasswordService.java`**: 密码校验服务。
+- **`main/java/com/ruoyi/framework/web/service/SysPermissionService.java`**: 权限数据服务。
+- **`main/java/com/ruoyi/framework/web/service/SysRegisterService.java`**: 注册服务。
+- **`main/java/com/ruoyi/framework/web/service/TokenService.java`**: Token 服务。
+- **`main/java/com/ruoyi/framework/web/service/UserDetailsServiceImpl.java`**: 用户详情服务。
+- **`main/java/com/ruoyi/framework/web/domain/Server.java`**: 服务器运行信息模型。
+- **`main/java/com/ruoyi/framework/web/domain/server/Cpu.java`**: CPU 信息模型。
+- **`main/java/com/ruoyi/framework/web/domain/server/Jvm.java`**: JVM 信息模型。
+- **`main/java/com/ruoyi/framework/web/domain/server/Mem.java`**: 内存信息模型。
+- **`main/java/com/ruoyi/framework/web/domain/server/Sys.java`**: 系统信息模型。
+- **`main/java/com/ruoyi/framework/web/domain/server/SysFile.java`**: 磁盘信息模型。
+
+## `ruoyi-generator/src`
+- **`main/java/com/ruoyi/generator/config/GenConfig.java`**: 代码生成配置。
+- **`main/java/com/ruoyi/generator/controller/GenController.java`**: 代码生成接口。
+- **`main/java/com/ruoyi/generator/domain/GenTable.java`**: 生成表模型。
+- **`main/java/com/ruoyi/generator/domain/GenTableColumn.java`**: 生成字段模型。
+- **`main/java/com/ruoyi/generator/mapper/GenTableMapper.java`**: 生成表 Mapper。
+- **`main/java/com/ruoyi/generator/mapper/GenTableColumnMapper.java`**: 生成字段 Mapper。
+- **`main/java/com/ruoyi/generator/service/IGenTableService.java`**: 生成表服务接口。
+- **`main/java/com/ruoyi/generator/service/IGenTableColumnService.java`**: 生成字段服务接口。
+- **`main/java/com/ruoyi/generator/service/GenTableServiceImpl.java`**: 生成表服务实现。
+- **`main/java/com/ruoyi/generator/service/GenTableColumnServiceImpl.java`**: 生成字段服务实现。
+- **`main/java/com/ruoyi/generator/util/GenUtils.java`**: 代码生成工具。
+- **`main/java/com/ruoyi/generator/util/VelocityInitializer.java`**: Velocity 初始化。
+- **`main/java/com/ruoyi/generator/util/VelocityUtils.java`**: Velocity 工具。
+- **`main/resources/mapper/generator/GenTableMapper.xml`**: 生成表 SQL 映射。
+- **`main/resources/mapper/generator/GenTableColumnMapper.xml`**: 生成字段 SQL 映射。
+- **`main/resources/vm/*.vm`**: 代码模板。
+- **`main/resources/generator.yml`**: 生成器配置。
+
+## `ruoyi-quartz/src`
+- **`main/java/com/ruoyi/quartz/config/ScheduleConfig.java`**: 调度配置。
+- **`main/java/com/ruoyi/quartz/controller/SysJobController.java`**: 任务管理接口。
+- **`main/java/com/ruoyi/quartz/controller/SysJobLogController.java`**: 任务日志接口。
+- **`main/java/com/ruoyi/quartz/domain/SysJob.java`**: 任务实体。
+- **`main/java/com/ruoyi/quartz/domain/SysJobLog.java`**: 任务日志实体。
+- **`main/java/com/ruoyi/quartz/mapper/SysJobMapper.java`**: 任务 Mapper。
+- **`main/java/com/ruoyi/quartz/mapper/SysJobLogMapper.java`**: 任务日志 Mapper。
+- **`main/java/com/ruoyi/quartz/service/ISysJobService.java`**: 任务服务接口。
+- **`main/java/com/ruoyi/quartz/service/ISysJobLogService.java`**: 任务日志服务接口。
+- **`main/java/com/ruoyi/quartz/service/impl/SysJobServiceImpl.java`**: 任务服务实现。
+- **`main/java/com/ruoyi/quartz/service/impl/SysJobLogServiceImpl.java`**: 任务日志服务实现。
+- **`main/java/com/ruoyi/quartz/task/RyTask.java`**: 内置任务示例。
+- **`main/java/com/ruoyi/quartz/util/AbstractQuartzJob.java`**: Quartz 抽象任务。
+- **`main/java/com/ruoyi/quartz/util/CronUtils.java`**: Cron 工具。
+- **`main/java/com/ruoyi/quartz/util/JobInvokeUtil.java`**: 任务调用工具。
+- **`main/java/com/ruoyi/quartz/util/QuartzDisallowConcurrentExecution.java`**: 并发限制注解。
+- **`main/java/com/ruoyi/quartz/util/QuartzJobExecution.java`**: Quartz 执行入口。
+- **`main/java/com/ruoyi/quartz/util/ScheduleUtils.java`**: 调度工具。
+- **`main/resources/mapper/quartz/SysJobMapper.xml`**: 任务 SQL 映射。
+- **`main/resources/mapper/quartz/SysJobLogMapper.xml`**: 任务日志 SQL 映射。
+
+## `ruoyi-system/src`
+- **`main/java/com/ruoyi/system/domain/SysCache.java`**: 缓存信息模型。
+- **`main/java/com/ruoyi/system/domain/SysConfig.java`**: 系统配置模型。
+- **`main/java/com/ruoyi/system/domain/SysLogininfor.java`**: 登录日志模型。
+- **`main/java/com/ruoyi/system/domain/SysNotice.java`**: 通知公告模型。
+- **`main/java/com/ruoyi/system/domain/SysOperLog.java`**: 操作日志模型。
+- **`main/java/com/ruoyi/system/domain/SysPost.java`**: 岗位模型。
+- **`main/java/com/ruoyi/system/domain/SysRoleDept.java`**: 角色-部门关联模型。
+- **`main/java/com/ruoyi/system/domain/SysRoleMenu.java`**: 角色-菜单关联模型。
+- **`main/java/com/ruoyi/system/domain/SysUserOnline.java`**: 在线用户模型。
+- **`main/java/com/ruoyi/system/domain/SysUserPost.java`**: 用户-岗位关联模型。
+- **`main/java/com/ruoyi/system/domain/SysUserRole.java`**: 用户-角色关联模型。
+- **`main/java/com/ruoyi/system/domain/vo/MetaVo.java`**: 前端路由元信息。
+- **`main/java/com/ruoyi/system/domain/vo/RouterVo.java`**: 前端路由模型。
+- **`main/java/com/ruoyi/system/domain/pig/Address.java`**: 地址模型。
+- **`main/java/com/ruoyi/system/domain/pig/BidProduct.java`**: 竞价商品模型。
+- **`main/java/com/ruoyi/system/domain/pig/BusinessMessage.java`**: 业务消息模型。
+- **`main/java/com/ruoyi/system/domain/pig/DeliveryInfo.java`**: 送货信息模型。
+- **`main/java/com/ruoyi/system/domain/pig/Enterprise.java`**: 企业模型。
+- **`main/java/com/ruoyi/system/domain/pig/EnterpriseGroup.java`**: 企业分组模型。
+- **`main/java/com/ruoyi/system/domain/pig/PigOrder.java`**: 生猪订单模型。
+- **`main/java/com/ruoyi/system/domain/pig/PigResource.java`**: 生猪资源模型。
+- **`main/java/com/ruoyi/system/domain/pig/PigTag.java`**: 生猪标签模型。
+- **`main/java/com/ruoyi/system/domain/pig/PigType.java`**: 生猪类型模型。
+- **`main/java/com/ruoyi/system/domain/pig/Site.java`**: 场地模型。
+- **`main/java/com/ruoyi/system/domain/pig/UserBid.java`**: 用户出价模型。
+- **`main/java/com/ruoyi/system/domain/pig/UserBidInfo.java`**: 用户出价详情模型。
+- **`main/java/com/ruoyi/system/domain/pig/UserExt.java`**: 用户扩展模型。
+- **`main/java/com/ruoyi/system/mapper/SysConfigMapper.java`**: 系统配置 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysDeptMapper.java`**: 部门 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysDictDataMapper.java`**: 字典数据 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysDictTypeMapper.java`**: 字典类型 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysLogininforMapper.java`**: 登录日志 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysMenuMapper.java`**: 菜单 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysNoticeMapper.java`**: 通知公告 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysOperLogMapper.java`**: 操作日志 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysPostMapper.java`**: 岗位 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysRoleDeptMapper.java`**: 角色-部门 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysRoleMapper.java`**: 角色 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysRoleMenuMapper.java`**: 角色-菜单 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysUserMapper.java`**: 用户 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysUserPostMapper.java`**: 用户-岗位 Mapper。
+- **`main/java/com/ruoyi/system/mapper/SysUserRoleMapper.java`**: 用户-角色 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/AddressMapper.java`**: 地址 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/BidProductMapper.java`**: 竞价商品 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/BusinessMessageMapper.java`**: 业务消息 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/DeliveryInfoMapper.java`**: 送货信息 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/EnterpriseGroupMapper.java`**: 企业分组 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/EnterpriseMapper.java`**: 企业 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/PigOrderMapper.java`**: 生猪订单 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/PigResourceMapper.java`**: 生猪资源 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/PigTagMapper.java`**: 生猪标签 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/PigTypeMapper.java`**: 生猪类型 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/SiteMapper.java`**: 场地 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/UserBidInfoMapper.java`**: 用户出价详情 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/UserBidMapper.java`**: 用户出价 Mapper。
+- **`main/java/com/ruoyi/system/mapper/pig/UserExtMapper.java`**: 用户扩展 Mapper。
+- **`main/java/com/ruoyi/system/service/ISysConfigService.java`**: 系统配置服务接口。
+- **`main/java/com/ruoyi/system/service/ISysDeptService.java`**: 部门服务接口。
+- **`main/java/com/ruoyi/system/service/ISysDictDataService.java`**: 字典数据服务接口。
+- **`main/java/com/ruoyi/system/service/ISysDictTypeService.java`**: 字典类型服务接口。
+- **`main/java/com/ruoyi/system/service/ISysLogininforService.java`**: 登录日志服务接口。
+- **`main/java/com/ruoyi/system/service/ISysMenuService.java`**: 菜单服务接口。
+- **`main/java/com/ruoyi/system/service/ISysNoticeService.java`**: 通知公告服务接口。
+- **`main/java/com/ruoyi/system/service/ISysOperLogService.java`**: 操作日志服务接口。
+- **`main/java/com/ruoyi/system/service/ISysPostService.java`**: 岗位服务接口。
+- **`main/java/com/ruoyi/system/service/ISysRoleService.java`**: 角色服务接口。
+- **`main/java/com/ruoyi/system/service/ISysUserOnlineService.java`**: 在线用户服务接口。
+- **`main/java/com/ruoyi/system/service/ISysUserService.java`**: 用户服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IAddressService.java`**: 地址服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IBidProductService.java`**: 竞价商品服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IBusinessMessageService.java`**: 业务消息服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IDeliveryInfoService.java`**: 送货信息服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IEnterpriseGroupService.java`**: 企业分组服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IEnterpriseService.java`**: 企业服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IPigOrderService.java`**: 生猪订单服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IPigResourceService.java`**: 生猪资源服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IPigTagService.java`**: 生猪标签服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IPigTypeService.java`**: 生猪类型服务接口。
+- **`main/java/com/ruoyi/system/service/pig/ISiteService.java`**: 场地服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IUserBidInfoService.java`**: 用户出价详情服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IUserBidService.java`**: 用户出价服务接口。
+- **`main/java/com/ruoyi/system/service/pig/IUserExtService.java`**: 用户扩展服务接口。
+- **`main/java/com/ruoyi/system/service/impl/SysConfigServiceImpl.java`**: 系统配置服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysDeptServiceImpl.java`**: 部门服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysDictDataServiceImpl.java`**: 字典数据服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysDictTypeServiceImpl.java`**: 字典类型服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysLogininforServiceImpl.java`**: 登录日志服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysMenuServiceImpl.java`**: 菜单服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysNoticeServiceImpl.java`**: 通知公告服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysOperLogServiceImpl.java`**: 操作日志服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysPostServiceImpl.java`**: 岗位服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysRoleServiceImpl.java`**: 角色服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysUserOnlineServiceImpl.java`**: 在线用户服务实现。
+- **`main/java/com/ruoyi/system/service/impl/SysUserServiceImpl.java`**: 用户服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/AddressServiceImpl.java`**: 地址服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/BidProductServiceImpl.java`**: 竞价商品服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/BusinessMessageServiceImpl.java`**: 业务消息服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/DeliveryInfoServiceImpl.java`**: 送货信息服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/EnterpriseGroupServiceImpl.java`**: 企业分组服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/EnterpriseServiceImpl.java`**: 企业服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/PigOrderServiceImpl.java`**: 生猪订单服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/PigResourceServiceImpl.java`**: 生猪资源服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/PigTagServiceImpl.java`**: 生猪标签服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/PigTypeServiceImpl.java`**: 生猪类型服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/SiteServiceImpl.java`**: 场地服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/UserBidInfoServiceImpl.java`**: 用户出价详情服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/UserBidServiceImpl.java`**: 用户出价服务实现。
+- **`main/java/com/ruoyi/system/service/impl/pig/UserExtServiceImpl.java`**: 用户扩展服务实现。
+- **`main/resources/mapper/system/SysConfigMapper.xml`**: 系统配置 SQL 映射。
+- **`main/resources/mapper/system/SysDeptMapper.xml`**: 部门 SQL 映射。
+- **`main/resources/mapper/system/SysDictDataMapper.xml`**: 字典数据 SQL 映射。
+- **`main/resources/mapper/system/SysDictTypeMapper.xml`**: 字典类型 SQL 映射。
+- **`main/resources/mapper/system/SysLogininforMapper.xml`**: 登录日志 SQL 映射。
+- **`main/resources/mapper/system/SysMenuMapper.xml`**: 菜单 SQL 映射。
+- **`main/resources/mapper/system/SysNoticeMapper.xml`**: 通知公告 SQL 映射。
+- **`main/resources/mapper/system/SysOperLogMapper.xml`**: 操作日志 SQL 映射。
+- **`main/resources/mapper/system/SysPostMapper.xml`**: 岗位 SQL 映射。
+- **`main/resources/mapper/system/SysRoleDeptMapper.xml`**: 角色-部门 SQL 映射。
+- **`main/resources/mapper/system/SysRoleMapper.xml`**: 角色 SQL 映射。
+- **`main/resources/mapper/system/SysRoleMenuMapper.xml`**: 角色-菜单 SQL 映射。
+- **`main/resources/mapper/system/SysUserMapper.xml`**: 用户 SQL 映射。
+- **`main/resources/mapper/system/SysUserPostMapper.xml`**: 用户-岗位 SQL 映射。
+- **`main/resources/mapper/system/SysUserRoleMapper.xml`**: 用户-角色 SQL 映射。
+- **`main/resources/mapper/pig/AddressMapper.xml`**: 地址 SQL 映射。
+- **`main/resources/mapper/pig/BidProductMapper.xml`**: 竞价商品 SQL 映射。
+- **`main/resources/mapper/pig/BusinessMessageMapper.xml`**: 业务消息 SQL 映射。
+- **`main/resources/mapper/pig/DeliveryInfoMapper.xml`**: 送货信息 SQL 映射。
+- **`main/resources/mapper/pig/EnterpriseGroupMapper.xml`**: 企业分组 SQL 映射。
+- **`main/resources/mapper/pig/EnterpriseMapper.xml`**: 企业 SQL 映射。
+- **`main/resources/mapper/pig/PigOrderMapper.xml`**: 生猪订单 SQL 映射。
+- **`main/resources/mapper/pig/PigResourceMapper.xml`**: 生猪资源 SQL 映射。
+- **`main/resources/mapper/pig/PigTagMapper.xml`**: 生猪标签 SQL 映射。
+- **`main/resources/mapper/pig/PigTypeMapper.xml`**: 生猪类型 SQL 映射。
+- **`main/resources/mapper/pig/SiteMapper.xml`**: 场地 SQL 映射。
+- **`main/resources/mapper/pig/UserBidInfoMapper.xml`**: 用户出价详情 SQL 映射。
+- **`main/resources/mapper/pig/UserBidMapper.xml`**: 用户出价 SQL 映射。
+- **`main/resources/mapper/pig/UserExtMapper.xml`**: 用户扩展 SQL 映射。
+
+### 每次调整要完善 README.md 文件，以及ruoyi-ui下的README.md文件，各文件、目录、接口说明

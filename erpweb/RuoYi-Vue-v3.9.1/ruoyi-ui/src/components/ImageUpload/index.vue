@@ -37,10 +37,19 @@
       append-to-body
     >
       <img
-        :src="dialogImageUrl"
+        v-if="!dialogIsVideo"
+        :src="dialogMediaUrl"
         style="display: block; max-width: 100%; margin: 0 auto"
       />
+      <video
+        v-else
+        :src="dialogMediaUrl"
+        style="display: block; width: 100%"
+        controls
+        preload="metadata"
+      ></video>
     </el-dialog>
+
   </div>
 </template>
 
@@ -96,8 +105,10 @@ export default {
     return {
       number: 0,
       uploadList: [],
-      dialogImageUrl: "",
+      dialogMediaUrl: "",
+      dialogIsVideo: false,
       dialogVisible: false,
+
       hideUpload: false,
       baseUrl: process.env.VUE_APP_BASE_API,
       uploadImgUrl: process.env.VUE_APP_BASE_API + this.action, // 上传的图片服务器地址
@@ -156,23 +167,23 @@ export default {
   methods: {
     // 上传前loading加载
     handleBeforeUpload(file) {
-      let isImg = false
+      let isValid = false
       if (this.fileType.length) {
         let fileExtension = ""
         if (file.name.lastIndexOf(".") > -1) {
           fileExtension = file.name.slice(file.name.lastIndexOf(".") + 1)
         }
-        isImg = this.fileType.some(type => {
+        isValid = this.fileType.some(type => {
           if (file.type.indexOf(type) > -1) return true
           if (fileExtension && fileExtension.indexOf(type) > -1) return true
           return false
         })
       } else {
-        isImg = file.type.indexOf("image") > -1
+        isValid = file.type.indexOf("image") > -1
       }
 
-      if (!isImg) {
-        this.$modal.msgError(`文件格式不正确，请上传${this.fileType.join("/")}图片格式文件!`)
+      if (!isValid) {
+        this.$modal.msgError(`文件格式不正确，请上传${this.fileType.join("/")}格式文件!`)
         return false
       }
       if (file.name.includes(',')) {
@@ -182,13 +193,14 @@ export default {
       if (this.fileSize) {
         const isLt = file.size / 1024 / 1024 < this.fileSize
         if (!isLt) {
-          this.$modal.msgError(`上传头像图片大小不能超过 ${this.fileSize} MB!`)
+          this.$modal.msgError(`上传文件大小不能超过 ${this.fileSize} MB!`)
           return false
         }
       }
-      this.$modal.loading("正在上传图片，请稍候...")
+      this.$modal.loading("正在上传文件，请稍候...")
       this.number++
     },
+
     // 文件个数超出
     handleExceed() {
       this.$modal.msgError(`上传文件数量不能超过 ${this.limit} 个!`)
@@ -216,9 +228,10 @@ export default {
     },
     // 上传失败
     handleUploadError() {
-      this.$modal.msgError("上传图片失败，请重试")
+      this.$modal.msgError("上传文件失败，请重试")
       this.$modal.closeLoading()
     },
+
     // 上传结束处理
     uploadedSuccessfully() {
       if (this.number > 0 && this.uploadList.length === this.number) {
@@ -231,9 +244,15 @@ export default {
     },
     // 预览
     handlePictureCardPreview(file) {
-      this.dialogImageUrl = file.url
+      const url = file?.url || ""
+      this.dialogMediaUrl = url
+      this.dialogIsVideo = this.isVideoUrl(url)
       this.dialogVisible = true
     },
+    isVideoUrl(url) {
+      return !!url && /\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i.test(url)
+    },
+
     // 对象转成指定字符串分隔
     listToString(list, separator) {
       let strs = ""

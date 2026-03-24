@@ -105,14 +105,6 @@ public class BaseController
     {
         return AjaxResult.error();
     }
-
-    /**
-     * 返回成功消息
-     */
-    public AjaxResult success(String message)
-    {
-        return AjaxResult.success(message);
-    }
     
     /**
      * 返回成功消息

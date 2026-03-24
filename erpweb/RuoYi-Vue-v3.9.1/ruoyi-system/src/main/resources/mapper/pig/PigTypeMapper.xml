@@ -11,8 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="pigIntro" column="f_pigIntro" />
         <result property="pigTagIds" column="f_pigTagIds" />
         <result property="weightRange" column="f_weightRange" />
-        <result property="pigImages" column="f_pigImages" />
-        <result property="pigVideos" column="f_pigVideos" />
+        <result property="pigMedia" column="f_pigMedia" />
         <result property="feedQuality" column="f_feedQuality" />
         <result property="epidemicStatus" column="f_epidemicStatus" />
         <result property="diseaseFreeRegion" column="f_diseaseFreeRegion" />
@@ -23,7 +22,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectPigTypeVo">
-        select f_id, f_pigName, f_pigCode, f_pigIntro, f_pigTagIds, f_weightRange, f_pigImages, f_pigVideos, f_feedQuality, f_epidemicStatus, f_diseaseFreeRegion, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_pigName, f_pigCode, f_pigIntro, f_pigTagIds, f_weightRange, f_pigMedia, f_feedQuality, f_epidemicStatus, f_diseaseFreeRegion, f_creator, f_createTime, f_updator, f_updateTime
         from t_pigType
     </sql>
 
@@ -48,11 +47,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="weightRange != null and weightRange != ''">
                 AND f_weightRange like concat('%', #{weightRange}, '%')
             </if>
-            <if test="pigImages != null and pigImages != ''">
-                AND f_pigImages like concat('%', #{pigImages}, '%')
-            </if>
-            <if test="pigVideos != null and pigVideos != ''">
-                AND f_pigVideos like concat('%', #{pigVideos}, '%')
+            <if test="pigMedia != null and pigMedia != ''">
+                AND f_pigMedia like concat('%', #{pigMedia}, '%')
             </if>
             <if test="feedQuality != null and feedQuality != ''">
                 AND f_feedQuality like concat('%', #{feedQuality}, '%')
@@ -79,8 +75,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="pigIntro != null and pigIntro != ''">f_pigIntro,</if>
 <if test="pigTagIds != null and pigTagIds != ''">f_pigTagIds,</if>
 <if test="weightRange != null and weightRange != ''">f_weightRange,</if>
-<if test="pigImages != null and pigImages != ''">f_pigImages,</if>
-<if test="pigVideos != null and pigVideos != ''">f_pigVideos,</if>
+<if test="pigMedia != null and pigMedia != ''">f_pigMedia,</if>
 <if test="feedQuality != null and feedQuality != ''">f_feedQuality,</if>
 <if test="epidemicStatus != null and epidemicStatus != ''">f_epidemicStatus,</if>
 <if test="diseaseFreeRegion != null and diseaseFreeRegion != ''">f_diseaseFreeRegion,</if>
@@ -93,8 +88,7 @@ f_createTime
 <if test="pigIntro != null and pigIntro != ''">#{pigIntro},</if>
 <if test="pigTagIds != null and pigTagIds != ''">#{pigTagIds},</if>
 <if test="weightRange != null and weightRange != ''">#{weightRange},</if>
-<if test="pigImages != null and pigImages != ''">#{pigImages},</if>
-<if test="pigVideos != null and pigVideos != ''">#{pigVideos},</if>
+<if test="pigMedia != null and pigMedia != ''">#{pigMedia},</if>
 <if test="feedQuality != null and feedQuality != ''">#{feedQuality},</if>
 <if test="epidemicStatus != null and epidemicStatus != ''">#{epidemicStatus},</if>
 <if test="diseaseFreeRegion != null and diseaseFreeRegion != ''">#{diseaseFreeRegion},</if>
@@ -111,8 +105,7 @@ sysdate()
             <if test="pigIntro != null and pigIntro != ''">f_pigIntro = #{pigIntro},</if>
             <if test="pigTagIds != null and pigTagIds != ''">f_pigTagIds = #{pigTagIds},</if>
             <if test="weightRange != null and weightRange != ''">f_weightRange = #{weightRange},</if>
-            <if test="pigImages != null and pigImages != ''">f_pigImages = #{pigImages},</if>
-            <if test="pigVideos != null and pigVideos != ''">f_pigVideos = #{pigVideos},</if>
+            <if test="pigMedia != null and pigMedia != ''">f_pigMedia = #{pigMedia},</if>
             <if test="feedQuality != null and feedQuality != ''">f_feedQuality = #{feedQuality},</if>
             <if test="epidemicStatus != null and epidemicStatus != ''">f_epidemicStatus = #{epidemicStatus},</if>
             <if test="diseaseFreeRegion != null and diseaseFreeRegion != ''">f_diseaseFreeRegion = #{diseaseFreeRegion},</if>

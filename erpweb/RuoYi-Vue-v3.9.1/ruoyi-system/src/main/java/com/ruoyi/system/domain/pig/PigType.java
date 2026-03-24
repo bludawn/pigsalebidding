@@ -37,13 +37,9 @@ public class PigType extends BaseEntity
     @Excel(name = "体重区间")
     private String weightRange;
 
-    /** 生猪图片 */
-    @Excel(name = "生猪图片")
-    private String pigImages;
-
-    /** 生猪视频 */
-    @Excel(name = "生猪视频")
-    private String pigVideos;
+    /** 生猪图片视频 */
+    @Excel(name = "生猪图片视频")
+    private String pigMedia;
 
     /** 食料品质 */
     @Excel(name = "食料品质")
@@ -117,24 +113,14 @@ public class PigType extends BaseEntity
         return weightRange;
     }
 
-    public void setPigImages(String pigImages)
+    public void setPigMedia(String pigMedia)
     {
-        this.pigImages = pigImages;
+        this.pigMedia = pigMedia;
     }
 
-    public String getPigImages()
+    public String getPigMedia()
     {
-        return pigImages;
-    }
-
-    public void setPigVideos(String pigVideos)
-    {
-        this.pigVideos = pigVideos;
-    }
-
-    public String getPigVideos()
-    {
-        return pigVideos;
+        return pigMedia;
     }
 
     public void setFeedQuality(String feedQuality)
@@ -177,8 +163,7 @@ public class PigType extends BaseEntity
             .append("pigIntro", getPigIntro())
             .append("pigTagIds", getPigTagIds())
             .append("weightRange", getWeightRange())
-            .append("pigImages", getPigImages())
-            .append("pigVideos", getPigVideos())
+            .append("pigMedia", getPigMedia())
             .append("feedQuality", getFeedQuality())
             .append("epidemicStatus", getEpidemicStatus())
             .append("diseaseFreeRegion", getDiseaseFreeRegion())

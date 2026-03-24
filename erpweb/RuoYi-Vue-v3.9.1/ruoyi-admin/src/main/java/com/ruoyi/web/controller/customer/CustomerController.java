@@ -1108,16 +1108,23 @@ public class CustomerController extends BaseController
         return date != null ? DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD_HH_MM_SS, date) : null;
     }
 
+
     private String firstImageUrl(PigType pigType)
     {
-        if (pigType == null || StringUtils.isEmpty(pigType.getPigImages()))
+        if (pigType == null || StringUtils.isEmpty(pigType.getPigMedia()))
         {
             return "";
         }
-        List<String> images = splitToList(pigType.getPigImages());
-        return images.isEmpty() ? "" : images.get(0);
+        List<String> media = splitToList(pigType.getPigMedia());
+        for (String url : media)
+        {
+            if (!isVideoUrl(url))
+            {
+                return url;
+            }
+        }
+        return media.isEmpty() ? "" : media.get(0);
     }
-
     private List<String> mergeMediaUrls(PigType pigType)
     {
         List<String> urls = new ArrayList<String>();
@@ -1125,9 +1132,13 @@ public class CustomerController extends BaseController
         {
             return urls;
         }
-        urls.addAll(splitToList(pigType.getPigImages()));
-        urls.addAll(splitToList(pigType.getPigVideos()));
+        urls.addAll(splitToList(pigType.getPigMedia()));
         return urls;
+    }
+
+    private boolean isVideoUrl(String url)
+    {
+        return StringUtils.isNotEmpty(url) && url.matches("(?i).*\\.(mp4|webm|mov|m4v|avi)(\\?.*)?$");
     }
 
     private Long calcRemainSeconds(Date endTime)

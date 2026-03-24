@@ -126,3 +126,18 @@
 7. 前端企业信息，列表能显示营业执照图片，点击后能查看。
 
 8. 生猪业务的所有表单数据，是｜否 布尔类型的，现在是上传的是 'Y'和'N' 还是 1和0，我看数据库是tinyint类型，理论上应该是 1 和0。
+
+
+
+整理Ruoyi-Vue-v3.9.1目录、文件、接口，并写到README.md中，如下子工程的src文件夹：
+ - ruoyi-admin/src  
+ - ruoyi-common/src  
+ - ruoyi-framework/src  
+ - ruoyi-generator/src  
+ - ruoyi-quartz/src  
+ - ruoyi-system/src  
+
+整理ruoyi-ui的文件介绍，并写到其目录的README.md中
+
+
+

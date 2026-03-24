@@ -51,26 +51,24 @@
       <el-table-column label="食料品质" align="center" prop="feedQuality" v-if="columns.feedQuality.visible" />
       <el-table-column label="防疫状态" align="center" prop="epidemicStatus" v-if="columns.epidemicStatus.visible" />
       <el-table-column label="无疫地区" align="center" prop="diseaseFreeRegion" v-if="columns.diseaseFreeRegion.visible" />
-      <el-table-column label="生猪图片" align="center" prop="pigImages" v-if="columns.pigImages.visible">
+      <el-table-column label="生猪图片视频" align="center" prop="pigMedia" v-if="columns.pigMedia.visible">
         <template slot-scope="scope">
-          <el-image
-            v-if="getFirstUrl(scope.row.pigImages)"
-            :src="getFirstUrl(scope.row.pigImages)"
-            :preview-src-list="getUrlList(scope.row.pigImages)"
-            style="width: 40px; height: 40px"
-            fit="cover"
-          />
-        </template>
-      </el-table-column>
-      <el-table-column label="生猪视频" align="center" prop="pigVideos" v-if="columns.pigVideos.visible">
-        <template slot-scope="scope">
-          <video
-            v-if="getFirstUrl(scope.row.pigVideos)"
-            :src="getFirstUrl(scope.row.pigVideos)"
-            style="width: 120px; height: 80px"
-            controls
-            preload="metadata"
-          ></video>
+          <template v-if="getFirstMedia(scope.row.pigMedia)">
+            <el-image
+              v-if="!isVideoUrl(getFirstMedia(scope.row.pigMedia))"
+              :src="getFirstMedia(scope.row.pigMedia)"
+              :preview-src-list="getImageList(scope.row.pigMedia)"
+              style="width: 40px; height: 40px"
+              fit="cover"
+            />
+            <video
+              v-else
+              :src="getFirstMedia(scope.row.pigMedia)"
+              style="width: 120px; height: 80px"
+              controls
+              preload="metadata"
+            ></video>
+          </template>
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
@@ -104,7 +102,7 @@
           <el-input v-model="form.pigName" placeholder="请输入生猪名称" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="生猪编码" prop="pigCode">
-          <el-input v-model="form.pigCode" placeholder="请输入生猪编码" :disabled="viewModeOnly" />
+          <el-input v-model="form.pigCode" placeholder="自动生成" :disabled="true" />
         </el-form-item>
         <el-form-item label="生猪介绍" prop="pigIntro">
           <el-input v-model="form.pigIntro" type="textarea" placeholder="请输入生猪介绍" :disabled="viewModeOnly" />
@@ -117,11 +115,14 @@
         <el-form-item label="体重区间" prop="weightRange">
           <el-input v-model="form.weightRange" placeholder="请输入体重区间" :disabled="viewModeOnly" />
         </el-form-item>
-        <el-form-item label="生猪图片" prop="pigImages">
-          <el-input v-model="form.pigImages" placeholder="请输入图片URL，多个用逗号隔开" :disabled="viewModeOnly" />
-        </el-form-item>
-        <el-form-item label="生猪视频" prop="pigVideos">
-          <el-input v-model="form.pigVideos" placeholder="请输入视频URL，多个用逗号隔开" :disabled="viewModeOnly" />
+        <el-form-item label="生猪图片视频" prop="pigMedia">
+          <ImageUpload
+            v-model="form.pigMedia"
+            :disabled="viewModeOnly"
+            :limit="9"
+            :file-type="mediaFileTypes"
+            :file-size="200"
+          />
         </el-form-item>
         <el-form-item label="食料品质" prop="feedQuality">
           <el-input v-model="form.feedQuality" placeholder="请输入食料品质" :disabled="viewModeOnly" />
@@ -164,12 +165,16 @@
 </template>
 
 <script>
-import { listPigType, getPigType, delPigType, addPigType, updatePigType } from "@/api/pig/pigType"
+import { listPigType, getPigType, delPigType, addPigType, updatePigType, getNextPigTypeCode } from "@/api/pig/pigType"
 import { listPigTag } from "@/api/pig/pigTag"
+import ImageUpload from "@/components/ImageUpload"
 import { getToken } from "@/utils/auth"
 
 export default {
   name: "PigType",
+  components: {
+    ImageUpload
+  },
   data() {
     return {
       loading: true,
@@ -197,8 +202,7 @@ export default {
         feedQuality: { label: '食料品质', visible: true },
         epidemicStatus: { label: '防疫状态', visible: true },
         diseaseFreeRegion: { label: '无疫地区', visible: true },
-        pigImages: { label: '生猪图片', visible: true },
-        pigVideos: { label: '生猪视频', visible: true },
+        pigMedia: { label: '生猪图片视频', visible: true },
         remark: { label: '备注', visible: true },
         createBy: { label: '创建人', visible: true },
         createTime: { label: '创建时间', visible: true },
@@ -216,7 +220,8 @@ export default {
         updateSupport: 0,
         headers: { Authorization: "Bearer " + getToken() },
         url: process.env.VUE_APP_BASE_API + "/pig/pigType/importData"
-      }
+      },
+      mediaFileTypes: ["png", "jpg", "jpeg", "gif", "webp", "bmp", "mp4", "webm", "mov", "m4v", "avi"]
     }
   },
   created() {
@@ -228,9 +233,15 @@ export default {
       if (!value) return []
       return value.split(',').map(item => item.trim()).filter(Boolean)
     },
-    getFirstUrl(value) {
+    isVideoUrl(url) {
+      return !!url && /\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i.test(url)
+    },
+    getFirstMedia(value) {
       const list = this.getUrlList(value)
       return list.length ? list[0] : ""
+    },
+    getImageList(value) {
+      return this.getUrlList(value).filter(url => !this.isVideoUrl(url))
     },
     loadPigTagOptions() {
       listPigTag({ pageNum: 1, pageSize: 1000 }).then(response => {
@@ -278,8 +289,7 @@ export default {
         pigIntro: undefined,
         pigTagIds: [],
         weightRange: undefined,
-        pigImages: undefined,
-        pigVideos: undefined,
+        pigMedia: undefined,
         feedQuality: undefined,
         epidemicStatus: undefined,
         diseaseFreeRegion: undefined,
@@ -305,6 +315,9 @@ export default {
       this.viewModeOnly = false
       this.open = true
       this.title = "添加生猪类型"
+      getNextPigTypeCode().then(response => {
+        this.$set(this.form, 'pigCode', response.data)
+      })
     },
     handleUpdate(row) {
       this.reset()
