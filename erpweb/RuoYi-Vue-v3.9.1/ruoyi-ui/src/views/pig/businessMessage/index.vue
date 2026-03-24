@@ -1,8 +1,10 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="80px">
-      <el-form-item label="用户id" prop="userId">
-        <el-input v-model="queryParams.userId" placeholder="请输入用户id" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
+      <el-form-item label="用户" prop="userId">
+        <el-select v-model="queryParams.userId" placeholder="请选择用户" clearable filterable style="width: 240px">
+          <el-option v-for="item in userOptions" :key="item.userId" :label="getUserLabel(item)" :value="item.userId" />
+        </el-select>
       </el-form-item>
       <el-form-item label="消息类型" prop="messageType">
         <el-select v-model="queryParams.messageType" placeholder="请选择消息类型" clearable style="width: 240px">
@@ -38,8 +40,16 @@
 
     <el-table v-loading="loading" :data="businessMessageList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
-      <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
-      <el-table-column label="用户id" align="center" prop="userId" v-if="columns.userId.visible" />
+      <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible">
+        <template slot-scope="scope">
+          <el-link type="primary" :underline="false" @click="handleView(scope.row)">{{ scope.row.id }}</el-link>
+        </template>
+      </el-table-column>
+      <el-table-column label="用户" align="center" prop="userId" v-if="columns.userId.visible">
+        <template slot-scope="scope">
+          <span>{{ getUserName(scope.row.userId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="消息类型" align="center" prop="messageType" v-if="columns.messageType.visible">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.pig_message_type" :value="scope.row.messageType" />
@@ -58,6 +68,7 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:businessMessage:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:businessMessage:remove']">删除</el-button>
         </template>
@@ -69,29 +80,31 @@
     <!-- 添加或修改业务消息对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" label-width="120px">
-        <el-form-item label="用户id" prop="userId">
-          <el-input v-model="form.userId" placeholder="请输入用户id" />
+        <el-form-item label="用户" prop="userId">
+          <el-select v-model="form.userId" placeholder="请选择用户" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in userOptions" :key="item.userId" :label="getUserLabel(item)" :value="item.userId" />
+          </el-select>
         </el-form-item>
         <el-form-item label="消息类型" prop="messageType">
-          <el-select v-model="form.messageType" placeholder="请选择消息类型">
+          <el-select v-model="form.messageType" placeholder="请选择消息类型" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.pig_message_type" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="是否阅读" prop="isRead">
-          <el-select v-model="form.isRead" placeholder="请选择是否阅读">
+          <el-select v-model="form.isRead" placeholder="请选择是否阅读" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="消息内容" prop="messageContent">
-          <el-input v-model="form.messageContent" type="textarea" placeholder="请输入消息内容" />
+          <el-input v-model="form.messageContent" type="textarea" placeholder="请输入消息内容" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
+        <el-button @click="cancel">关 闭</el-button>
       </div>
     </el-dialog>
   </div>
@@ -99,6 +112,7 @@
 
 <script>
 import { listBusinessMessage, getBusinessMessage, delBusinessMessage, addBusinessMessage, updateBusinessMessage } from "@/api/pig/businessMessage"
+import { listUser } from "@/api/system/user"
 
 export default {
   name: "BusinessMessage",
@@ -123,16 +137,20 @@ export default {
       },
       columns: {
         id: { label: '编号', visible: true },
-        userId: { label: '用户id', visible: true },
+        userId: { label: '用户', visible: true },
         messageType: { label: '消息类型', visible: true },
         isRead: { label: '是否阅读', visible: true },
         messageContent: { label: '消息内容', visible: true },
         createTime: { label: '创建时间', visible: true }
       },
+      userOptions: [],
+      userMap: {},
+      viewModeOnly: false,
       form: {}
     }
   },
   created() {
+    this.loadUserOptions()
     this.getList()
   },
   methods: {
@@ -144,8 +162,27 @@ export default {
         this.loading = false
       })
     },
+    loadUserOptions() {
+      listUser({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.userOptions = response.rows || []
+        this.userMap = this.userOptions.reduce((acc, item) => {
+          acc[item.userId] = item
+          return acc
+        }, {})
+      })
+    },
+    getUserLabel(item) {
+      if (!item) return ''
+      return item.nickName || item.userName || item.userId
+    },
+    getUserName(userId) {
+      if (!userId) return '-'
+      const item = this.userMap[userId]
+      return item ? this.getUserLabel(item) : userId
+    },
     cancel() {
       this.open = false
+      this.viewModeOnly = false
       this.reset()
     },
     reset() {
@@ -176,6 +213,17 @@ export default {
       this.reset()
       this.open = true
       this.title = "添加业务消息"
+      this.viewModeOnly = false
+    },
+    handleView(row) {
+      this.reset()
+      const id = row.id || this.ids
+      getBusinessMessage(id).then(response => {
+        this.form = response.data
+        this.open = true
+        this.title = "查看业务消息"
+        this.viewModeOnly = true
+      })
     },
     handleUpdate(row) {
       this.reset()
@@ -184,6 +232,7 @@ export default {
         this.form = response.data
         this.open = true
         this.title = "修改业务消息"
+        this.viewModeOnly = false
       })
     },
     submitForm() {

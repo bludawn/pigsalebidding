@@ -29,9 +29,17 @@
     <el-table v-loading="loading" :data="enterpriseGroupList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
-      <el-table-column label="组名" align="center" prop="groupName" v-if="columns.groupName.visible" />
+      <el-table-column label="组名" align="center" prop="groupName" v-if="columns.groupName.visible">
+        <template slot-scope="scope">
+          <el-link type="primary" :underline="false" @click="handleView(scope.row)">{{ scope.row.groupName || scope.row.id }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="组描述" align="center" prop="groupDesc" v-if="columns.groupDesc.visible" />
-      <el-table-column label="企业id数组" align="center" prop="enterpriseIds" v-if="columns.enterpriseIds.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="企业" align="center" prop="enterpriseIds" v-if="columns.enterpriseIds.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ formatEnterpriseNames(scope.row.enterpriseIds) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -39,6 +47,7 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:enterpriseGroup:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:enterpriseGroup:remove']">删除</el-button>
         </template>
@@ -51,21 +60,23 @@
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" label-width="100px">
         <el-form-item label="组名" prop="groupName">
-          <el-input v-model="form.groupName" placeholder="请输入组名" />
+          <el-input v-model="form.groupName" placeholder="请输入组名" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="组描述" prop="groupDesc">
-          <el-input v-model="form.groupDesc" type="textarea" placeholder="请输入组描述" />
+          <el-input v-model="form.groupDesc" type="textarea" placeholder="请输入组描述" :disabled="viewModeOnly" />
         </el-form-item>
-        <el-form-item label="企业id数组" prop="enterpriseIds">
-          <el-input v-model="form.enterpriseIds" placeholder="请输入企业id，多个用逗号隔开" />
+        <el-form-item label="企业" prop="enterpriseIds">
+          <el-select v-model="enterpriseIdList" placeholder="请选择企业" multiple filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in enterpriseOptions" :key="item.id" :label="item.enterpriseName || item.id" :value="item.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
+        <el-button @click="cancel">关 闭</el-button>
       </div>
     </el-dialog>
   </div>
@@ -73,6 +84,7 @@
 
 <script>
 import { listEnterpriseGroup, getEnterpriseGroup, delEnterpriseGroup, addEnterpriseGroup, updateEnterpriseGroup } from "@/api/pig/enterpriseGroup"
+import { listEnterprise } from "@/api/pig/enterprise"
 
 export default {
   name: "EnterpriseGroup",
@@ -96,13 +108,18 @@ export default {
         id: { label: '编号', visible: true },
         groupName: { label: '组名', visible: true },
         groupDesc: { label: '组描述', visible: true },
-        enterpriseIds: { label: '企业id数组', visible: true },
+        enterpriseIds: { label: '企业', visible: true },
         createTime: { label: '创建时间', visible: true }
       },
+      enterpriseOptions: [],
+      enterpriseMap: {},
+      enterpriseIdList: [],
+      viewModeOnly: false,
       form: {}
     }
   },
   created() {
+    this.loadEnterpriseOptions()
     this.getList()
   },
   methods: {
@@ -114,8 +131,31 @@ export default {
         this.loading = false
       })
     },
+    loadEnterpriseOptions() {
+      listEnterprise({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.enterpriseOptions = response.rows || []
+        this.enterpriseMap = this.enterpriseOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    formatEnterpriseNames(ids) {
+      if (!ids) return '-'
+      const list = String(ids)
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean)
+      return list
+        .map(id => {
+          const match = this.enterpriseMap[id]
+          return match ? (match.enterpriseName || id) : id
+        })
+        .join('、')
+    },
     cancel() {
       this.open = false
+      this.viewModeOnly = false
       this.reset()
     },
     reset() {
@@ -145,19 +185,41 @@ export default {
       this.reset()
       this.open = true
       this.title = "添加企业分组"
+      this.viewModeOnly = false
+      this.enterpriseIdList = []
+    },
+    handleView(row) {
+      this.reset()
+      const id = row.id || this.ids
+      getEnterpriseGroup(id).then(response => {
+        this.form = response.data
+        this.enterpriseIdList = this.form.enterpriseIds
+          ? String(this.form.enterpriseIds).split(',').map(item => Number(item) || item)
+          : []
+        this.open = true
+        this.title = "查看企业分组"
+        this.viewModeOnly = true
+      })
     },
     handleUpdate(row) {
       this.reset()
       const id = row.id || this.ids
       getEnterpriseGroup(id).then(response => {
         this.form = response.data
+        this.enterpriseIdList = this.form.enterpriseIds
+          ? String(this.form.enterpriseIds).split(',').map(item => Number(item) || item)
+          : []
         this.open = true
         this.title = "修改企业分组"
+        this.viewModeOnly = false
       })
     },
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
+          this.form.enterpriseIds = this.enterpriseIdList && this.enterpriseIdList.length
+            ? this.enterpriseIdList.join(',')
+            : undefined
           if (this.form.id != undefined) {
             updateEnterpriseGroup(this.form).then(() => {
               this.$modal.msgSuccess("修改成功")

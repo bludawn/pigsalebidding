@@ -37,24 +37,46 @@
     <el-table v-loading="loading" :data="pigResourceList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
-      <el-table-column label="资源编码" align="center" prop="resourceCode" v-if="columns.resourceCode.visible" :show-overflow-tooltip="true" />
-      <el-table-column label="生猪类型id" align="center" prop="pigTypeId" v-if="columns.pigTypeId.visible" />
-      <el-table-column label="场点id" align="center" prop="siteId" v-if="columns.siteId.visible" />
+      <el-table-column label="资源编码" align="center" prop="resourceCode" v-if="columns.resourceCode.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <el-link type="primary" :underline="false" @click="handleView(scope.row)">{{ scope.row.resourceCode || scope.row.id }}</el-link>
+        </template>
+      </el-table-column>
+      <el-table-column label="生猪类型" align="center" prop="pigTypeId" v-if="columns.pigTypeId.visible">
+        <template slot-scope="scope">
+          <span>{{ getPigTypeName(scope.row.pigTypeId) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="场点" align="center" prop="siteId" v-if="columns.siteId.visible">
+        <template slot-scope="scope">
+          <span>{{ getSiteName(scope.row.siteId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="资源来源" align="center" prop="resourceSource" v-if="columns.resourceSource.visible">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.pig_resource_source" :value="scope.row.resourceSource" />
         </template>
       </el-table-column>
+      <el-table-column label="采购单" align="center" prop="purchaseOrderId" v-if="columns.purchaseOrderId.visible" />
       <el-table-column label="资源数量" align="center" prop="resourceCount" v-if="columns.resourceCount.visible" />
       <el-table-column label="资源单价" align="center" prop="resourceUnitPrice" v-if="columns.resourceUnitPrice.visible" />
       <el-table-column label="资源总价" align="center" prop="resourceTotalPrice" v-if="columns.resourceTotalPrice.visible" />
+      <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="创建人" align="center" prop="createBy" v-if="columns.createBy.visible" />
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="更新人" align="center" prop="updateBy" v-if="columns.updateBy.visible" />
+      <el-table-column label="更新时间" align="center" prop="updateTime" v-if="columns.updateTime.visible" width="160">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.updateTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:pigResource:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:pigResource:remove']">删除</el-button>
         </template>
@@ -67,38 +89,42 @@
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" label-width="120px">
         <el-form-item label="资源编码" prop="resourceCode">
-          <el-input v-model="form.resourceCode" placeholder="请输入资源编码" />
+          <el-input v-model="form.resourceCode" placeholder="请输入资源编码" :disabled="viewModeOnly" />
         </el-form-item>
-        <el-form-item label="生猪类型id" prop="pigTypeId">
-          <el-input v-model="form.pigTypeId" placeholder="请输入生猪类型id" />
+        <el-form-item label="生猪类型" prop="pigTypeId">
+          <el-select v-model="form.pigTypeId" placeholder="请选择生猪类型" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in pigTypeOptions" :key="item.id" :label="item.pigName || item.pigCode || item.id" :value="item.id" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="场点id" prop="siteId">
-          <el-input v-model="form.siteId" placeholder="请输入场点id" />
+        <el-form-item label="场点" prop="siteId">
+          <el-select v-model="form.siteId" placeholder="请选择场点" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in siteOptions" :key="item.id" :label="item.siteName || item.id" :value="item.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="资源来源" prop="resourceSource">
-          <el-select v-model="form.resourceSource" placeholder="请选择资源来源">
+          <el-select v-model="form.resourceSource" placeholder="请选择资源来源" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.pig_resource_source" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="采购单id" prop="purchaseOrderId">
-          <el-input v-model="form.purchaseOrderId" placeholder="请输入采购单id" />
+          <el-input v-model="form.purchaseOrderId" placeholder="请输入采购单id" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="资源数量" prop="resourceCount">
-          <el-input v-model="form.resourceCount" placeholder="请输入资源数量" />
+          <el-input v-model="form.resourceCount" placeholder="请输入资源数量" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="资源单价" prop="resourceUnitPrice">
-          <el-input v-model="form.resourceUnitPrice" placeholder="请输入资源单价" />
+          <el-input v-model="form.resourceUnitPrice" placeholder="请输入资源单价" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="资源总价" prop="resourceTotalPrice">
-          <el-input v-model="form.resourceTotalPrice" placeholder="请输入资源总价" />
+          <el-input v-model="form.resourceTotalPrice" placeholder="请输入资源总价" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
+        <el-button @click="cancel">关 闭</el-button>
       </div>
     </el-dialog>
 
@@ -125,6 +151,8 @@
 
 <script>
 import { listPigResource, getPigResource, delPigResource, addPigResource, updatePigResource } from "@/api/pig/pigResource"
+import { listPigType } from "@/api/pig/pigType"
+import { listSite } from "@/api/pig/site"
 import { getToken } from "@/utils/auth"
 
 export default {
@@ -150,14 +178,24 @@ export default {
       columns: {
         id: { label: '编号', visible: true },
         resourceCode: { label: '资源编码', visible: true },
-        pigTypeId: { label: '生猪类型id', visible: true },
-        siteId: { label: '场点id', visible: true },
+        pigTypeId: { label: '生猪类型', visible: true },
+        siteId: { label: '场点', visible: true },
         resourceSource: { label: '资源来源', visible: true },
+        purchaseOrderId: { label: '采购单', visible: true },
         resourceCount: { label: '资源数量', visible: true },
         resourceUnitPrice: { label: '资源单价', visible: true },
         resourceTotalPrice: { label: '资源总价', visible: true },
-        createTime: { label: '创建时间', visible: true }
+        remark: { label: '备注', visible: true },
+        createBy: { label: '创建人', visible: true },
+        createTime: { label: '创建时间', visible: true },
+        updateBy: { label: '更新人', visible: true },
+        updateTime: { label: '更新时间', visible: true }
       },
+      pigTypeOptions: [],
+      pigTypeMap: {},
+      siteOptions: [],
+      siteMap: {},
+      viewModeOnly: false,
       form: {},
       upload: {
         open: false,
@@ -170,9 +208,39 @@ export default {
     }
   },
   created() {
+    this.loadPigTypeOptions()
+    this.loadSiteOptions()
     this.getList()
   },
   methods: {
+    loadPigTypeOptions() {
+      listPigType({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.pigTypeOptions = response.rows || []
+        this.pigTypeMap = this.pigTypeOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    loadSiteOptions() {
+      listSite({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.siteOptions = response.rows || []
+        this.siteMap = this.siteOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    getPigTypeName(id) {
+      if (!id) return ""
+      const item = this.pigTypeMap[id]
+      return item ? (item.pigName || item.pigCode || item.id) : id
+    },
+    getSiteName(id) {
+      if (!id) return ""
+      const item = this.siteMap[id]
+      return item ? (item.siteName || item.id) : id
+    },
     getList() {
       this.loading = true
       listPigResource(this.queryParams).then(response => {
@@ -183,6 +251,7 @@ export default {
     },
     cancel() {
       this.open = false
+      this.viewModeOnly = false
       this.reset()
     },
     reset() {
@@ -215,16 +284,28 @@ export default {
     },
     handleAdd() {
       this.reset()
+      this.viewModeOnly = false
       this.open = true
       this.title = "添加生猪资源"
     },
     handleUpdate(row) {
       this.reset()
+      this.viewModeOnly = false
       const id = row.id || this.ids
       getPigResource(id).then(response => {
         this.form = response.data
         this.open = true
         this.title = "修改生猪资源"
+      })
+    },
+    handleView(row) {
+      this.reset()
+      const id = row.id || this.ids
+      getPigResource(id).then(response => {
+        this.form = response.data
+        this.viewModeOnly = true
+        this.open = true
+        this.title = "查看生猪资源"
       })
     },
     submitForm() {

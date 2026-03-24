@@ -35,7 +35,11 @@
     <el-table v-loading="loading" :data="siteList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
-      <el-table-column label="场点名称" align="center" prop="siteName" v-if="columns.siteName.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="场点名称" align="center" prop="siteName" v-if="columns.siteName.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <el-link type="primary" :underline="false" @click="handleView(scope.row)">{{ scope.row.siteName || scope.row.id }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="场点电话" align="center" prop="sitePhone" v-if="columns.sitePhone.visible" />
       <el-table-column label="场点地区" align="center" prop="siteAddressCode" v-if="columns.siteAddressCode.visible" :show-overflow-tooltip="true">
         <template slot-scope="scope">
@@ -43,6 +47,12 @@
         </template>
       </el-table-column>
       <el-table-column label="场点地址" align="center" prop="siteAddress" v-if="columns.siteAddress.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="完整地址" align="center" v-if="columns.fullAddress.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ formatSiteFullAddress(scope.row.siteAddressCode, scope.row.siteAddress) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="场点介绍" align="center" prop="siteIntro" v-if="columns.siteIntro.visible" :show-overflow-tooltip="true" />
       <el-table-column label="场点图片" align="center" prop="siteImages" v-if="columns.siteImages.visible">
         <template slot-scope="scope">
           <el-image
@@ -66,14 +76,27 @@
         </template>
       </el-table-column>
       <el-table-column label="经纬度" align="center" prop="siteLocation" v-if="columns.siteLocation.visible" />
-      <el-table-column label="所属企业" align="center" prop="enterpriseId" v-if="columns.enterpriseId.visible" />
+      <el-table-column label="所属企业" align="center" prop="enterpriseId" v-if="columns.enterpriseId.visible">
+        <template slot-scope="scope">
+          <span>{{ getEnterpriseName(scope.row.enterpriseId) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="创建人" align="center" prop="createBy" v-if="columns.createBy.visible" />
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="更新人" align="center" prop="updateBy" v-if="columns.updateBy.visible" />
+      <el-table-column label="更新时间" align="center" prop="updateTime" v-if="columns.updateTime.visible" width="160">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.updateTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:site:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:site:remove']">删除</el-button>
         </template>
@@ -86,10 +109,12 @@
     <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" label-width="120px">
         <el-form-item label="所属企业" prop="enterpriseId">
-          <el-input v-model="form.enterpriseId" placeholder="请输入所属企业" />
+          <el-select v-model="form.enterpriseId" placeholder="请选择所属企业" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in enterpriseOptions" :key="item.id" :label="item.enterpriseName" :value="item.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="场点名称" prop="siteName">
-          <el-input v-model="form.siteName" placeholder="请输入场点名称" />
+          <el-input v-model="form.siteName" placeholder="请输入场点名称" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="场点地区" prop="siteAddressCodeList">
           <el-cascader
@@ -99,33 +124,34 @@
             clearable
             filterable
             placeholder="请选择场点地区"
+            :disabled="viewModeOnly"
           />
         </el-form-item>
         <el-form-item label="场点地址" prop="siteAddress">
-          <el-input v-model="form.siteAddress" placeholder="请输入详细地址" />
+          <el-input v-model="form.siteAddress" placeholder="请输入详细地址" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="经纬度" prop="siteLocation">
-          <el-input v-model="form.siteLocation" placeholder="请输入经纬度坐标" />
+          <el-input v-model="form.siteLocation" placeholder="请输入经纬度坐标" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="场点电话" prop="sitePhone">
-          <el-input v-model="form.sitePhone" placeholder="请输入场点电话" />
+          <el-input v-model="form.sitePhone" placeholder="请输入场点电话" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="场点介绍" prop="siteIntro">
-          <el-input v-model="form.siteIntro" type="textarea" placeholder="请输入场点介绍" />
+          <el-input v-model="form.siteIntro" type="textarea" placeholder="请输入场点介绍" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="场点图片" prop="siteImages">
-          <el-input v-model="form.siteImages" placeholder="请输入图片URL，多个用逗号隔开" />
+          <el-input v-model="form.siteImages" placeholder="请输入图片URL，多个用逗号隔开" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="场点视频" prop="siteVideos">
-          <el-input v-model="form.siteVideos" placeholder="请输入视频URL，多个用逗号隔开" />
+          <el-input v-model="form.siteVideos" placeholder="请输入视频URL，多个用逗号隔开" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
+        <el-button @click="cancel">关 闭</el-button>
       </div>
     </el-dialog>
 
@@ -152,6 +178,7 @@
 
 <script>
 import { listSite, getSite, delSite, addSite, updateSite } from "@/api/pig/site"
+import { listEnterprise } from "@/api/pig/enterprise"
 import { getToken } from "@/utils/auth"
 import pcasData from "@/assets/pcas-code.json"
 
@@ -180,12 +207,21 @@ export default {
         sitePhone: { label: '场点电话', visible: true },
         siteAddressCode: { label: '场点地区', visible: true },
         siteAddress: { label: '场点地址', visible: true },
+        fullAddress: { label: '完整地址', visible: true },
+        siteIntro: { label: '场点介绍', visible: true },
         siteImages: { label: '场点图片', visible: true },
         siteVideos: { label: '场点视频', visible: true },
         siteLocation: { label: '经纬度', visible: true },
         enterpriseId: { label: '所属企业', visible: true },
-        createTime: { label: '创建时间', visible: true }
+        remark: { label: '备注', visible: true },
+        createBy: { label: '创建人', visible: true },
+        createTime: { label: '创建时间', visible: true },
+        updateBy: { label: '更新人', visible: true },
+        updateTime: { label: '更新时间', visible: true }
       },
+      enterpriseOptions: [],
+      enterpriseMap: {},
+      viewModeOnly: false,
       pcasOptions: [],
       pcasCodeMap: {},
       pcasProps: {
@@ -206,6 +242,7 @@ export default {
   },
   created() {
     this.initPcasOptions()
+    this.loadEnterpriseOptions()
     this.getList()
   },
   methods: {
@@ -216,6 +253,24 @@ export default {
     getFirstUrl(value) {
       const list = this.getUrlList(value)
       return list.length ? list[0] : ""
+    },
+    loadEnterpriseOptions() {
+      listEnterprise({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.enterpriseOptions = response.rows || []
+        this.enterpriseMap = this.enterpriseOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    getEnterpriseName(id) {
+      if (!id) return ""
+      return this.enterpriseMap[id] ? this.enterpriseMap[id].enterpriseName : id
+    },
+    formatSiteFullAddress(code, detail) {
+      const region = this.formatSiteAddressCode(code)
+      if (region && detail) return `${region}${detail}`
+      return region || detail || ""
     },
     initPcasOptions() {
       const rawList = Object.keys(pcasData)
@@ -257,6 +312,7 @@ export default {
     },
     cancel() {
       this.open = false
+      this.viewModeOnly = false
       this.reset()
     },
     reset() {
@@ -291,17 +347,30 @@ export default {
     },
     handleAdd() {
       this.reset()
+      this.viewModeOnly = false
       this.open = true
       this.title = "添加场点"
     },
     handleUpdate(row) {
       this.reset()
+      this.viewModeOnly = false
       const id = row.id || this.ids
       getSite(id).then(response => {
         this.form = response.data
         this.form.siteAddressCodeList = this.getCodePath(this.form.siteAddressCode)
         this.open = true
         this.title = "修改场点"
+      })
+    },
+    handleView(row) {
+      this.reset()
+      const id = row.id || this.ids
+      getSite(id).then(response => {
+        this.form = response.data
+        this.form.siteAddressCodeList = this.getCodePath(this.form.siteAddressCode)
+        this.viewModeOnly = true
+        this.open = true
+        this.title = "查看场点"
       })
     },
     submitForm() {

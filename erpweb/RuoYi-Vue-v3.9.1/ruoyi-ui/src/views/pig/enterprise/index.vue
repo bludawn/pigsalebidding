@@ -34,7 +34,11 @@
     <el-table v-loading="loading" :data="enterpriseList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
-      <el-table-column label="企业名称" align="center" prop="enterpriseName" v-if="columns.enterpriseName.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="企业名称" align="center" prop="enterpriseName" v-if="columns.enterpriseName.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <el-link type="primary" :underline="false" @click="handleView(scope.row)">{{ scope.row.enterpriseName || scope.row.id }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="统一信用代码" align="center" prop="creditCode" v-if="columns.creditCode.visible" />
       <el-table-column label="法定代表人" align="center" prop="legalPerson" v-if="columns.legalPerson.visible" />
       <el-table-column label="联系人" align="center" prop="contactPerson" v-if="columns.contactPerson.visible" />
@@ -45,6 +49,17 @@
             v-if="getFirstUrl(scope.row.businessLicenseUrl)"
             :src="getFirstUrl(scope.row.businessLicenseUrl)"
             :preview-src-list="getUrlList(scope.row.businessLicenseUrl)"
+            style="width: 40px; height: 40px"
+            fit="cover"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column label="其他资料" align="center" prop="otherMaterialUrls" v-if="columns.otherMaterialUrls.visible">
+        <template slot-scope="scope">
+          <el-image
+            v-if="getFirstUrl(scope.row.otherMaterialUrls)"
+            :src="getFirstUrl(scope.row.otherMaterialUrls)"
+            :preview-src-list="getUrlList(scope.row.otherMaterialUrls)"
             style="width: 40px; height: 40px"
             fit="cover"
           />
@@ -67,13 +82,22 @@
       </el-table-column>
       <el-table-column label="保证金" align="center" prop="depositAmount" v-if="columns.depositAmount.visible" />
       <el-table-column label="货款" align="center" prop="paymentAmount" v-if="columns.paymentAmount.visible" />
+      <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="创建人" align="center" prop="createBy" v-if="columns.createBy.visible" />
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="更新人" align="center" prop="updateBy" v-if="columns.updateBy.visible" />
+      <el-table-column label="更新时间" align="center" prop="updateTime" v-if="columns.updateTime.visible" width="160">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.updateTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:enterprise:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:enterprise:remove']">删除</el-button>
         </template>
@@ -86,54 +110,54 @@
     <el-dialog :title="title" :visible.sync="open" width="700px" append-to-body>
       <el-form ref="form" :model="form" label-width="120px">
         <el-form-item label="企业名称" prop="enterpriseName">
-          <el-input v-model="form.enterpriseName" placeholder="请输入企业名称" />
+          <el-input v-model="form.enterpriseName" placeholder="请输入企业名称" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="统一信用代码" prop="creditCode">
-          <el-input v-model="form.creditCode" placeholder="请输入统一社会信用代码" />
+          <el-input v-model="form.creditCode" placeholder="请输入统一社会信用代码" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="法定代表人" prop="legalPerson">
-          <el-input v-model="form.legalPerson" placeholder="请输入法定代表人" />
+          <el-input v-model="form.legalPerson" placeholder="请输入法定代表人" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="联系人" prop="contactPerson">
-          <el-input v-model="form.contactPerson" placeholder="请输入联系人" />
+          <el-input v-model="form.contactPerson" placeholder="请输入联系人" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="联系电话" prop="contactPhone">
-          <el-input v-model="form.contactPhone" placeholder="请输入联系电话" />
+          <el-input v-model="form.contactPhone" placeholder="请输入联系电话" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="营业执照" prop="businessLicenseUrl">
-          <el-input v-model="form.businessLicenseUrl" placeholder="请输入营业执照URL" />
+          <el-input v-model="form.businessLicenseUrl" placeholder="请输入营业执照URL" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="其他资料" prop="otherMaterialUrls">
-          <el-input v-model="form.otherMaterialUrls" placeholder="请输入其他资料URL，多个用逗号隔开" />
+          <el-input v-model="form.otherMaterialUrls" placeholder="请输入其他资料URL，多个用逗号隔开" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="是否认证" prop="isVerified">
-          <el-select v-model="form.isVerified" placeholder="请选择是否认证">
+          <el-select v-model="form.isVerified" placeholder="请选择是否认证" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="是否可竞价" prop="canBid">
-          <el-select v-model="form.canBid" placeholder="请选择是否可竞价">
+          <el-select v-model="form.canBid" placeholder="请选择是否可竞价" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="是否缴纳保证金" prop="hasDeposit">
-          <el-select v-model="form.hasDeposit" placeholder="请选择是否缴纳保证金">
+          <el-select v-model="form.hasDeposit" placeholder="请选择是否缴纳保证金" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="保证金" prop="depositAmount">
-          <el-input v-model="form.depositAmount" placeholder="请输入保证金" />
+          <el-input v-model="form.depositAmount" placeholder="请输入保证金" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="货款" prop="paymentAmount">
-          <el-input v-model="form.paymentAmount" placeholder="请输入货款" />
+          <el-input v-model="form.paymentAmount" placeholder="请输入货款" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
+        <el-button @click="cancel">关 闭</el-button>
       </div>
     </el-dialog>
   </div>
@@ -170,13 +194,19 @@ export default {
         contactPerson: { label: '联系人', visible: true },
         contactPhone: { label: '联系电话', visible: true },
         businessLicenseUrl: { label: '营业执照', visible: true },
+        otherMaterialUrls: { label: '其他资料', visible: true },
         isVerified: { label: '是否认证', visible: true },
         canBid: { label: '是否可竞价', visible: true },
         hasDeposit: { label: '是否缴纳保证金', visible: true },
         depositAmount: { label: '保证金', visible: true },
         paymentAmount: { label: '货款', visible: true },
-        createTime: { label: '创建时间', visible: true }
+        remark: { label: '备注', visible: true },
+        createBy: { label: '创建人', visible: true },
+        createTime: { label: '创建时间', visible: true },
+        updateBy: { label: '更新人', visible: true },
+        updateTime: { label: '更新时间', visible: true }
       },
+      viewModeOnly: false,
       form: {}
     }
   },
@@ -202,6 +232,7 @@ export default {
     },
     cancel() {
       this.open = false
+      this.viewModeOnly = false
       this.reset()
     },
     reset() {
@@ -238,16 +269,28 @@ export default {
     },
     handleAdd() {
       this.reset()
+      this.viewModeOnly = false
       this.open = true
       this.title = "添加企业信息"
     },
     handleUpdate(row) {
       this.reset()
+      this.viewModeOnly = false
       const id = row.id || this.ids
       getEnterprise(id).then(response => {
         this.form = response.data
         this.open = true
         this.title = "修改企业信息"
+      })
+    },
+    handleView(row) {
+      this.reset()
+      const id = row.id || this.ids
+      getEnterprise(id).then(response => {
+        this.form = response.data
+        this.viewModeOnly = true
+        this.open = true
+        this.title = "查看企业信息"
       })
     },
     submitForm() {

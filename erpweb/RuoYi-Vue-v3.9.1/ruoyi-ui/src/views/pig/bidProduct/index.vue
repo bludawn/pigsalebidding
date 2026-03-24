@@ -42,9 +42,21 @@
     <el-table v-loading="loading" :data="bidProductList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
-      <el-table-column label="商品编码" align="center" prop="bidProductCode" v-if="columns.bidProductCode.visible" :show-overflow-tooltip="true" />
-      <el-table-column label="资源id" align="center" prop="pigResourceId" v-if="columns.pigResourceId.visible" />
-      <el-table-column label="场点id" align="center" prop="siteId" v-if="columns.siteId.visible" />
+      <el-table-column label="商品编码" align="center" prop="bidProductCode" v-if="columns.bidProductCode.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <el-link type="primary" :underline="false" @click="handleView(scope.row)">{{ scope.row.bidProductCode || scope.row.id }}</el-link>
+        </template>
+      </el-table-column>
+      <el-table-column label="资源" align="center" prop="pigResourceId" v-if="columns.pigResourceId.visible">
+        <template slot-scope="scope">
+          <span>{{ getResourceName(scope.row.pigResourceId) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="场点" align="center" prop="siteId" v-if="columns.siteId.visible">
+        <template slot-scope="scope">
+          <span>{{ getSiteName(scope.row.siteId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="起始单价" align="center" prop="startPrice" v-if="columns.startPrice.visible" />
       <el-table-column label="开始时间" align="center" prop="startTime" v-if="columns.startTime.visible" width="160">
         <template slot-scope="scope">
@@ -71,6 +83,7 @@
       <el-table-column label="起拍头数" align="center" prop="startBidCount" v-if="columns.startBidCount.visible" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:bidProduct:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:bidProduct:remove']">删除</el-button>
         </template>
@@ -83,61 +96,67 @@
     <el-dialog :title="title" :visible.sync="open" width="700px" append-to-body>
       <el-form ref="form" :model="form" label-width="120px">
         <el-form-item label="商品编码" prop="bidProductCode">
-          <el-input v-model="form.bidProductCode" placeholder="请输入商品编码" />
+          <el-input v-model="form.bidProductCode" placeholder="请输入商品编码" :disabled="viewModeOnly" />
         </el-form-item>
-        <el-form-item label="资源id" prop="pigResourceId">
-          <el-input v-model="form.pigResourceId" placeholder="请输入资源id" />
+        <el-form-item label="资源" prop="pigResourceId">
+          <el-select v-model="form.pigResourceId" placeholder="请选择资源" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in resourceOptions" :key="item.id" :label="getResourceLabel(item)" :value="item.id" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="企业分组id" prop="enterpriseGroupId">
-          <el-input v-model="form.enterpriseGroupId" placeholder="请输入企业分组id" />
+        <el-form-item label="企业分组" prop="enterpriseGroupId">
+          <el-select v-model="form.enterpriseGroupId" placeholder="请选择企业分组" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in enterpriseGroupOptions" :key="item.id" :label="item.groupName || item.id" :value="item.id" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="场点id" prop="siteId">
-          <el-input v-model="form.siteId" placeholder="请输入场点id" />
+        <el-form-item label="场点" prop="siteId">
+          <el-select v-model="form.siteId" placeholder="请选择场点" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in siteOptions" :key="item.id" :label="item.siteName || item.id" :value="item.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="起始单价" prop="startPrice">
-          <el-input v-model="form.startPrice" placeholder="请输入起始单价" />
+          <el-input v-model="form.startPrice" placeholder="请输入起始单价" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="开始时间" prop="startTime">
-          <el-date-picker v-model="form.startTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择开始时间"></el-date-picker>
+          <el-date-picker v-model="form.startTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择开始时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="结束时间" prop="endTime">
-          <el-date-picker v-model="form.endTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择结束时间"></el-date-picker>
+          <el-date-picker v-model="form.endTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择结束时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="最高出价" prop="currentHighestPrice">
-          <el-input v-model="form.currentHighestPrice" placeholder="请输入当前最高出价" />
+          <el-input v-model="form.currentHighestPrice" placeholder="请输入当前最高出价" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="竞价状态" prop="bidStatus">
-          <el-select v-model="form.bidStatus" placeholder="请选择竞价状态">
+          <el-select v-model="form.bidStatus" placeholder="请选择竞价状态" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.pig_bid_status" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="审批状态" prop="approvalStatus">
-          <el-select v-model="form.approvalStatus" placeholder="请选择审批状态">
+          <el-select v-model="form.approvalStatus" placeholder="请选择审批状态" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.pig_approval_status" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="总头数" prop="totalHeadCount">
-          <el-input v-model="form.totalHeadCount" placeholder="请输入总头数" />
+          <el-input v-model="form.totalHeadCount" placeholder="请输入总头数" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="起拍头数" prop="startBidCount">
-          <el-input v-model="form.startBidCount" placeholder="请输入起拍头数" />
+          <el-input v-model="form.startBidCount" placeholder="请输入起拍头数" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="加价幅度" prop="priceStep">
-          <el-input v-model="form.priceStep" placeholder="请输入加价幅度" />
+          <el-input v-model="form.priceStep" placeholder="请输入加价幅度" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="加拍价" prop="addPrice">
-          <el-input v-model="form.addPrice" placeholder="请输入加拍价" />
+          <el-input v-model="form.addPrice" placeholder="请输入加拍价" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="竞价须知" prop="bidNotice">
-          <el-input v-model="form.bidNotice" type="textarea" placeholder="请输入竞价须知" />
+          <el-input v-model="form.bidNotice" type="textarea" placeholder="请输入竞价须知" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
+        <el-button @click="cancel">关 闭</el-button>
       </div>
     </el-dialog>
 
@@ -164,6 +183,9 @@
 
 <script>
 import { listBidProduct, getBidProduct, delBidProduct, addBidProduct, updateBidProduct } from "@/api/pig/bidProduct"
+import { listPigResource } from "@/api/pig/pigResource"
+import { listEnterpriseGroup } from "@/api/pig/enterpriseGroup"
+import { listSite } from "@/api/pig/site"
 import { getToken } from "@/utils/auth"
 
 export default {
@@ -190,8 +212,8 @@ export default {
       columns: {
         id: { label: '编号', visible: true },
         bidProductCode: { label: '商品编码', visible: true },
-        pigResourceId: { label: '资源id', visible: true },
-        siteId: { label: '场点id', visible: true },
+        pigResourceId: { label: '资源', visible: true },
+        siteId: { label: '场点', visible: true },
         startPrice: { label: '起始单价', visible: true },
         startTime: { label: '开始时间', visible: true },
         endTime: { label: '结束时间', visible: true },
@@ -201,6 +223,13 @@ export default {
         totalHeadCount: { label: '总头数', visible: true },
         startBidCount: { label: '起拍头数', visible: true }
       },
+      resourceOptions: [],
+      resourceMap: {},
+      enterpriseGroupOptions: [],
+      enterpriseGroupMap: {},
+      siteOptions: [],
+      siteMap: {},
+      viewModeOnly: false,
       form: {},
       upload: {
         open: false,
@@ -213,6 +242,7 @@ export default {
     }
   },
   created() {
+    this.loadOptions()
     this.getList()
   },
   methods: {
@@ -224,8 +254,46 @@ export default {
         this.loading = false
       })
     },
+    loadOptions() {
+      listPigResource({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.resourceOptions = response.rows || []
+        this.resourceMap = this.resourceOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+      listEnterpriseGroup({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.enterpriseGroupOptions = response.rows || []
+        this.enterpriseGroupMap = this.enterpriseGroupOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+      listSite({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.siteOptions = response.rows || []
+        this.siteMap = this.siteOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    getResourceLabel(item) {
+      if (!item) return ''
+      return item.resourceCode || item.id
+    },
+    getResourceName(id) {
+      if (!id) return '-'
+      const item = this.resourceMap[id]
+      return item ? this.getResourceLabel(item) : id
+    },
+    getSiteName(id) {
+      if (!id) return '-'
+      const item = this.siteMap[id]
+      return item ? (item.siteName || item.id) : id
+    },
     cancel() {
       this.open = false
+      this.viewModeOnly = false
       this.reset()
     },
     reset() {
@@ -267,6 +335,17 @@ export default {
       this.reset()
       this.open = true
       this.title = "添加竞价商品"
+      this.viewModeOnly = false
+    },
+    handleView(row) {
+      this.reset()
+      const id = row.id || this.ids
+      getBidProduct(id).then(response => {
+        this.form = response.data
+        this.open = true
+        this.title = "查看竞价商品"
+        this.viewModeOnly = true
+      })
     },
     handleUpdate(row) {
       this.reset()
@@ -275,6 +354,7 @@ export default {
         this.form = response.data
         this.open = true
         this.title = "修改竞价商品"
+        this.viewModeOnly = false
       })
     },
     submitForm() {

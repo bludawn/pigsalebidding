@@ -29,15 +29,28 @@
     <el-table v-loading="loading" :data="pigTagList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
-      <el-table-column label="标签名称" align="center" prop="tagName" v-if="columns.tagName.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="标签名称" align="center" prop="tagName" v-if="columns.tagName.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <el-link type="primary" :underline="false" @click="handleView(scope.row)">{{ scope.row.tagName || scope.row.id }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="标签描述" align="center" prop="tagDesc" v-if="columns.tagDesc.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="创建人" align="center" prop="createBy" v-if="columns.createBy.visible" />
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="更新人" align="center" prop="updateBy" v-if="columns.updateBy.visible" />
+      <el-table-column label="更新时间" align="center" prop="updateTime" v-if="columns.updateTime.visible" width="160">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.updateTime) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:pigTag:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:pigTag:remove']">删除</el-button>
         </template>
@@ -50,18 +63,18 @@
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" label-width="100px">
         <el-form-item label="标签名称" prop="tagName">
-          <el-input v-model="form.tagName" placeholder="请输入标签名称" />
+          <el-input v-model="form.tagName" placeholder="请输入标签名称" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="标签描述" prop="tagDesc">
-          <el-input v-model="form.tagDesc" type="textarea" placeholder="请输入标签描述" />
+          <el-input v-model="form.tagDesc" type="textarea" placeholder="请输入标签描述" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
+        <el-button @click="cancel">关 闭</el-button>
       </div>
     </el-dialog>
   </div>
@@ -92,8 +105,13 @@ export default {
         id: { label: '编号', visible: true },
         tagName: { label: '标签名称', visible: true },
         tagDesc: { label: '标签描述', visible: true },
-        createTime: { label: '创建时间', visible: true }
+        remark: { label: '备注', visible: true },
+        createBy: { label: '创建人', visible: true },
+        createTime: { label: '创建时间', visible: true },
+        updateBy: { label: '更新人', visible: true },
+        updateTime: { label: '更新时间', visible: true }
       },
+      viewModeOnly: false,
       form: {}
     }
   },
@@ -111,6 +129,7 @@ export default {
     },
     cancel() {
       this.open = false
+      this.viewModeOnly = false
       this.reset()
     },
     reset() {
@@ -137,16 +156,28 @@ export default {
     },
     handleAdd() {
       this.reset()
+      this.viewModeOnly = false
       this.open = true
       this.title = "添加生猪标签"
     },
     handleUpdate(row) {
       this.reset()
+      this.viewModeOnly = false
       const id = row.id || this.ids
       getPigTag(id).then(response => {
         this.form = response.data
         this.open = true
         this.title = "修改生猪标签"
+      })
+    },
+    handleView(row) {
+      this.reset()
+      const id = row.id || this.ids
+      getPigTag(id).then(response => {
+        this.form = response.data
+        this.viewModeOnly = true
+        this.open = true
+        this.title = "查看生猪标签"
       })
     },
     submitForm() {
