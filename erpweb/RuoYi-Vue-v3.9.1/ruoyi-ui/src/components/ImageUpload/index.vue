@@ -65,12 +65,12 @@
       <img
         v-if="!dialogIsVideo"
         :src="dialogMediaUrl"
-        style="display: block; max-width: 100%; max-height: 70vh; margin: 0 auto"
+        class="upload-preview-media"
       />
       <video
         v-else
         :src="dialogMediaUrl"
-        style="display: block; width: 100%; max-height: 70vh"
+        class="upload-preview-media"
         controls
         preload="metadata"
         playsinline
@@ -326,10 +326,21 @@ export default {
 }
 
 ::v-deep .upload-preview-dialog .el-dialog__body {
+  padding-top: 10px;
+}
+
+.upload-preview-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 10px;
+  min-height: 70vh;
+}
+
+.upload-preview-media {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  margin: 0 auto;
 }
 </style>
 

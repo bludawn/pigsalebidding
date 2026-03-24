@@ -121,7 +121,10 @@ public class PigTypeServiceImpl implements IPigTypeService
                 {
                     if (StringUtils.isEmpty(pigType.getPigCode()))
                     {
-                        throw new ServiceException("生猪编码不能为空，无法更新");
+                        pigType.setCreateBy(operName);
+                        this.insertPigType(pigType);
+                        successNum++;
+                        continue;
                     }
                     PigType exist = pigTypeMapper.selectPigTypeByPigCode(pigType.getPigCode());
                     if (exist != null)
