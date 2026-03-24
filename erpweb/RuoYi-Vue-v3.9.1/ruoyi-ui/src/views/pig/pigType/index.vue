@@ -34,7 +34,7 @@
 
     <el-table v-loading="loading" :data="pigTypeList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
-      <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
+      <el-table-column label="序号" align="center" type="index" width="80" v-if="columns.id.visible" :index="indexMethod" />
       <el-table-column label="生猪名称" align="center" prop="pigName" v-if="columns.pigName.visible" :show-overflow-tooltip="true">
         <template slot-scope="scope">
           <el-link type="primary" :underline="false" @click="handleView(scope.row)">{{ scope.row.pigName || scope.row.pigCode || scope.row.id }}</el-link>
@@ -47,7 +47,7 @@
           <span>{{ formatPigTags(scope.row.pigTagIds) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="体重区间" align="center" prop="weightRange" v-if="columns.weightRange.visible" />
+      <el-table-column label="体重区间（KG）" align="center" prop="weightRange" v-if="columns.weightRange.visible" />
       <el-table-column label="食料品质" align="center" prop="feedQuality" v-if="columns.feedQuality.visible" />
       <el-table-column label="防疫状态" align="center" prop="epidemicStatus" v-if="columns.epidemicStatus.visible" />
       <el-table-column label="无疫地区" align="center" prop="diseaseFreeRegion" v-if="columns.diseaseFreeRegion.visible" />
@@ -63,10 +63,12 @@
             />
             <video
               v-else
+              class="pig-media-video"
               :src="getFirstMedia(scope.row.pigMedia)"
-              style="width: 120px; height: 80px"
+              style="width: 120px; height: 80px; object-fit: contain; background: #000"
               controls
               preload="metadata"
+              playsinline
             ></video>
           </template>
         </template>
@@ -112,7 +114,7 @@
             <el-option v-for="item in pigTagOptions" :key="item.id" :label="item.tagName" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="体重区间" prop="weightRange">
+        <el-form-item label="体重区间（KG）" prop="weightRange">
           <el-input v-model="form.weightRange" placeholder="请输入体重区间" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="生猪图片视频" prop="pigMedia">
@@ -132,9 +134,6 @@
         </el-form-item>
         <el-form-item label="无疫地区" prop="diseaseFreeRegion">
           <el-input v-model="form.diseaseFreeRegion" placeholder="请输入无疫地区" :disabled="viewModeOnly" />
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -193,12 +192,12 @@ export default {
         pigCode: undefined
       },
       columns: {
-        id: { label: '编号', visible: true },
+        id: { label: '序号', visible: true },
         pigName: { label: '生猪名称', visible: true },
         pigCode: { label: '生猪编码', visible: true },
         pigIntro: { label: '生猪介绍', visible: true },
         pigTagIds: { label: '生猪标签', visible: true },
-        weightRange: { label: '体重区间', visible: true },
+        weightRange: { label: '体重区间（KG）', visible: true },
         feedQuality: { label: '食料品质', visible: true },
         epidemicStatus: { label: '防疫状态', visible: true },
         diseaseFreeRegion: { label: '无疫地区', visible: true },
@@ -276,6 +275,11 @@ export default {
         this.loading = false
       })
     },
+    indexMethod(index) {
+      const pageNum = this.queryParams.pageNum || 1
+      const pageSize = this.queryParams.pageSize || 10
+      return (pageNum - 1) * pageSize + index + 1
+    },
     cancel() {
       this.open = false
       this.viewModeOnly = false
@@ -292,8 +296,7 @@ export default {
         pigMedia: undefined,
         feedQuality: undefined,
         epidemicStatus: undefined,
-        diseaseFreeRegion: undefined,
-        remark: undefined
+        diseaseFreeRegion: undefined
       }
       this.resetForm("form")
     },
@@ -406,3 +409,13 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.pig-media-video::-webkit-media-controls-timeline,
+.pig-media-video::-webkit-media-controls-volume-slider,
+.pig-media-video::-webkit-media-controls-volume-control-container,
+.pig-media-video::-webkit-media-controls-mute-button,
+.pig-media-video::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+}
+</style>

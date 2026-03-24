@@ -64,4 +64,12 @@ public interface PigTypeMapper
      * @return 最大主键
      */
     public Long selectMaxId();
+
+    /**
+     * 通过生猪编码查询生猪类型
+     *
+     * @param pigCode 生猪编码
+     * @return 生猪类型
+     */
+    public PigType selectPigTypeByPigCode(String pigCode);
 }

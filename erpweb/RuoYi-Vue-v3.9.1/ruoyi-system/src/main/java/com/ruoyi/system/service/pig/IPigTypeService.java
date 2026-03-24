@@ -19,6 +19,13 @@ public interface IPigTypeService
     public String importPigType(List<PigType> pigTypeList, Boolean updateSupport, String operName);
 
     /**
+     * 填充生猪标签名称
+     *
+     * @param pigTypeList 生猪类型列表
+     */
+    public void fillPigTagNames(List<PigType> pigTypeList);
+
+    /**
      * 生成生猪类型编码
      *
      * @return 生猪类型编码

@@ -1,12 +1,16 @@
 package com.ruoyi.system.service.impl.pig;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
-
+import com.ruoyi.system.domain.pig.PigTag;
 import com.ruoyi.system.domain.pig.PigType;
+import com.ruoyi.system.mapper.pig.PigTagMapper;
 import com.ruoyi.system.mapper.pig.PigTypeMapper;
 import com.ruoyi.system.service.pig.IPigTypeService;
 
@@ -20,6 +24,9 @@ public class PigTypeServiceImpl implements IPigTypeService
 {
     @Autowired
     private PigTypeMapper pigTypeMapper;
+
+    @Autowired
+    private PigTagMapper pigTagMapper;
 
     @Override
     public List<PigType> selectPigTypeList(PigType pigType)
@@ -67,11 +74,39 @@ public class PigTypeServiceImpl implements IPigTypeService
     }
 
     @Override
+    public void fillPigTagNames(List<PigType> pigTypeList)
+    {
+        if (pigTypeList == null || pigTypeList.isEmpty())
+        {
+            return;
+        }
+        Map<Long, String> tagIdNameMap = getPigTagIdNameMap();
+        for (PigType pigType : pigTypeList)
+        {
+            pigType.setPigTagNames(convertPigTagIdsToNames(pigType.getPigTagIds(), tagIdNameMap));
+        }
+    }
+
+    @Override
     public String importPigType(List<PigType> pigTypeList, Boolean updateSupport, String operName)
     {
         if (StringUtils.isNull(pigTypeList) || pigTypeList.size() == 0)
         {
             throw new ServiceException("导入生猪类型数据不能为空！");
+        }
+        Map<String, Long> tagNameIdMap = new HashMap<>();
+        Map<String, Long> tagIdMap = new HashMap<>();
+        List<PigTag> pigTags = pigTagMapper.selectPigTagList(new PigTag());
+        for (PigTag tag : pigTags)
+        {
+            if (StringUtils.isNotEmpty(tag.getTagName()))
+            {
+                tagNameIdMap.put(tag.getTagName(), tag.getId());
+            }
+            if (tag.getId() != null)
+            {
+                tagIdMap.put(String.valueOf(tag.getId()), tag.getId());
+            }
         }
         int successNum = 0;
         int failureNum = 0;
@@ -81,10 +116,25 @@ public class PigTypeServiceImpl implements IPigTypeService
         {
             try
             {
-                if (updateSupport != null && updateSupport && pigType.getId() != null && selectPigTypeById(pigType.getId()) != null)
+                pigType.setPigTagIds(convertPigTagNamesToIds(pigType.getPigTagNames(), tagNameIdMap, tagIdMap));
+                if (updateSupport != null && updateSupport)
                 {
-                    pigType.setUpdateBy(operName);
-                    this.updatePigType(pigType);
+                    if (StringUtils.isEmpty(pigType.getPigCode()))
+                    {
+                        throw new ServiceException("生猪编码不能为空，无法更新");
+                    }
+                    PigType exist = pigTypeMapper.selectPigTypeByPigCode(pigType.getPigCode());
+                    if (exist != null)
+                    {
+                        pigType.setId(exist.getId());
+                        pigType.setUpdateBy(operName);
+                        this.updatePigType(pigType);
+                    }
+                    else
+                    {
+                        pigType.setCreateBy(operName);
+                        this.insertPigType(pigType);
+                    }
                     successNum++;
                 }
                 else
@@ -97,7 +147,8 @@ public class PigTypeServiceImpl implements IPigTypeService
             catch (Exception e)
             {
                 failureNum++;
-                String msg = failureNum + "、" + pigType.getId() + " 导入失败：";
+                String pigCode = StringUtils.isNotEmpty(pigType.getPigCode()) ? pigType.getPigCode() : "未知编码";
+                String msg = failureNum + "、" + pigCode + " 导入失败：";
                 failureMsg.append(msg).append(e.getMessage()).append("\n");
             }
         }
@@ -111,6 +162,87 @@ public class PigTypeServiceImpl implements IPigTypeService
             successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条");
         }
         return successMsg.toString();
+    }
+
+    private Map<Long, String> getPigTagIdNameMap()
+    {
+        List<PigTag> pigTags = pigTagMapper.selectPigTagList(new PigTag());
+        Map<Long, String> tagIdNameMap = new HashMap<>();
+        for (PigTag tag : pigTags)
+        {
+            if (tag.getId() != null)
+            {
+                tagIdNameMap.put(tag.getId(), tag.getTagName());
+            }
+        }
+        return tagIdNameMap;
+    }
+
+    private String convertPigTagNamesToIds(String pigTagNames, Map<String, Long> tagNameIdMap, Map<String, Long> tagIdMap)
+    {
+        if (StringUtils.isEmpty(pigTagNames))
+        {
+            return null;
+        }
+        String[] parts = pigTagNames.split("[,，、;；]");
+        List<String> ids = new ArrayList<>();
+        for (String part : parts)
+        {
+            if (StringUtils.isEmpty(part))
+            {
+                continue;
+            }
+            String name = part.trim();
+            if (StringUtils.isEmpty(name))
+            {
+                continue;
+            }
+            Long tagId = tagNameIdMap.get(name);
+            if (tagId == null)
+            {
+                tagId = tagIdMap.get(name);
+            }
+            if (tagId == null)
+            {
+                throw new ServiceException("生猪标签【" + name + "】不存在");
+            }
+            ids.add(String.valueOf(tagId));
+        }
+        return ids.isEmpty() ? null : String.join(",", ids);
+    }
+
+    private String convertPigTagIdsToNames(String pigTagIds, Map<Long, String> tagIdNameMap)
+    {
+        if (StringUtils.isEmpty(pigTagIds))
+        {
+            return null;
+        }
+        String[] parts = pigTagIds.split(",");
+        List<String> names = new ArrayList<>();
+        for (String part : parts)
+        {
+            if (StringUtils.isEmpty(part))
+            {
+                continue;
+            }
+            String value = part.trim();
+            if (StringUtils.isEmpty(value))
+            {
+                continue;
+            }
+            Long tagId = null;
+            try
+            {
+                tagId = Long.valueOf(value);
+            }
+            catch (NumberFormatException ex)
+            {
+                tagId = null;
+            }
+            String name = tagId != null ? tagIdNameMap.get(tagId) : null;
+            names.add(name != null ? name : value);
+        }
+        return names.isEmpty() ? null : String.join("、", names);
     }
 
 }

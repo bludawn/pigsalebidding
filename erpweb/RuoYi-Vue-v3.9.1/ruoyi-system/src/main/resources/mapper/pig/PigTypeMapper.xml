@@ -67,6 +67,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where f_id = #{id}
     </select>
 
+    <select id="selectPigTypeByPigCode" parameterType="String" resultMap="PigTypeResult">
+        <include refid="selectPigTypeVo"/>
+        where f_pigCode = #{pigCode}
+    </select>
+
     <insert id="insertPigType" parameterType="com.ruoyi.system.domain.pig.PigType" useGeneratedKeys="true" keyProperty="id">
         insert into t_pigType(
             <if test="id != null and id != 0">f_id,</if>
@@ -92,6 +97,7 @@ f_createTime
 <if test="feedQuality != null and feedQuality != ''">#{feedQuality},</if>
 <if test="epidemicStatus != null and epidemicStatus != ''">#{epidemicStatus},</if>
 <if test="diseaseFreeRegion != null and diseaseFreeRegion != ''">#{diseaseFreeRegion},</if>
+<if test="remark != null and remark != ''">#{remark},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
 sysdate()
         )

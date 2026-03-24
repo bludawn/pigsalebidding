@@ -20,6 +20,31 @@
       :class="{hide: this.fileList.length >= this.limit}"
     >
       <i class="el-icon-plus"></i>
+      <template slot="file" slot-scope="{ file }">
+        <div class="upload-file-item">
+          <img
+            v-if="!isVideoUrl(file.url)"
+            class="el-upload-list__item-thumbnail"
+            :src="file.url"
+          />
+          <video
+            v-else
+            class="el-upload-list__item-thumbnail upload-video-thumb"
+            :src="file.url"
+            controls
+            preload="metadata"
+            playsinline
+          ></video>
+          <span class="el-upload-list__item-actions">
+            <span class="el-upload-list__item-preview" @click="handlePictureCardPreview(file)">
+              <i class="el-icon-zoom-in"></i>
+            </span>
+            <span v-if="!disabled" class="el-upload-list__item-delete" @click="handleDelete(file)">
+              <i class="el-icon-delete"></i>
+            </span>
+          </span>
+        </div>
+      </template>
     </el-upload>
 
     <!-- 上传提示 -->
@@ -35,18 +60,20 @@
       title="预览"
       width="800"
       append-to-body
+      custom-class="upload-preview-dialog"
     >
       <img
         v-if="!dialogIsVideo"
         :src="dialogMediaUrl"
-        style="display: block; max-width: 100%; margin: 0 auto"
+        style="display: block; max-width: 100%; max-height: 70vh; margin: 0 auto"
       />
       <video
         v-else
         :src="dialogMediaUrl"
-        style="display: block; width: 100%"
+        style="display: block; width: 100%; max-height: 70vh"
         controls
         preload="metadata"
+        playsinline
       ></video>
     </el-dialog>
 
@@ -147,6 +174,7 @@ export default {
                   item = { name: item, url: item }
               }
             }
+            item.status = item.status || "success"
             return item
           })
         } else {
@@ -199,6 +227,7 @@ export default {
       }
       this.$modal.loading("正在上传文件，请稍候...")
       this.number++
+      return true
     },
 
     // 文件个数超出
@@ -208,7 +237,8 @@ export default {
     // 上传成功回调
     handleUploadSuccess(res, file) {
       if (res.code === 200) {
-        this.uploadList.push({ name: res.fileName, url: res.fileName })
+        const fileUrl = res.url || res.fileName
+        this.uploadList.push({ name: res.fileName || file.name, url: fileUrl, status: "success" })
         this.uploadedSuccessfully()
       } else {
         this.number--
@@ -229,12 +259,14 @@ export default {
     // 上传失败
     handleUploadError() {
       this.$modal.msgError("上传文件失败，请重试")
+      this.uploadList = []
+      this.number = 0
       this.$modal.closeLoading()
     },
 
     // 上传结束处理
     uploadedSuccessfully() {
-      if (this.number > 0 && this.uploadList.length === this.number) {
+      if (this.number > 0 && this.uploadList.length >= this.number) {
         this.fileList = this.fileList.concat(this.uploadList)
         this.uploadList = []
         this.number = 0
@@ -286,6 +318,18 @@ export default {
 ::v-deep .el-list-enter, .el-list-leave-active {
   opacity: 0;
   transform: translateY(0);
+}
+
+.upload-video-thumb {
+  object-fit: contain;
+  background: #000;
+}
+
+::v-deep .upload-preview-dialog .el-dialog__body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 10px;
 }
 </style>
 

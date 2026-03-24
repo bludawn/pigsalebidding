@@ -57,6 +57,7 @@ public class PigTypeController extends BaseController
     public void export(HttpServletResponse response, PigType pigType)
     {
         List<PigType> list = pigTypeService.selectPigTypeList(pigType);
+        pigTypeService.fillPigTagNames(list);
         ExcelUtil<PigType> util = new ExcelUtil<PigType>(PigType.class);
         util.exportExcel(response, list, "生猪类型数据");
     }
