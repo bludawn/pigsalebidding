@@ -57,4 +57,12 @@ public interface UserBidMapper
      * @return 结果
      */
     public int deleteUserBidByIds(Long[] ids);
+
+    /**
+     * 查询竞拍结算用出价记录
+     *
+     * @param bidProductId 竞价商品id
+     * @return 出价记录
+     */
+    public List<UserBid> selectUserBidsForSettlement(Long bidProductId);
 }

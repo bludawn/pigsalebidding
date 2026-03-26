@@ -59,6 +59,14 @@ public interface PigOrderMapper
     public int deletePigOrderByIds(Long[] ids);
 
     /**
+     * 根据出价id查询订单
+     *
+     * @param userBidId 用户出价id
+     * @return 订单
+     */
+    public PigOrder selectPigOrderByUserBidId(Long userBidId);
+
+    /**
      * 获取最大主键
      *
      * @return 最大主键

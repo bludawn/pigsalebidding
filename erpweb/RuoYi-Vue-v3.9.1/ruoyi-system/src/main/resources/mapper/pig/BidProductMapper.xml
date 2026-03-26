@@ -175,6 +175,13 @@ sysdate()
         </foreach>
     </delete>
 
+    <select id="selectExpiredBidProducts" parameterType="java.util.Date" resultMap="BidProductResult">
+        <include refid="selectBidProductVo"/>
+        where f_endTime is not null
+          and f_endTime &lt;= #{now}
+          and (f_bidStatus is null or f_bidStatus != 'ENDED')
+    </select>
+
     <select id="selectMaxId" resultType="java.lang.Long">
         select max(f_id) from t_bidProduct
     </select>

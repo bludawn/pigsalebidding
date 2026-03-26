@@ -121,4 +121,11 @@ sysdate()
         </foreach>
     </delete>
 
+    <select id="selectUserBidsForSettlement" parameterType="Long" resultMap="UserBidResult">
+        <include refid="selectUserBidVo"/>
+        where f_bidProductId = #{bidProductId}
+          and (f_status is null or upper(f_status) not like '%CANCEL%')
+        order by f_price desc, f_bidTime asc, f_id asc
+    </select>
+
 </mapper>

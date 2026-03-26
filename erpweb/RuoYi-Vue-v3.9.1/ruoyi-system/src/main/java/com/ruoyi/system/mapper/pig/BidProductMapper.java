@@ -59,6 +59,14 @@ public interface BidProductMapper
     public int deleteBidProductByIds(Long[] ids);
 
     /**
+     * 查询已到期竞拍商品
+     *
+     * @param now 当前时间
+     * @return 已到期竞价商品集合
+     */
+    public List<BidProduct> selectExpiredBidProducts(java.util.Date now);
+
+    /**
      * 获取最大主键
      *
      * @return 最大主键

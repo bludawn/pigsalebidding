@@ -102,6 +102,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where f_id = #{id}
     </select>
 
+    <select id="selectPigOrderByUserBidId" parameterType="Long" resultMap="PigOrderResult">
+        <include refid="selectPigOrderVo"/>
+        where f_userBidId = #{userBidId}
+        limit 1
+    </select>
+
     <insert id="insertPigOrder" parameterType="PigOrder" useGeneratedKeys="true" keyProperty="id">
         insert into t_order(
             <if test="id != null and id != 0">f_id,</if>

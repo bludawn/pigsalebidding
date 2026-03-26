@@ -255,6 +255,10 @@ CREATE TABLE t_businessMessage (
   PRIMARY KEY (f_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='业务消息表';
 
+-- 竞拍结算定时任务（每5分钟执行一次）
+INSERT INTO sys_job (job_id, job_name, job_group, invoke_target, cron_expression, misfire_policy, concurrent, status, create_by, create_time, update_by, update_time, remark)
+VALUES (4, '竞拍结算任务', 'SYSTEM', 'auctionSettleTask.settleExpiredAuctions', '0 */5 * * * ?', '3', '1', '0', 'admin', sysdate(), '', null, '竞拍结束自动生成订单与通知');
+
 -- ----------------------------
 -- 字典类型与字典数据（枚举值）
 -- ----------------------------
