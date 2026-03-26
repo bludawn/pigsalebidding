@@ -825,7 +825,7 @@ public class CustomerController extends BaseController
         item.id = String.valueOf(bidProduct.getId());
         item.farmId = site != null ? String.valueOf(site.getId()) : null;
         item.farmName = site != null ? site.getSiteName() : null;
-        item.farmIcon = "";
+        item.farmIcon = site.getSiteImages() != null ? site.getSiteImages().split(",")[0] : "";
         item.breed = pigType != null ? pigType.getPigName() : null;
         item.quantity = bidProduct.getTotalHeadCount();
         item.weightRange = pigType != null ? pigType.getWeightRange() : null;
@@ -1016,6 +1016,9 @@ public class CustomerController extends BaseController
         query.setUserId(userId);
         query.setBidProductId(bidProductId);
         List<UserBid> list = userBidService.selectUserBidList(query);
+        // todo 查询条件移除 已经取消的
+
+        list.removeIf(item -> "CANCELED".equalsIgnoreCase(item.getStatus()));
         if (list.isEmpty())
         {
             return "NO_BID";

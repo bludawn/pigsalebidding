@@ -19,8 +19,8 @@
   - 资源来源，字符串枚举值，采购｜自产
   - 采购单id，int8，外键
   - 资源数量，int4
-  - 资源单价，decimal(10,6)
-  - 资源总价，decimal(10,6)
+  - 资源单价，decimal(19.6)
+  - 资源总价，decimal(19.6)
   - 其他审计字段
 3. 竞价商品表
   - id，int8，自增唯一id
@@ -28,16 +28,16 @@
   - 生猪资源id，int8，外键
   - 企业分组id，int8，外键
   - 场点id，int8，外键
-  - 起始单价，decimal(10,6)
+  - 起始单价，decimal(19.6)
   - 开始时间，datetime
   - 结束时间，datetime
-  - 当前最高出价，decimal(10,6)
+  - 当前最高出价，decimal(19.6)
   - 竞价须知，字符串
   - 备注，字符串
   - 总头数，int4
   - 起拍头数，int4
-  - 加价幅度，decimal(10,6)
-  - 加拍价，decimal(10,6)
+  - 加价幅度，decimal(19.6)
+  - 加拍价，decimal(19.6)
   - 竞价状态，字符串，'WAITING' | 'BIDDING' | 'ENDED'
   - 审批状态，字符串，'WAITING' | 'APPROVED' | 'REJECTED'
   - 其他审计字段
@@ -72,11 +72,11 @@
   - 用户id，int8，外键
   - 企业id，int8，外键
   - 竞价商品id，int8，外键
-  - 单价，decimal(10,6)
+  - 单价，decimal(19.6)
   - 数量，int4
   - 出价时间，datetime
   - 状态，字符串枚举值，'BIDDING' | 'BID_SUCCESS' | 'BID_FAILED' ｜ 'BID_CANCEL'
-  - 总价，decimal(10,6)
+  - 总价，decimal(19.6)
   - 其他审计字段
 8. 企业分组表
   - id，int8，自增唯一id
@@ -96,7 +96,7 @@
   - 期望装车时间，datetime
   - 备注，字符串
   - 生猪资源id，int8，外键
-  - 订单金额，decimal(10,6)
+  - 订单金额，decimal(19.6)
   - 支付渠道，字符串
   - 支付时间，datetime
   - 装货时间，datetime
@@ -126,8 +126,8 @@
   - 是否认证，布尔，0 | 1
   - 是否可以参与竞价，布尔，0 | 1
   - 是否缴纳保证金，布尔，0 | 1
-  - 保证金，decimal(10,6)
-  - 货款，decimal(10,6)
+  - 保证金，decimal(19.6)
+  - 货款，decimal(19.6)
   - 其他审计字段
 12. 地址管理表
   - id，int8，自增唯一id

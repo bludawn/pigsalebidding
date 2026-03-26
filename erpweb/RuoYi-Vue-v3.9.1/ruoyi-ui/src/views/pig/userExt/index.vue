@@ -24,9 +24,9 @@
       <el-col :span="1.5">
         <el-button type="success" plain icon="el-icon-edit" size="mini" :disabled="single" @click="handleUpdate" v-hasPermi="['pig:userExt:edit']">修改</el-button>
       </el-col>
-      <el-col :span="1.5">
+      <!-- <el-col :span="1.5">
         <el-button type="danger" plain icon="el-icon-delete" size="mini" :disabled="multiple" @click="handleDelete" v-hasPermi="['pig:userExt:remove']">删除</el-button>
-      </el-col>
+      </el-col> -->
       <el-col :span="1.5">
         <el-button type="warning" plain icon="el-icon-download" size="mini" @click="handleExport" v-hasPermi="['pig:userExt:export']">导出</el-button>
       </el-col>
@@ -67,7 +67,7 @@
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:userExt:edit']">修改</el-button>
-          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:userExt:remove']">删除</el-button>
+          <!-- <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:userExt:remove']">删除</el-button> -->
         </template>
       </el-table-column>
     </el-table>
@@ -105,7 +105,7 @@
 </template>
 
 <script>
-import { listUserExt, getUserExt, delUserExt, addUserExt, updateUserExt } from "@/api/pig/userExt"
+import { listUserExt, getUserExt, addUserExt, updateUserExt, delUserExt } from "@/api/pig/userExt"
 import { listUser } from "@/api/system/user"
 import { listEnterprise } from "@/api/pig/enterprise"
 
@@ -250,19 +250,19 @@ export default {
           if (this.form.isRealName !== undefined && this.form.isRealName !== null && this.form.isRealName !== "") {
             this.form.isRealName = Number(this.form.isRealName)
           }
-          if (this.form.id != undefined) {
-            updateUserExt(this.form).then(() => {
-              this.$modal.msgSuccess("修改成功")
-              this.open = false
-              this.getList()
-            })
-          } else {
+          // if (this.form.id != undefined) {
+          //   updateUserExt(this.form).then(() => {
+          //     this.$modal.msgSuccess("修改成功")
+          //     this.open = false
+          //     this.getList()
+          //   })
+          // } else {
             addUserExt(this.form).then(() => {
               this.$modal.msgSuccess("新增成功")
               this.open = false
               this.getList()
             })
-          }
+          // }
         }
       })
     },

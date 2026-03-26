@@ -40,7 +40,7 @@ const isStepValid = (value: number, step: number) => {
   return Math.abs(ratio - Math.round(ratio)) < 1e-6;
 };
 
-const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigate, refreshKey = 0 }) => {
+const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigate, refreshKey = 0, isActive = true }) => {
   const [detail, setDetail] = useState<AuctionDetailInfo | null>(null);
   const [countdownSeconds, setCountdownSeconds] = useState(0);
   const [bidRecords, setBidRecords] = useState<BidRecordItem[]>([]);
@@ -68,6 +68,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const prevMediaIndexRef = useRef(0);
   const initializedRef = useRef(false);
+  const detailRequestRef = useRef<{ key: string; inFlight: boolean } | null>(null);
 
   const mediaList = detail?.mediaUrls?.length ? detail.mediaUrls : [params.imageUrl];
   const minBidCount = detail?.startingCount ?? params.startingCount;
@@ -79,20 +80,29 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
     return parsed > 0 ? parsed : params.startingPrice;
   }, [detail, params.startingPrice]);
 
-  useEffect(() => {
-    const loadDetail = async () => {
-      const res = await getAuctionDetail({ auctionId: params.id });
-      if (res.errcode === 0 && res.data) {
-        setDetail(res.data);
-        setCountdownSeconds(res.data.endCountdownSeconds || 0);
-        return;
-      }
+  const loadDetail = async (force = false) => {
+    const key = `${params.id}-${refreshKey}`;
+    if (!force) {
+      if (detailRequestRef.current?.inFlight && detailRequestRef.current.key === key) return;
+      if (detailRequestRef.current?.key === key && !detailRequestRef.current.inFlight) return;
+    }
+
+    detailRequestRef.current = { key, inFlight: true };
+    const res = await getAuctionDetail({ auctionId: params.id });
+    if (res.errcode === 0 && res.data) {
+      setDetail(res.data);
+      setCountdownSeconds(res.data.endCountdownSeconds || 0);
+    } else {
       setDetail(null);
       setCountdownSeconds(0);
-    };
+    }
+    detailRequestRef.current = { key, inFlight: false };
+  };
 
+  useEffect(() => {
+    if (!isActive) return;
     loadDetail();
-  }, [params.id, refreshKey]);
+  }, [params.id, refreshKey, isActive]);
 
   useEffect(() => {
     const loadDefaultAddress = async () => {
@@ -251,6 +261,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
     });
     if (res.errcode === 0) {
       setIsDialogOpen(false);
+      await loadDetail(true);
       await loadBidRecords(isExpanded, isMineOnly);
     }
     setIsSubmitting(false);

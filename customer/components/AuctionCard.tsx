@@ -1,4 +1,5 @@
 import React from 'react';
+import { MyBidStatus } from '../types';
 
 interface AuctionCardProps {
   topBar: React.ReactNode;
@@ -13,6 +14,7 @@ interface AuctionCardProps {
   tags: string[];
   startingCount: number;
   startingPrice: number;
+  customerBidStatus?: MyBidStatus;
 }
 
 const AuctionCard: React.FC<AuctionCardProps> = ({
@@ -28,7 +30,16 @@ const AuctionCard: React.FC<AuctionCardProps> = ({
   tags,
   startingCount,
   startingPrice,
+  customerBidStatus,
 }) => {
+  const customerStatusConfig: Record<MyBidStatus, { label: string; className: string }> = {
+    BIDDING: { label: '我的竞拍中', className: 'bg-amber-50 text-amber-600' },
+    BID_SUCCESS: { label: '竞拍成功', className: 'bg-emerald-50 text-emerald-600' },
+    BID_FAILED: { label: '竞拍失败', className: 'bg-rose-50 text-rose-600' },
+    NO_BID: { label: '未参与', className: 'bg-slate-100 text-slate-400' },
+  };
+  const customerStatusMeta = customerBidStatus ? customerStatusConfig[customerBidStatus] : null;
+
   return (
     <div
       className="bg-white rounded-custom overflow-hidden shadow-sm border border-slate-100 active:scale-[0.98] transition-transform"
@@ -43,6 +54,11 @@ const AuctionCard: React.FC<AuctionCardProps> = ({
           <img src={farmIcon} alt="" className="w-7 h-7 rounded-full object-cover border border-slate-100 shadow-sm" />
           <span className="text-xs font-bold text-slate-800">{farmName}</span>
         </div>
+        {customerStatusMeta && (
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${customerStatusMeta.className}`}>
+            {customerStatusMeta.label}
+          </span>
+        )}
       </div>
 
       <div className="p-3 flex gap-4 relative items-center">
@@ -65,7 +81,7 @@ const AuctionCard: React.FC<AuctionCardProps> = ({
 
         <div className="flex-1 flex flex-col justify-between h-28 py-0.5">
           <div>
-            <h3 className="text-[15px] font-bold text-slate-800 line-clamp-1">{weightRange}</h3>
+            <h3 className="text-[15px] font-bold text-slate-800 line-clamp-1">{`${breed} ${weightRange} KG`}</h3>
             <div className="flex flex-wrap gap-2 mt-2">
               {tags.map(tag => (
                 <span key={tag} className="bg-slate-100 text-slate-500 text-[10px] px-2 py-1 rounded-sm font-medium">

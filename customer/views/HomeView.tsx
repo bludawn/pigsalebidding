@@ -784,6 +784,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
               tags={item.tags}
               startingCount={item.startingCount}
               startingPrice={item.startingPrice}
+              customerBidStatus={item.customerBidStatus}
             />
           ))}
 

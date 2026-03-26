@@ -106,6 +106,7 @@ const App: React.FC = () => {
     if (route === 'auction-detail' && params) {
       setAuctionDetailParams(params as AuctionItem);
       setAuctionDetailBackRoute(currentRoute);
+      setAuctionDetailRefreshKey(prev => prev + 1);
     }
 
     if (route === 'order-list' && params) {
@@ -195,6 +196,7 @@ const App: React.FC = () => {
               onBack={() => setCurrentRoute(auctionDetailBackRoute)}
               onNavigate={navigate}
               refreshKey={auctionDetailRefreshKey}
+              isActive={currentRoute === 'auction-detail'}
             />
           </div>
         )}
