@@ -45,7 +45,11 @@
     <el-table v-loading="loading" :data="pigOrderList" v-if="viewMode === 'table'" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
-      <el-table-column label="订单编号" align="center" prop="orderNo" v-if="columns.orderNo.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="订单编号" align="center" prop="orderNo" v-if="columns.orderNo.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <el-link type="primary" :underline="false" @click="handleView(scope.row)">{{ scope.row.orderNo || scope.row.id }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="订单状态" align="center" prop="orderStatus" v-if="columns.orderStatus.visible">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.pig_order_status" :value="scope.row.orderStatus" />
@@ -61,16 +65,37 @@
           <span>{{ getEnterpriseName(scope.row.enterpriseId) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="竞价商品id" align="center" prop="bidProductId" v-if="columns.bidProductId.visible" />
-      <el-table-column label="用户出价id" align="center" prop="userBidId" v-if="columns.userBidId.visible" />
-      <el-table-column label="收货地址id" align="center" prop="addressId" v-if="columns.addressId.visible" />
+      <el-table-column label="竞价商品" align="center" prop="bidProductId" v-if="columns.bidProductId.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ getBidProductLabel(scope.row.bidProductId) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="用户出价" align="center" prop="userBidId" v-if="columns.userBidId.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ getUserBidLabel(scope.row.userBidId) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="收货地址" align="center" prop="addressId" v-if="columns.addressId.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ getAddressLabel(scope.row.addressId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="期望装车时间" align="center" prop="expectLoadTime" v-if="columns.expectLoadTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.expectLoadTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="生猪资源id" align="center" prop="pigResourceId" v-if="columns.pigResourceId.visible" />
+      <el-table-column label="生猪资源" align="center" prop="pigResourceId" v-if="columns.pigResourceId.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ getPigResourceLabel(scope.row.pigResourceId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="订单金额" align="center" prop="orderAmount" v-if="columns.orderAmount.visible" />
+      <el-table-column label="竞拍数量(头)" align="center" prop="bidQuantity" v-if="columns.bidQuantity.visible">
+        <template slot-scope="scope">
+          <span>{{ scope.row.bidQuantity ? scope.row.bidQuantity + '头' : '-' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="支付渠道" align="center" prop="payChannel" v-if="columns.payChannel.visible" />
       <el-table-column label="支付时间" align="center" prop="payTime" v-if="columns.payTime.visible" width="160">
         <template slot-scope="scope">
@@ -108,6 +133,7 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:pigOrder:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:pigOrder:remove']">删除</el-button>
         </template>
@@ -118,16 +144,20 @@
       <el-col :span="8" v-for="item in pigOrderList" :key="item.id" class="mb8">
         <el-card shadow="hover">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-weight: 600;">{{ item.orderNo || ('订单#' + item.id) }}</span>
+            <el-link type="primary" :underline="false" @click="handleView(item)">{{ item.orderNo || ('订单#' + item.id) }}</el-link>
             <dict-tag :options="dict.type.pig_order_status" :value="item.orderStatus" />
           </div>
           <div style="line-height: 1.8;">
             <div>订单来源：<dict-tag :options="dict.type.pig_order_source" :value="item.orderSource" /></div>
             <div>归属企业：{{ getEnterpriseName(item.enterpriseId) }}</div>
+            <div>竞价商品：{{ getBidProductLabel(item.bidProductId) }}</div>
+            <div>用户出价：{{ getUserBidLabel(item.userBidId) }}</div>
+            <div>收货地址：{{ getAddressLabel(item.addressId) }}</div>
+            <div>生猪资源：{{ getPigResourceLabel(item.pigResourceId) }}</div>
+            <div>竞拍数量：{{ item.bidQuantity ? item.bidQuantity + '头' : '-' }}</div>
             <div>订单金额：{{ item.orderAmount }}</div>
             <div>支付渠道：{{ item.payChannel }}</div>
             <div>支付时间：{{ parseTime(item.payTime) }}</div>
-            <div>收货地址id：{{ item.addressId }}</div>
             <div>期望装车时间：{{ parseTime(item.expectLoadTime) }}</div>
             <div>装货时间：{{ parseTime(item.loadTime) }}</div>
             <div>发货时间：{{ parseTime(item.shipTime) }}</div>
@@ -152,53 +182,67 @@
           <el-input v-model="form.orderNo" placeholder="自动生成" :disabled="true" />
         </el-form-item>
         <el-form-item label="订单状态" prop="orderStatus">
-          <el-select v-model="form.orderStatus" placeholder="请选择订单状态">
+          <el-select v-model="form.orderStatus" placeholder="请选择订单状态" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.pig_order_status" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="订单来源" prop="orderSource">
-          <el-select v-model="form.orderSource" placeholder="请选择订单来源">
+          <el-select v-model="form.orderSource" placeholder="请选择订单来源" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.pig_order_source" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="归属企业" prop="enterpriseId">
-          <el-select v-model="form.enterpriseId" placeholder="请选择归属企业" filterable clearable>
+          <el-select v-model="form.enterpriseId" placeholder="请选择归属企业" filterable clearable :disabled="viewModeOnly">
             <el-option v-for="item in enterpriseOptions" :key="item.id" :label="item.enterpriseName" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="竞价商品id" prop="bidProductId">
-          <el-input v-model="form.bidProductId" placeholder="请输入竞价商品id" />
+        <el-form-item label="竞价商品" prop="bidProductId">
+          <el-select v-model="form.bidProductId" placeholder="请选择竞价商品" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in bidProductOptions" :key="item.id" :label="getBidProductOptionLabel(item)" :value="item.id" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="用户出价id" prop="userBidId">
-          <el-input v-model="form.userBidId" placeholder="请输入用户出价id" />
+        <el-form-item label="用户出价" prop="userBidId">
+          <el-select v-model="form.userBidId" placeholder="请选择用户出价" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in userBidOptions" :key="item.id" :label="getUserBidOptionLabel(item)" :value="item.id" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="收货地址id" prop="addressId">
-          <el-input v-model="form.addressId" placeholder="请输入收货地址id" />
+        <el-form-item label="收货地址" prop="addressId">
+          <el-select v-model="form.addressId" placeholder="请选择收货地址" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in addressOptions" :key="item.id" :label="getAddressOptionLabel(item)" :value="item.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="期望装车时间" prop="expectLoadTime">
-          <el-date-picker v-model="form.expectLoadTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择期望装车时间"></el-date-picker>
+          <el-date-picker v-model="form.expectLoadTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择期望装车时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
-        <el-form-item label="生猪资源id" prop="pigResourceId">
-          <el-input v-model="form.pigResourceId" placeholder="请输入生猪资源id" />
+        <el-form-item label="生猪资源" prop="pigResourceId">
+          <el-select v-model="form.pigResourceId" placeholder="请选择生猪资源" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in pigResourceOptions" :key="item.id" :label="getPigResourceOptionLabel(item)" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="竞拍数量(头)" prop="bidQuantity">
+          <el-input v-model="form.bidQuantity" placeholder="请输入竞拍数量" :disabled="viewModeOnly" />
+        </el-form-item>
+        <el-form-item label="单价" prop="unitPrice">
+          <el-input v-model="form.unitPrice" placeholder="请输入单价" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="订单金额" prop="orderAmount">
-          <el-input v-model="form.orderAmount" placeholder="请输入订单金额" />
+          <el-input v-model="form.orderAmount" placeholder="自动计算" :disabled="true" />
         </el-form-item>
         <el-form-item label="支付渠道" prop="payChannel">
-          <el-input v-model="form.payChannel" placeholder="请输入支付渠道" />
+          <el-input v-model="form.payChannel" placeholder="请输入支付渠道" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="支付时间" prop="payTime">
-          <el-date-picker v-model="form.payTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择支付时间"></el-date-picker>
+          <el-date-picker v-model="form.payTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择支付时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="装货时间" prop="loadTime">
-          <el-date-picker v-model="form.loadTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择装货时间"></el-date-picker>
+          <el-date-picker v-model="form.loadTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择装货时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="发货时间" prop="shipTime">
-          <el-date-picker v-model="form.shipTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择发货时间"></el-date-picker>
+          <el-date-picker v-model="form.shipTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择发货时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="送货信息">
           <div style="margin-bottom: 8px;">
-            <el-button size="mini" type="primary" plain icon="el-icon-plus" @click="openDeliveryInfoDialog()">新增送货信息</el-button>
+            <el-button v-if="!viewModeOnly" size="mini" type="primary" plain icon="el-icon-plus" @click="openDeliveryInfoDialog()">新增送货信息</el-button>
           </div>
           <el-table :data="deliveryInfoList" size="mini" border style="width: 100%;">
             <el-table-column label="运输编码" prop="transportCode" min-width="140" />
@@ -218,22 +262,23 @@
             </el-table-column>
             <el-table-column label="操作" align="center" min-width="120">
               <template slot-scope="scope">
-                <el-button type="text" size="mini" @click="openDeliveryInfoDialog(scope.row)">编辑</el-button>
-                <el-button type="text" size="mini" @click="removeDeliveryInfo(scope.$index)">移除</el-button>
+                <el-button v-if="!viewModeOnly" type="text" size="mini" @click="openDeliveryInfoDialog(scope.row)">编辑</el-button>
+                <el-button v-if="!viewModeOnly" type="text" size="mini" @click="removeDeliveryInfo(scope.$index)">移除</el-button>
+                <span v-if="viewModeOnly">-</span>
               </template>
             </el-table-column>
           </el-table>
         </el-form-item>
         <el-form-item label="确认收货时间" prop="receiveTime">
-          <el-date-picker v-model="form.receiveTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择确认收货时间"></el-date-picker>
+          <el-date-picker v-model="form.receiveTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择确认收货时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
+        <el-button @click="cancel">{{ viewModeOnly ? '关 闭' : '取 消' }}</el-button>
       </div>
     </el-dialog>
 
@@ -294,7 +339,12 @@
 <script>
 import { listPigOrder, getPigOrder, delPigOrder, addPigOrder, updatePigOrder, getNextOrderNo } from "@/api/pig/pigOrder"
 import { listEnterprise } from "@/api/pig/enterprise"
+import { listBidProduct } from "@/api/pig/bidProduct"
+import { listUserBid } from "@/api/pig/userBid"
+import { listAddress } from "@/api/pig/address"
+import { listPigResource } from "@/api/pig/pigResource"
 import { listDeliveryInfo, getDeliveryInfo, addDeliveryInfo, updateDeliveryInfo, getNextTransportCode } from "@/api/pig/deliveryInfo"
+import pcasData from "@/assets/pcas-code.json"
 
 export default {
   name: "PigOrder",
@@ -325,12 +375,13 @@ export default {
         orderStatus: { label: '订单状态', visible: true },
         orderSource: { label: '订单来源', visible: true },
         enterpriseId: { label: '归属企业', visible: true },
-        bidProductId: { label: '竞价商品id', visible: true },
-        userBidId: { label: '用户出价id', visible: true },
-        addressId: { label: '收货地址id', visible: true },
+        bidProductId: { label: '竞价商品', visible: true },
+        userBidId: { label: '用户出价', visible: true },
+        addressId: { label: '收货地址', visible: true },
         expectLoadTime: { label: '期望装车时间', visible: true },
-        pigResourceId: { label: '生猪资源id', visible: true },
+        pigResourceId: { label: '生猪资源', visible: true },
         orderAmount: { label: '订单金额', visible: true },
+        bidQuantity: { label: '竞拍数量', visible: true },
         payChannel: { label: '支付渠道', visible: true },
         payTime: { label: '支付时间', visible: true },
         loadTime: { label: '装货时间', visible: true },
@@ -344,6 +395,16 @@ export default {
         updateTime: { label: '更新时间', visible: true }
       },
       enterpriseOptions: [],
+      bidProductOptions: [],
+      bidProductMap: {},
+      userBidOptions: [],
+      userBidMap: {},
+      addressOptions: [],
+      addressMap: {},
+      pigResourceOptions: [],
+      pigResourceMap: {},
+      pcasCodeMap: {},
+      viewModeOnly: false,
       deliveryInfoList: [],
       deliveryDialogVisible: false,
       deliveryDialogTitle: '新增送货信息',
@@ -360,8 +421,21 @@ export default {
     }
   },
   created() {
+    this.initPcasOptions()
     this.getList()
     this.loadEnterpriseOptions()
+    this.loadBidProductOptions()
+    this.loadUserBidOptions()
+    this.loadAddressOptions()
+    this.loadPigResourceOptions()
+  },
+  watch: {
+    'form.unitPrice'() {
+      this.updateOrderAmount()
+    },
+    'form.bidQuantity'() {
+      this.updateOrderAmount()
+    }
   },
   methods: {
     getList() {
@@ -374,6 +448,7 @@ export default {
     },
     cancel() {
       this.open = false
+      this.viewModeOnly = false
       this.reset()
     },
     reset() {
@@ -390,6 +465,8 @@ export default {
         remark: undefined,
         pigResourceId: undefined,
         orderAmount: undefined,
+        bidQuantity: undefined,
+        unitPrice: undefined,
         payChannel: undefined,
         payTime: undefined,
         loadTime: undefined,
@@ -415,6 +492,7 @@ export default {
     },
     handleAdd() {
       this.reset()
+      this.viewModeOnly = false
       this.open = true
       this.title = "添加订单"
       getNextOrderNo().then(response => {
@@ -423,11 +501,25 @@ export default {
     },
     handleUpdate(row) {
       this.reset()
+      this.viewModeOnly = false
       const id = row.id || this.ids
       getPigOrder(id).then(async response => {
         this.form = response.data
+        this.form.unitPrice = this.calcUnitPrice(this.form.orderAmount, this.form.bidQuantity)
         this.open = true
         this.title = "修改订单"
+        await this.loadDeliveryInfosByIds(this.form.deliveryInfoIds)
+      })
+    },
+    handleView(row) {
+      this.reset()
+      this.viewModeOnly = true
+      const id = row.id || this.ids
+      getPigOrder(id).then(async response => {
+        this.form = response.data
+        this.form.unitPrice = this.calcUnitPrice(this.form.orderAmount, this.form.bidQuantity)
+        this.open = true
+        this.title = "查看订单"
         await this.loadDeliveryInfosByIds(this.form.deliveryInfoIds)
       })
     },
@@ -435,6 +527,134 @@ export default {
       listEnterprise({ pageNum: 1, pageSize: 1000 }).then(response => {
         this.enterpriseOptions = response.rows || []
       })
+    },
+    loadBidProductOptions() {
+      listBidProduct({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.bidProductOptions = response.rows || []
+        this.bidProductMap = this.bidProductOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    loadUserBidOptions() {
+      listUserBid({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.userBidOptions = response.rows || []
+        this.userBidMap = this.userBidOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    loadAddressOptions() {
+      listAddress({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.addressOptions = response.rows || []
+        this.addressMap = this.addressOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    loadPigResourceOptions() {
+      listPigResource({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.pigResourceOptions = response.rows || []
+        this.pigResourceMap = this.pigResourceOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    initPcasOptions() {
+      const rawList = Object.keys(pcasData)
+        .map(key => pcasData[key])
+      this.pcasCodeMap = {}
+      this.normalizePcasTree(rawList, [], [])
+    },
+    normalizePcasTree(list, parentCodes, parentLabels) {
+      return list.map(item => {
+        const currentCodes = [...parentCodes, item.code]
+        const currentLabels = [...parentLabels, item.name]
+        this.pcasCodeMap[item.code] = {
+          codes: currentCodes,
+          labels: currentLabels
+        }
+        const children = item.children ? this.normalizePcasTree(item.children, currentCodes, currentLabels) : undefined
+        return {
+          value: item.code,
+          label: item.name,
+          children: children
+        }
+      })
+    },
+    formatAddressCode(code) {
+      if (!code) return ""
+      return this.pcasCodeMap[code] ? this.pcasCodeMap[code].labels.join("/") : code
+    },
+    formatAddressFull(code, detail) {
+      const prefix = this.formatAddressCode(code)
+      if (prefix && detail) {
+        return `${prefix} ${detail}`
+      }
+      return prefix || detail || ''
+    },
+    getBidProductOptionLabel(item) {
+      if (!item) return ''
+      return item.bidProductCode || item.productName || item.productCode || item.id
+    },
+    getBidProductLabel(id) {
+      if (!id) return '-'
+      const item = this.bidProductMap[id]
+      return item ? this.getBidProductOptionLabel(item) : id
+    },
+    getUserBidOptionLabel(item) {
+      if (!item) return ''
+      const price = item.price ? `单价${item.price}` : ''
+      const quantity = item.quantity ? `数量${item.quantity}头` : ''
+      const suffix = [price, quantity].filter(Boolean).join(' ')
+      return suffix ? `#${item.id} ${suffix}` : `#${item.id}`
+    },
+    getUserBidLabel(id) {
+      if (!id) return '-'
+      const item = this.userBidMap[id]
+      return item ? this.getUserBidOptionLabel(item) : id
+    },
+    getAddressOptionLabel(item) {
+      if (!item) return ''
+      return this.formatAddressFull(item.addressCode, item.detailAddress) || item.id
+    },
+    getAddressLabel(id) {
+      if (!id) return '-'
+      const item = this.addressMap[id]
+      return item ? this.getAddressOptionLabel(item) : id
+    },
+    getPigResourceOptionLabel(item) {
+      if (!item) return ''
+      return item.resourceCode || item.id
+    },
+    getPigResourceLabel(id) {
+      if (!id) return '-'
+      const item = this.pigResourceMap[id]
+      return item ? this.getPigResourceOptionLabel(item) : id
+    },
+    calcUnitPrice(orderAmount, bidQuantity) {
+      const amount = Number(orderAmount)
+      const quantity = Number(bidQuantity)
+      if (!Number.isFinite(amount) || !Number.isFinite(quantity) || quantity <= 0) {
+        return undefined
+      }
+      return Number((amount / quantity).toFixed(2))
+    },
+    updateOrderAmount() {
+      if (this.viewModeOnly) {
+        return
+      }
+      const unitPrice = Number(this.form.unitPrice)
+      const quantity = Number(this.form.bidQuantity)
+      if (!Number.isFinite(unitPrice) || !Number.isFinite(quantity) || quantity <= 0) {
+        return
+      }
+      const amount = Number((unitPrice * quantity).toFixed(2))
+      this.$set(this.form, 'orderAmount', amount)
     },
     getEnterpriseName(id) {
       if (!id) {
@@ -586,14 +806,17 @@ export default {
       this.$refs["form"].validate(valid => {
         if (valid) {
           this.syncDeliveryInfoIds()
-          if (this.form.id != undefined) {
-            updatePigOrder(this.form).then(() => {
+          this.updateOrderAmount()
+          const payload = { ...this.form }
+          delete payload.unitPrice
+          if (payload.id != undefined) {
+            updatePigOrder(payload).then(() => {
               this.$modal.msgSuccess("修改成功")
               this.open = false
               this.getList()
             })
           } else {
-            addPigOrder(this.form).then(() => {
+            addPigOrder(payload).then(() => {
               this.$modal.msgSuccess("新增成功")
               this.open = false
               this.getList()

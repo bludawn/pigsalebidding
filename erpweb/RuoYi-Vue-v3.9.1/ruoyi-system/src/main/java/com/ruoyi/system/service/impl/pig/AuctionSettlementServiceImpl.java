@@ -159,10 +159,12 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
         order.setEnterpriseId(bid.getEnterpriseId());
         order.setBidProductId(product.getId());
         order.setUserBidId(bid.getId());
+        order.
         order.setPigResourceId(product.getPigResourceId());
         fillOrderMaintenanceInfo(order, bid.getUserId(), product.getId());
 
         BigDecimal price = bid.getPrice() == null ? BigDecimal.ZERO : bid.getPrice();
+        order.setBidQuantity(allocated);
         order.setOrderAmount(price.multiply(new BigDecimal(allocated)));
         order.setCreateBy(String.valueOf(bid.getUserId()));
 

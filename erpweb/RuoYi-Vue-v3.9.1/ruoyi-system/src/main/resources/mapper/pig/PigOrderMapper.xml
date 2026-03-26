@@ -17,6 +17,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="remark" column="f_remark" />
         <result property="pigResourceId" column="f_pigResourceId" />
         <result property="orderAmount" column="f_orderAmount" />
+        <result property="bidQuantity" column="f_bidQuantity" />
         <result property="payChannel" column="f_payChannel" />
         <result property="payTime" column="f_payTime" />
         <result property="loadTime" column="f_loadTime" />
@@ -30,7 +31,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectPigOrderVo">
-        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_enterpriseId, f_bidProductId, f_userBidId, f_addressId, f_expectLoadTime, f_remark, f_pigResourceId, f_orderAmount, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_enterpriseId, f_bidProductId, f_userBidId, f_addressId, f_expectLoadTime, f_remark, f_pigResourceId, f_orderAmount, f_bidQuantity, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_creator, f_createTime, f_updator, f_updateTime
         from t_order
     </sql>
 
@@ -75,6 +76,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
             <if test="orderAmount != null">
                 AND f_orderAmount = #{orderAmount}
+            </if>
+            <if test="bidQuantity != null">
+                AND f_bidQuantity = #{bidQuantity}
             </if>
             <if test="payChannel != null and payChannel != ''">
                 AND f_payChannel like concat('%', #{payChannel}, '%')
@@ -122,6 +126,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="remark != null and remark != ''">f_remark,</if>
 <if test="pigResourceId != null">f_pigResourceId,</if>
 <if test="orderAmount != null">f_orderAmount,</if>
+<if test="bidQuantity != null">f_bidQuantity,</if>
 <if test="payChannel != null and payChannel != ''">f_payChannel,</if>
 <if test="payTime != null">f_payTime,</if>
 <if test="loadTime != null">f_loadTime,</if>
@@ -143,6 +148,7 @@ f_createTime
 <if test="remark != null and remark != ''">#{remark},</if>
 <if test="pigResourceId != null">#{pigResourceId},</if>
 <if test="orderAmount != null">#{orderAmount},</if>
+<if test="bidQuantity != null">#{bidQuantity},</if>
 <if test="payChannel != null and payChannel != ''">#{payChannel},</if>
 <if test="payTime != null">#{payTime},</if>
 <if test="loadTime != null">#{loadTime},</if>
@@ -168,6 +174,7 @@ sysdate()
             <if test="remark != null and remark != ''">f_remark = #{remark},</if>
             <if test="pigResourceId != null">f_pigResourceId = #{pigResourceId},</if>
             <if test="orderAmount != null">f_orderAmount = #{orderAmount},</if>
+            <if test="bidQuantity != null">f_bidQuantity = #{bidQuantity},</if>
             <if test="payChannel != null and payChannel != ''">f_payChannel = #{payChannel},</if>
             <if test="payTime != null">f_payTime = #{payTime},</if>
             <if test="loadTime != null">f_loadTime = #{loadTime},</if>

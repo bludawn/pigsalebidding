@@ -65,6 +65,10 @@ public class PigOrder extends BaseEntity
     @Excel(name = "订单金额")
     private BigDecimal orderAmount;
 
+    /** 竞拍数量 */
+    @Excel(name = "竞拍数量")
+    private Integer bidQuantity;
+
     /** 支付渠道 */
     @Excel(name = "支付渠道")
     private String payChannel;
@@ -213,6 +217,16 @@ public class PigOrder extends BaseEntity
         return orderAmount;
     }
 
+    public void setBidQuantity(Integer bidQuantity)
+    {
+        this.bidQuantity = bidQuantity;
+    }
+
+    public Integer getBidQuantity()
+    {
+        return bidQuantity;
+    }
+
     public void setPayChannel(String payChannel)
     {
         this.payChannel = payChannel;
@@ -289,6 +303,7 @@ public class PigOrder extends BaseEntity
             .append("remark", getRemark())
             .append("pigResourceId", getPigResourceId())
             .append("orderAmount", getOrderAmount())
+            .append("bidQuantity", getBidQuantity())
             .append("payChannel", getPayChannel())
             .append("payTime", getPayTime())
             .append("loadTime", getLoadTime())

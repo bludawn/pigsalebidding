@@ -9,3 +9,6 @@
 - RuoYi-Vue-v3.9.1 管理端前后端工程，ruoyi框架
 
 ## 每次调整要完善各工程下的 README.md 文件
+
+## 变更记录
+- 订单表 `t_order` 新增 `f_bidQuantity`（竞拍数量），结算任务写入该字段。
