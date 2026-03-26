@@ -12,3 +12,4 @@
 
 ## 变更记录
 - 订单表 `t_order` 新增 `f_bidQuantity`（竞拍数量），结算任务写入该字段。
+- 订单表 `t_order` 新增 `f_unitPrice`（单价），竞拍结算写入用户出价。

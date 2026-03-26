@@ -155,6 +155,7 @@
             <div>收货地址：{{ getAddressLabel(item.addressId) }}</div>
             <div>生猪资源：{{ getPigResourceLabel(item.pigResourceId) }}</div>
             <div>竞拍数量：{{ item.bidQuantity ? item.bidQuantity + '头' : '-' }}</div>
+            <div>单价：{{ item.unitPrice }}</div>
             <div>订单金额：{{ item.orderAmount }}</div>
             <div>支付渠道：{{ item.payChannel }}</div>
             <div>支付时间：{{ parseTime(item.payTime) }}</div>
@@ -226,7 +227,7 @@
           <el-input v-model="form.unitPrice" placeholder="请输入单价" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="订单金额" prop="orderAmount">
-          <el-input v-model="form.orderAmount" placeholder="自动计算" :disabled="true" />
+          <el-input v-model="form.orderAmount" placeholder="自动计算，可手工修改" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="支付渠道" prop="payChannel">
           <el-input v-model="form.payChannel" placeholder="请输入支付渠道" :disabled="viewModeOnly" />
@@ -343,6 +344,8 @@ import { listBidProduct } from "@/api/pig/bidProduct"
 import { listUserBid } from "@/api/pig/userBid"
 import { listAddress } from "@/api/pig/address"
 import { listPigResource } from "@/api/pig/pigResource"
+import { listPigType } from "@/api/pig/pigType"
+import { listSite } from "@/api/pig/site"
 import { listDeliveryInfo, getDeliveryInfo, addDeliveryInfo, updateDeliveryInfo, getNextTransportCode } from "@/api/pig/deliveryInfo"
 import pcasData from "@/assets/pcas-code.json"
 
@@ -381,6 +384,7 @@ export default {
         expectLoadTime: { label: '期望装车时间', visible: true },
         pigResourceId: { label: '生猪资源', visible: true },
         orderAmount: { label: '订单金额', visible: true },
+        unitPrice: { label: '单价', visible: true },
         bidQuantity: { label: '竞拍数量', visible: true },
         payChannel: { label: '支付渠道', visible: true },
         payTime: { label: '支付时间', visible: true },
@@ -403,6 +407,10 @@ export default {
       addressMap: {},
       pigResourceOptions: [],
       pigResourceMap: {},
+      pigTypeOptions: [],
+      pigTypeMap: {},
+      siteOptions: [],
+      siteMap: {},
       pcasCodeMap: {},
       viewModeOnly: false,
       deliveryInfoList: [],
@@ -505,7 +513,9 @@ export default {
       const id = row.id || this.ids
       getPigOrder(id).then(async response => {
         this.form = response.data
-        this.form.unitPrice = this.calcUnitPrice(this.form.orderAmount, this.form.bidQuantity)
+        if (this.form.unitPrice == null) {
+          this.form.unitPrice = this.calcUnitPrice(this.form.orderAmount, this.form.bidQuantity)
+        }
         this.open = true
         this.title = "修改订单"
         await this.loadDeliveryInfosByIds(this.form.deliveryInfoIds)
@@ -563,6 +573,36 @@ export default {
           return acc
         }, {})
       })
+    },
+    loadPigTypeOptions() {
+      listPigType({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.pigTypeOptions = response.rows || []
+        this.pigTypeMap = this.pigTypeOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    loadSiteOptions() {
+      listSite({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.siteOptions = response.rows || []
+        this.siteMap = this.siteOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    handlePigResourceChange(value) {
+      if (this.viewModeOnly) {
+        return
+      }
+      const resource = value ? this.pigResourceMap[value] : null
+      if (!resource) {
+        return
+      }
+      if (resource.resourceUnitPrice != null) {
+        this.$set(this.form, 'unitPrice', resource.resourceUnitPrice)
+      }
     },
     initPcasOptions() {
       const rawList = Object.keys(pcasData)
@@ -808,7 +848,6 @@ export default {
           this.syncDeliveryInfoIds()
           this.updateOrderAmount()
           const payload = { ...this.form }
-          delete payload.unitPrice
           if (payload.id != undefined) {
             updatePigOrder(payload).then(() => {
               this.$modal.msgSuccess("修改成功")

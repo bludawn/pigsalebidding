@@ -158,6 +158,7 @@ CREATE TABLE t_order (
   f_remark varchar(500) DEFAULT NULL COMMENT '备注',
   f_pigResourceId bigint(20) DEFAULT NULL COMMENT '生猪资源id',
   f_orderAmount decimal(19,6) DEFAULT NULL COMMENT '订单金额',
+  f_unitPrice decimal(19,6) DEFAULT NULL COMMENT '单价',
   f_bidQuantity int(4) DEFAULT NULL COMMENT '竞拍数量',
   f_payChannel varchar(50) DEFAULT NULL COMMENT '支付渠道',
   f_payTime datetime COMMENT '支付时间',

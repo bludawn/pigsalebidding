@@ -65,6 +65,10 @@ public class PigOrder extends BaseEntity
     @Excel(name = "订单金额")
     private BigDecimal orderAmount;
 
+    /** 单价 */
+    @Excel(name = "单价")
+    private BigDecimal unitPrice;
+
     /** 竞拍数量 */
     @Excel(name = "竞拍数量")
     private Integer bidQuantity;
@@ -96,6 +100,15 @@ public class PigOrder extends BaseEntity
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Excel(name = "确认收货时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date receiveTime;
+
+
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
+    }
 
     public void setId(Long id)
     {
@@ -303,6 +316,7 @@ public class PigOrder extends BaseEntity
             .append("remark", getRemark())
             .append("pigResourceId", getPigResourceId())
             .append("orderAmount", getOrderAmount())
+            .append("unitPrice", getUnitPrice())
             .append("bidQuantity", getBidQuantity())
             .append("payChannel", getPayChannel())
             .append("payTime", getPayTime())
