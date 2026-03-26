@@ -6,13 +6,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimerTask;
+
+import com.ruoyi.system.manager.AsyncManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.framework.manager.AsyncManager;
 import com.ruoyi.system.domain.pig.BidProduct;
 import com.ruoyi.system.domain.pig.BusinessMessage;
 import com.ruoyi.system.domain.pig.PigOrder;

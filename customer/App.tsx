@@ -131,7 +131,7 @@ const App: React.FC = () => {
     setRouteParams(params);
   };
 
-  const handleLogout = () => {
+  const handleLogout = React.useCallback(() => {
     clearAuthToken();
     setIsAuthed(false);
     setActiveTab('home');
@@ -141,7 +141,7 @@ const App: React.FC = () => {
     setAuctionMaintenanceParams(null);
     setOrderListParams(null);
     setOrderDetailParams(null);
-  };
+  }, []);
 
   useEffect(() => {
     if (currentRoute === 'tabs') {
@@ -153,6 +153,16 @@ const App: React.FC = () => {
       window.scrollTo(0, 0);
     }
   }, [currentRoute, activeTab]);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      handleLogout();
+    };
+    window.addEventListener('customer-auth-expired', handleAuthExpired);
+    return () => {
+      window.removeEventListener('customer-auth-expired', handleAuthExpired);
+    };
+  }, [handleLogout]);
 
   const renderTabContent = () => {
     if (!isAuthed) return null;

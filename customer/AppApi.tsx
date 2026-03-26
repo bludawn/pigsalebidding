@@ -133,10 +133,22 @@ async function request<T>(url: string, payload: object = {}): Promise<ApiRespons
     console.log('response', response)
     const result: ApiResponse<T> = await response.json();
     console.log('result', result)
+
+    const ruoyiResult = result as unknown as RuoyiAjaxResult;
+    if (response.status === 401 || ruoyiResult.code === 401 || result.errcode === 401) {
+      clearAuthToken();
+      window.dispatchEvent(new CustomEvent('customer-auth-expired'));
+      return {
+        errcode: 401,
+        errmsg: ruoyiResult.msg || result.errmsg || '认证失败',
+        data: null as T,
+      };
+    }
+
     if (result.errcode !== 0) {
       console.error(`API Error [${url}]:`, result.errmsg);
     }
-    
+
     return result;
   } catch (error) {
     console.error(`Request Error [${url}]:`, error);

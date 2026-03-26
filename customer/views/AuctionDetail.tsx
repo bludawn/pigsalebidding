@@ -433,7 +433,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h1 className="text-lg font-bold">{(detail?.pigTypeName || params.breed) + ' '  + (detail?.weightRanges?.join(' / ') || params.weightRange)}</h1>
+              <h1 className="text-lg font-bold">{(detail?.pigTypeName || params.breed) + ' '  + (detail?.weightRanges?.join(' / ') + ' KG'  || params.weightRange)}</h1>
               {detail?.productTags?.length
                 ? detail.productTags.map(tag => (
                     <span key={tag} className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-sm">
@@ -453,7 +453,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
           </div>
         </div>
         <div className="flex items-baseline gap-1 mt-1">
-          <span className="text-industry-red text-2xl font-bold">¥{detail?.price || params.startingPrice}</span>
+          <span className="text-industry-red text-2xl font-bold">¥{displayPriceValue.toFixed(2)}</span>
           <span className="text-slate-400 text-xs">元/kg</span>
         </div>
         {detail?.remark && (
