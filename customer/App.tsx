@@ -217,8 +217,8 @@ const App: React.FC = () => {
         {orderDetailParams && currentRoute === 'order-detail' && (
           <OrderDetailView params={orderDetailParams} onBack={() => setCurrentRoute(orderDetailBackRoute)} />
         )}
-        {auctionMaintenanceParams && currentRoute === 'auction-maintenance' && (
-          <div className="block h-full">
+        {auctionMaintenanceParams && (
+          <div className={currentRoute === 'auction-maintenance' ? 'block h-full' : 'hidden h-full'}>
             <AuctionMaintenanceView
               key={auctionMaintenanceKey}
               auctionId={auctionMaintenanceParams.auctionId}

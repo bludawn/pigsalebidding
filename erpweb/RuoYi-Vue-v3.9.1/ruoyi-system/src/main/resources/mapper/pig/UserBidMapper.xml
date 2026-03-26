@@ -56,6 +56,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 AND f_totalPrice = #{totalPrice}
             </if>
         </where>
+
+        order by f_bidTime desc
     </select>
 
     <select id="selectUserBidById" parameterType="Long" resultMap="UserBidResult">

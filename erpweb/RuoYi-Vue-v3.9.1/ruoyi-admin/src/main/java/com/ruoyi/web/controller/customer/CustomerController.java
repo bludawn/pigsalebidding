@@ -319,7 +319,8 @@ public class CustomerController extends BaseController
         List<BidRecordItem> records = list.stream().map(bid -> {
             BidRecordItem item = new BidRecordItem();
             item.id = String.valueOf(bid.getId());
-            item.customerName = String.valueOf(bid.getUserId());
+            // TODO 通过用户 获取企业名称
+            item.customerName = String.valueOf("客户" + bid.getUserId());
             item.price = bid.getPrice();
             item.quantity = bid.getQuantity();
             item.time = formatDate(bid.getBidTime());
@@ -829,7 +830,7 @@ public class CustomerController extends BaseController
         item.quantity = bidProduct.getTotalHeadCount();
         item.weightRange = pigType != null ? pigType.getWeightRange() : null;
         item.tags = resolveTagNames(pigType);
-        item.startingPrice = bidProduct.getStartPrice();
+        item.startingPrice = bidProduct.getCurrentHighestPrice();
         item.startingCount = bidProduct.getStartBidCount();
         item.endTime = bidProduct.getEndTime();
         item.imageUrl = firstImageUrl(pigType);
