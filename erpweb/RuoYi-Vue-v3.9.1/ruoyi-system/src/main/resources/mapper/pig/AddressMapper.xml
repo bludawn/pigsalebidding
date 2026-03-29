@@ -11,6 +11,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="contactPhone" column="f_contactPhone" />
         <result property="addressCode" column="f_addressCode" />
         <result property="detailAddress" column="f_detailAddress" />
+        <result property="longitude" column="f_longitude" />
+        <result property="latitude" column="f_latitude" />
         <result property="isDefault" column="f_isDefault" />
         <result property="createBy" column="f_creator" />
         <result property="createTime" column="f_createTime" />
@@ -19,7 +21,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectAddressVo">
-        select f_id, f_userId, f_contactName, f_contactPhone, f_addressCode, f_detailAddress, f_isDefault, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_userId, f_contactName, f_contactPhone, f_addressCode, f_detailAddress, f_longitude, f_latitude, f_isDefault, f_creator, f_createTime, f_updator, f_updateTime
         from t_address
     </sql>
 
@@ -63,6 +65,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="contactPhone != null and contactPhone != ''">f_contactPhone,</if>
 <if test="addressCode != null and addressCode != ''">f_addressCode,</if>
 <if test="detailAddress != null and detailAddress != ''">f_detailAddress,</if>
+<if test="longitude != null and longitude != ''">f_longitude,</if>
+<if test="latitude != null and latitude != ''">f_latitude,</if>
 <if test="isDefault != null">f_isDefault,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
 f_createTime
@@ -73,6 +77,8 @@ f_createTime
 <if test="contactPhone != null and contactPhone != ''">#{contactPhone},</if>
 <if test="addressCode != null and addressCode != ''">#{addressCode},</if>
 <if test="detailAddress != null and detailAddress != ''">#{detailAddress},</if>
+<if test="longitude != null and longitude != ''">#{longitude},</if>
+<if test="latitude != null and latitude != ''">#{latitude},</if>
 <if test="isDefault != null">#{isDefault},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
 sysdate()
@@ -87,6 +93,8 @@ sysdate()
             <if test="contactPhone != null and contactPhone != ''">f_contactPhone = #{contactPhone},</if>
             <if test="addressCode != null and addressCode != ''">f_addressCode = #{addressCode},</if>
             <if test="detailAddress != null and detailAddress != ''">f_detailAddress = #{detailAddress},</if>
+            <if test="longitude != null and longitude != ''">f_longitude = #{longitude},</if>
+            <if test="latitude != null and latitude != ''">f_latitude = #{latitude},</if>
             <if test="isDefault != null">f_isDefault = #{isDefault},</if>
             <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
             f_updateTime = sysdate()

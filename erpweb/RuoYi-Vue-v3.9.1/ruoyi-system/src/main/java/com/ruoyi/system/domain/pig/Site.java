@@ -33,9 +33,13 @@ public class Site extends BaseEntity
     @Excel(name = "场点地址code")
     private String siteAddressCode;
 
-    /** 场点经纬度坐标 */
-    @Excel(name = "场点经纬度坐标")
-    private String siteLocation;
+    /** 场点经度 */
+    @Excel(name = "场点经度")
+    private String siteLongitude;
+
+    /** 场点纬度 */
+    @Excel(name = "场点纬度")
+    private String siteLatitude;
 
     /** 场点电话 */
     @Excel(name = "场点电话")
@@ -103,14 +107,24 @@ public class Site extends BaseEntity
         return siteAddressCode;
     }
 
-    public void setSiteLocation(String siteLocation)
+    public void setSiteLongitude(String siteLongitude)
     {
-        this.siteLocation = siteLocation;
+        this.siteLongitude = siteLongitude;
     }
 
-    public String getSiteLocation()
+    public String getSiteLongitude()
     {
-        return siteLocation;
+        return siteLongitude;
+    }
+
+    public void setSiteLatitude(String siteLatitude)
+    {
+        this.siteLatitude = siteLatitude;
+    }
+
+    public String getSiteLatitude()
+    {
+        return siteLatitude;
     }
 
     public void setSitePhone(String sitePhone)
@@ -162,7 +176,8 @@ public class Site extends BaseEntity
             .append("siteName", getSiteName())
             .append("siteAddress", getSiteAddress())
             .append("siteAddressCode", getSiteAddressCode())
-            .append("siteLocation", getSiteLocation())
+            .append("siteLongitude", getSiteLongitude())
+            .append("siteLatitude", getSiteLatitude())
             .append("sitePhone", getSitePhone())
             .append("siteIntro", getSiteIntro())
             .append("siteImages", getSiteImages())

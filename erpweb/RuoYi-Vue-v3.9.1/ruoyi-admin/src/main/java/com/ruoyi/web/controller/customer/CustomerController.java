@@ -549,6 +549,8 @@ public class CustomerController extends BaseController {
         address.setContactPhone(request.contactPhone);
         address.setAddressCode(request.regionCode);
         address.setDetailAddress(request.detailAddress);
+        address.setLongitude(request.longitude);
+        address.setLatitude(request.latitude);
         address.setIsDefault(Boolean.TRUE.equals(request.isDefault) ? 1 : 0);
         address.setCreateBy(String.valueOf(getUserId()));
         addressService.insertAddress(address);
@@ -568,6 +570,8 @@ public class CustomerController extends BaseController {
         address.setContactPhone(request.contactPhone);
         address.setAddressCode(request.regionCode);
         address.setDetailAddress(request.detailAddress);
+        address.setLongitude(request.longitude);
+        address.setLatitude(request.latitude);
         address.setIsDefault(Boolean.TRUE.equals(request.isDefault) ? 1 : 0);
         address.setUpdateBy(String.valueOf(getUserId()));
         addressService.updateAddress(address);
@@ -804,6 +808,8 @@ public class CustomerController extends BaseController {
         item.regionCode = address.getAddressCode();
         item.regionName = address.getAddressCode();
         item.detailAddress = address.getDetailAddress();
+        item.longitude = address.getLongitude();
+        item.latitude = address.getLatitude();
         item.isDefault = address.getIsDefault() != null && address.getIsDefault() == 1;
         item.updatedAt = formatDate(address.getUpdateTime());
         return item;

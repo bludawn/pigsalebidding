@@ -37,6 +37,14 @@ public class Address extends BaseEntity
     @Excel(name = "详细地址")
     private String detailAddress;
 
+    /** 经度 */
+    @Excel(name = "经度")
+    private String longitude;
+
+    /** 纬度 */
+    @Excel(name = "纬度")
+    private String latitude;
+
     /** 是否默认地址 */
     @Excel(name = "是否默认地址")
     private Integer isDefault;
@@ -101,6 +109,26 @@ public class Address extends BaseEntity
         return detailAddress;
     }
 
+    public void setLongitude(String longitude)
+    {
+        this.longitude = longitude;
+    }
+
+    public String getLongitude()
+    {
+        return longitude;
+    }
+
+    public void setLatitude(String latitude)
+    {
+        this.latitude = latitude;
+    }
+
+    public String getLatitude()
+    {
+        return latitude;
+    }
+
     public void setIsDefault(Integer isDefault)
     {
         this.isDefault = isDefault;
@@ -121,6 +149,8 @@ public class Address extends BaseEntity
             .append("contactPhone", getContactPhone())
             .append("addressCode", getAddressCode())
             .append("detailAddress", getDetailAddress())
+            .append("longitude", getLongitude())
+            .append("latitude", getLatitude())
             .append("isDefault", getIsDefault())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())

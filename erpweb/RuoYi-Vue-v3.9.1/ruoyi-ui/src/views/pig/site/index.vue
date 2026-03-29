@@ -75,7 +75,8 @@
           ></video>
         </template>
       </el-table-column>
-      <el-table-column label="经纬度" align="center" prop="siteLocation" v-if="columns.siteLocation.visible" />
+      <el-table-column label="经度" align="center" prop="siteLongitude" v-if="columns.siteLongitude.visible" />
+      <el-table-column label="纬度" align="center" prop="siteLatitude" v-if="columns.siteLatitude.visible" />
       <el-table-column label="所属企业" align="center" prop="enterpriseId" v-if="columns.enterpriseId.visible">
         <template slot-scope="scope">
           <span>{{ getEnterpriseName(scope.row.enterpriseId) }}</span>
@@ -130,8 +131,12 @@
         <el-form-item label="场点地址" prop="siteAddress">
           <el-input v-model="form.siteAddress" placeholder="请输入详细地址" :disabled="viewModeOnly" />
         </el-form-item>
-        <el-form-item label="经纬度" prop="siteLocation">
-          <el-input v-model="form.siteLocation" placeholder="请输入经纬度坐标" :disabled="viewModeOnly" />
+        <el-form-item label="经纬度" prop="siteLongitude">
+          <div style="display: flex; gap: 8px;">
+            <el-input v-model="form.siteLongitude" placeholder="经度" style="width: 45%;" :disabled="viewModeOnly" />
+            <el-input v-model="form.siteLatitude" placeholder="纬度" style="width: 45%;" :disabled="viewModeOnly" />
+            <el-button size="mini" @click="openMapPicker" v-if="!viewModeOnly">地图选点</el-button>
+          </div>
         </el-form-item>
         <el-form-item label="场点电话" prop="sitePhone">
           <el-input v-model="form.sitePhone" placeholder="请输入场点电话" :disabled="viewModeOnly" />
@@ -152,6 +157,20 @@
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
         <el-button @click="cancel">关 闭</el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog title="地图选点" :visible.sync="mapDialogVisible" width="700px" append-to-body>
+      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <el-input v-model="mapKeyword" placeholder="搜索位置" size="mini" clearable @keyup.enter.native="searchMap" />
+        <el-button size="mini" type="primary" @click="searchMap">搜索</el-button>
+      </div>
+      <div v-loading="mapLoading" style="height: 360px;">
+        <div :id="mapContainerId" style="height: 360px;"></div>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="mapDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmMapPicker">确 定</el-button>
       </div>
     </el-dialog>
 
@@ -211,7 +230,8 @@ export default {
         siteIntro: { label: '场点介绍', visible: true },
         siteImages: { label: '场点图片', visible: true },
         siteVideos: { label: '场点视频', visible: true },
-        siteLocation: { label: '经纬度', visible: true },
+        siteLongitude: { label: '经度', visible: true },
+        siteLatitude: { label: '纬度', visible: true },
         enterpriseId: { label: '所属企业', visible: true },
         remark: { label: '备注', visible: true },
         createBy: { label: '创建人', visible: true },
@@ -230,6 +250,17 @@ export default {
         children: 'children'
       },
       form: {},
+      mapDialogVisible: false,
+      mapContainerId: 'site-map-picker',
+      mapInstance: null,
+      mapMarker: null,
+      mapLoading: false,
+      mapSelectedLat: undefined,
+      mapSelectedLng: undefined,
+      mapKeyword: '',
+      mapPlaceSearch: null,
+      mapGeocoder: null,
+      mapSelectedAddress: '',
       upload: {
         open: false,
         title: "",
@@ -323,7 +354,8 @@ export default {
         siteAddress: undefined,
         siteAddressCode: undefined,
         siteAddressCodeList: [],
-        siteLocation: undefined,
+        siteLongitude: undefined,
+        siteLatitude: undefined,
         sitePhone: undefined,
         siteIntro: undefined,
         siteImages: undefined,
@@ -372,6 +404,166 @@ export default {
         this.open = true
         this.title = "查看场点"
       })
+    },
+    openMapPicker() {
+      this.mapDialogVisible = true
+      this.mapSelectedLng = this.form.siteLongitude ? Number(this.form.siteLongitude) : undefined
+      this.mapSelectedLat = this.form.siteLatitude ? Number(this.form.siteLatitude) : undefined
+      this.mapKeyword = this.form.siteAddress || ''
+      this.mapSelectedAddress = ''
+      this.$nextTick(() => {
+        this.initMap()
+      })
+    },
+    ensureAmap() {
+      if (window.AMap) {
+        return Promise.resolve(window.AMap)
+      }
+      if (window._amapLoading) {
+        return window._amapLoading
+      }
+      const amapKey = window.AMAP_KEY || ''
+      if (!amapKey) {
+        return Promise.reject(new Error('Missing AMap key'))
+      }
+      window._amapLoading = new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = `https://webapi.amap.com/maps?v=2.0&key=${amapKey}&plugin=AMap.Geocoder,AMap.PlaceSearch,AMap.ToolBar`
+        script.onload = () => resolve(window.AMap)
+        script.onerror = () => reject(new Error('AMap load failed'))
+        document.body.appendChild(script)
+      })
+      return window._amapLoading
+    },
+    initMap() {
+      this.mapLoading = true
+      const defaultLat = this.mapSelectedLat || 31.2304
+      const defaultLng = this.mapSelectedLng || 121.4737
+      this.ensureAmap().then(AMap => {
+        if (!this.mapInstance) {
+          this.mapInstance = new AMap.Map(this.mapContainerId, {
+            zoom: 12,
+            center: [defaultLng, defaultLat]
+          })
+          this.mapInstance.addControl(new AMap.ToolBar())
+          this.mapGeocoder = new AMap.Geocoder({ city: '' })
+          this.mapPlaceSearch = new AMap.PlaceSearch({ pageSize: 5, map: this.mapInstance })
+          this.mapInstance.on('click', event => {
+            const lng = Number(event.lnglat.lng.toFixed(6))
+            const lat = Number(event.lnglat.lat.toFixed(6))
+            this.mapSelectedLng = lng
+            this.mapSelectedLat = lat
+            if (!this.mapMarker) {
+              this.mapMarker = new AMap.Marker({ position: [lng, lat] })
+              this.mapInstance.add(this.mapMarker)
+            } else {
+              this.mapMarker.setPosition([lng, lat])
+            }
+            if (this.mapGeocoder) {
+              this.mapGeocoder.getAddress([lng, lat], (status, result) => {
+                if (status === 'complete' && result && result.regeocode) {
+                  this.mapSelectedAddress = result.regeocode.formattedAddress || ''
+                  this.mapKeyword = this.mapSelectedAddress || this.mapKeyword
+                }
+              })
+            }
+          })
+        }
+        this.mapInstance.setZoomAndCenter(12, [defaultLng, defaultLat])
+        if (this.mapSelectedLat && this.mapSelectedLng) {
+          if (!this.mapMarker) {
+            this.mapMarker = new AMap.Marker({ position: [this.mapSelectedLng, this.mapSelectedLat] })
+            this.mapInstance.add(this.mapMarker)
+          } else {
+            this.mapMarker.setPosition([this.mapSelectedLng, this.mapSelectedLat])
+          }
+        }
+        this.$nextTick(() => {
+          this.mapInstance && this.mapInstance.resize()
+        })
+      }).catch(() => {
+        this.$modal.msgError('地图加载失败，请检查高德地图 Key 配置')
+      }).finally(() => {
+        this.mapLoading = false
+      })
+    },
+    searchMap() {
+      const keyword = (this.mapKeyword || '').trim()
+      if (!keyword) {
+        this.$modal.msgWarning('请输入搜索关键词')
+        return
+      }
+      if (!this.mapInstance) {
+        this.$modal.msgWarning('地图未初始化')
+        return
+      }
+      if (!this.mapPlaceSearch && window.AMap) {
+        this.mapPlaceSearch = new AMap.PlaceSearch({ pageSize: 5, map: this.mapInstance })
+      }
+      if (!this.mapGeocoder && window.AMap) {
+        this.mapGeocoder = new AMap.Geocoder({ city: '' })
+      }
+      if (!this.mapPlaceSearch) {
+        this.$modal.msgWarning('地图搜索未初始化')
+        return
+      }
+      this.mapPlaceSearch.search(keyword, (status, result) => {
+        if (status === 'complete' && result && result.poiList && result.poiList.pois && result.poiList.pois.length) {
+          const poi = result.poiList.pois[0]
+          const lng = Number(poi.location.lng.toFixed(6))
+          const lat = Number(poi.location.lat.toFixed(6))
+          this.mapSelectedLng = lng
+          this.mapSelectedLat = lat
+          if (!this.mapMarker) {
+            this.mapMarker = new AMap.Marker({ position: [lng, lat] })
+            this.mapInstance.add(this.mapMarker)
+          } else {
+            this.mapMarker.setPosition([lng, lat])
+          }
+          this.mapInstance.setZoomAndCenter(15, [lng, lat])
+          this.mapSelectedAddress = `${poi.address || ''}${poi.name || ''}`
+          if (this.mapSelectedAddress) {
+            this.mapKeyword = this.mapSelectedAddress
+          }
+          return
+        }
+        if (this.mapGeocoder) {
+          this.mapGeocoder.getLocation(keyword, (geoStatus, geoResult) => {
+            if (geoStatus === 'complete' && geoResult && geoResult.geocodes && geoResult.geocodes.length) {
+              const location = geoResult.geocodes[0].location
+              const lng = Number(location.lng.toFixed(6))
+              const lat = Number(location.lat.toFixed(6))
+              this.mapSelectedLng = lng
+              this.mapSelectedLat = lat
+              if (!this.mapMarker) {
+                this.mapMarker = new AMap.Marker({ position: [lng, lat] })
+                this.mapInstance.add(this.mapMarker)
+              } else {
+                this.mapMarker.setPosition([lng, lat])
+              }
+              this.mapInstance.setZoomAndCenter(15, [lng, lat])
+              this.mapSelectedAddress = geoResult.geocodes[0].formattedAddress || keyword
+              this.mapKeyword = this.mapSelectedAddress
+            } else {
+              this.$modal.msgWarning('未找到匹配位置')
+            }
+          })
+          return
+        }
+        this.$modal.msgWarning('未找到匹配位置')
+      })
+    },
+    confirmMapPicker() {
+      if (!this.mapSelectedLat || !this.mapSelectedLng) {
+        this.$modal.msgWarning('请在地图上选择位置')
+        return
+      }
+      this.form.siteLongitude = String(this.mapSelectedLng)
+      this.form.siteLatitude = String(this.mapSelectedLat)
+      if (this.mapSelectedAddress) {
+        this.form.siteAddress = this.mapSelectedAddress
+      }
+      this.mapDialogVisible = false
     },
     submitForm() {
       this.$refs["form"].validate(valid => {

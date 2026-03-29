@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AddressItem } from '../types';
 import {
   createAddress,
@@ -23,6 +23,8 @@ const EMPTY_FORM: Omit<AddressItem, 'id'> = {
   regionCode: '',
   regionName: '',
   detailAddress: '',
+  longitude: '',
+  latitude: '',
   isDefault: false,
 };
 
@@ -34,6 +36,16 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [showRegionPicker, setShowRegionPicker] = useState(false);
   const [error, setError] = useState('');
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [mapLoading, setMapLoading] = useState(false);
+  const [mapKeyword, setMapKeyword] = useState('');
+  const [mapSelectedLng, setMapSelectedLng] = useState<number | null>(null);
+  const [mapSelectedLat, setMapSelectedLat] = useState<number | null>(null);
+  const [mapSelectedAddress, setMapSelectedAddress] = useState('');
+  const mapRef = useRef<any>(null);
+  const mapMarkerRef = useRef<any>(null);
+  const mapGeocoderRef = useRef<any>(null);
+  const mapPlaceSearchRef = useRef<any>(null);
 
   const hasSingleAddress = addresses.length === 1;
 
@@ -60,6 +72,123 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
     loadAddresses();
   }, [loadAddresses]);
 
+  const ensureAmap = useCallback(() => {
+    if ((window as any).AMap) {
+      return Promise.resolve((window as any).AMap);
+    }
+    if ((window as any)._amapLoading) {
+      return (window as any)._amapLoading;
+    }
+    const amapKey = (window as any).AMAP_KEY || '';
+    if (!amapKey) {
+      setError('未配置高德地图 Key');
+      return Promise.reject(new Error('Missing AMap key'));
+    }
+    (window as any)._amapLoading = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = `https://webapi.amap.com/maps?v=2.0&key=${amapKey}&plugin=AMap.Geocoder,AMap.PlaceSearch,AMap.ToolBar`;
+      script.onload = () => resolve((window as any).AMap);
+      script.onerror = () => reject(new Error('AMap load failed'));
+      document.body.appendChild(script);
+    });
+    return (window as any)._amapLoading;
+  }, []);
+
+  const initMap = useCallback(async () => {
+    const container = document.getElementById('address-map-picker');
+    if (!container) return;
+    setMapLoading(true);
+    try {
+      const AMap = await ensureAmap();
+      const centerLng = mapSelectedLng ?? 121.4737;
+      const centerLat = mapSelectedLat ?? 31.2304;
+      if (!mapRef.current) {
+        mapRef.current = new AMap.Map(container, {
+          zoom: 12,
+          center: [centerLng, centerLat],
+        });
+        mapRef.current.addControl(new AMap.ToolBar());
+        mapGeocoderRef.current = new AMap.Geocoder({ city: '' });
+        mapPlaceSearchRef.current = new AMap.PlaceSearch({ pageSize: 5, map: mapRef.current });
+        mapRef.current.on('click', (event: any) => {
+          const lng = Number(event.lnglat.lng.toFixed(6));
+          const lat = Number(event.lnglat.lat.toFixed(6));
+          setMapSelectedLng(lng);
+          setMapSelectedLat(lat);
+          if (!mapMarkerRef.current) {
+            mapMarkerRef.current = new AMap.Marker({ position: [lng, lat] });
+            mapRef.current.add(mapMarkerRef.current);
+          } else {
+            mapMarkerRef.current.setPosition([lng, lat]);
+          }
+          if (mapGeocoderRef.current) {
+            mapGeocoderRef.current.getAddress([lng, lat], (status: string, result: any) => {
+              if (status === 'complete' && result?.regeocode?.formattedAddress) {
+                setMapSelectedAddress(result.regeocode.formattedAddress);
+                setMapKeyword(result.regeocode.formattedAddress);
+              }
+            });
+          }
+        });
+      }
+      mapRef.current.setZoomAndCenter(12, [centerLng, centerLat]);
+      if (mapSelectedLng && mapSelectedLat) {
+        if (!mapMarkerRef.current) {
+          mapMarkerRef.current = new AMap.Marker({ position: [mapSelectedLng, mapSelectedLat] });
+          mapRef.current.add(mapMarkerRef.current);
+        } else {
+          mapMarkerRef.current.setPosition([mapSelectedLng, mapSelectedLat]);
+        }
+      }
+      mapRef.current.resize();
+    } catch (err) {
+      setError('地图加载失败');
+    } finally {
+      setMapLoading(false);
+    }
+  }, [ensureAmap, mapSelectedLat, mapSelectedLng]);
+
+  const searchMap = useCallback(() => {
+    const keyword = mapKeyword.trim();
+    if (!keyword) return;
+    if (!mapPlaceSearchRef.current || !mapRef.current) return;
+    mapPlaceSearchRef.current.search(keyword, (status: string, result: any) => {
+      if (status === 'complete' && result?.poiList?.pois?.length) {
+        const poi = result.poiList.pois[0];
+        const lng = Number(poi.location.lng.toFixed(6));
+        const lat = Number(poi.location.lat.toFixed(6));
+        setMapSelectedLng(lng);
+        setMapSelectedLat(lat);
+        setMapSelectedAddress(`${poi.address || ''}${poi.name || ''}`);
+        if (!mapMarkerRef.current) {
+          mapMarkerRef.current = new (window as any).AMap.Marker({ position: [lng, lat] });
+          mapRef.current.add(mapMarkerRef.current);
+        } else {
+          mapMarkerRef.current.setPosition([lng, lat]);
+        }
+        mapRef.current.setZoomAndCenter(15, [lng, lat]);
+      }
+    });
+  }, [mapKeyword]);
+
+  const geocodeAddress = useCallback(async (address: string) => {
+    if (!address) return null;
+    const AMap = await ensureAmap();
+    if (!mapGeocoderRef.current) {
+      mapGeocoderRef.current = new AMap.Geocoder({ city: '' });
+    }
+    return new Promise<[number, number] | null>((resolve) => {
+      mapGeocoderRef.current.getLocation(address, (status: string, result: any) => {
+        if (status === 'complete' && result?.geocodes?.length) {
+          const location = result.geocodes[0].location;
+          resolve([location.lng, location.lat]);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }, [ensureAmap]);
+
   const openCreateForm = () => {
     setEditingAddress(null);
     setFormData(EMPTY_FORM);
@@ -75,10 +204,40 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
       regionCode: item.regionCode,
       regionName: item.regionName,
       detailAddress: item.detailAddress,
+      longitude: item.longitude || '',
+      latitude: item.latitude || '',
       isDefault: item.isDefault,
     });
     setError('');
     setShowForm(true);
+  };
+
+  useEffect(() => {
+    if (showMapPicker) {
+      initMap();
+    }
+  }, [showMapPicker, initMap]);
+
+  const openMapPicker = () => {
+    setMapSelectedLng(formData.longitude ? Number(formData.longitude) : null);
+    setMapSelectedLat(formData.latitude ? Number(formData.latitude) : null);
+    setMapKeyword(formData.detailAddress || '');
+    setMapSelectedAddress('');
+    setShowMapPicker(true);
+  };
+
+  const confirmMapPicker = () => {
+    if (!mapSelectedLng || !mapSelectedLat) {
+      setError('请在地图上选择位置');
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      longitude: String(mapSelectedLng),
+      latitude: String(mapSelectedLat),
+      detailAddress: mapSelectedAddress || prev.detailAddress,
+    }));
+    setShowMapPicker(false);
   };
 
   const validateForm = () => {
@@ -98,12 +257,31 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
     }
 
     setError('');
+    let longitude = formData.longitude?.trim();
+    let latitude = formData.latitude?.trim();
+    if (!longitude || !latitude) {
+      const addressText = `${formData.regionName || ''}${formData.detailAddress || ''}`.trim();
+      if (addressText) {
+        const location = await geocodeAddress(addressText);
+        if (location) {
+          longitude = String(location[0]);
+          latitude = String(location[1]);
+        }
+      }
+    }
+    if (!longitude || !latitude) {
+      setError('无法解析地址经纬度，请在地图上选点');
+      return;
+    }
+
     const payload = {
       contactName: formData.contactName.trim(),
       contactPhone: formData.contactPhone.trim(),
       regionCode: formData.regionCode,
       regionName: formData.regionName,
       detailAddress: formData.detailAddress.trim(),
+      longitude,
+      latitude,
       isDefault: formData.isDefault,
     };
 
@@ -302,6 +480,20 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
               </div>
 
               <div>
+                <div className="text-[11px] text-slate-500 mb-1">地图选点</div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={openMapPicker}
+                    className="px-3 py-2 text-[11px] bg-slate-100 rounded-custom text-slate-600"
+                  >
+                    地图选点
+                  </button>
+                  <span className="text-[10px] text-slate-400">未选点将自动解析经纬度</span>
+                </div>
+              </div>
+
+              <div>
                 <div className="text-[11px] text-slate-500 mb-1">详细地址</div>
                 <textarea
                   value={formData.detailAddress}
@@ -330,6 +522,61 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
                 className="w-full py-3 bg-industry-red text-white rounded-custom text-sm font-bold"
               >
                 保存地址
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMapPicker && (
+        <div className="fixed inset-0 bg-black/40 z-[110] flex items-end">
+          <div className="bg-white w-full rounded-t-xl p-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-bold">地图选点</h3>
+              <button onClick={() => setShowMapPicker(false)} className="text-slate-400">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex gap-2 mb-3">
+              <input
+                value={mapKeyword}
+                onChange={e => setMapKeyword(e.target.value)}
+                placeholder="搜索位置"
+                className="flex-1 bg-slate-50 rounded-custom px-3 py-2 text-sm border border-slate-100 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={searchMap}
+                className="px-3 py-2 text-[11px] bg-industry-red text-white rounded-custom"
+              >
+                搜索
+              </button>
+            </div>
+
+            <div className="relative h-[320px] rounded-custom overflow-hidden border border-slate-100">
+              {mapLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10">
+                  <div className="w-6 h-6 border-2 border-industry-red border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              <div id="address-map-picker" className="h-full" />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setShowMapPicker(false)}
+                className="px-4 py-2 text-sm rounded-custom border border-slate-200 text-slate-500"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmMapPicker}
+                className="px-4 py-2 text-sm rounded-custom bg-industry-red text-white"
+              >
+                确定
               </button>
             </div>
           </div>

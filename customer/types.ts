@@ -142,6 +142,8 @@ export interface AddressItem {
   regionCode: string;
   regionName: string;
   detailAddress: string;
+  longitude?: string;
+  latitude?: string;
   isDefault: boolean;
   updatedAt?: string;
 }

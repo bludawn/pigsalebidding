@@ -7,6 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
     <title><%= webpackConfig.name %></title>
+    <script>
+      window.AMAP_KEY = '9c60f30788aebb5240478625017650da'
+      window.AMAP_SECURITY_JS_CODE = 'c5abf237ca23a48500de16edfd4c1649'
+      window._AMapSecurityConfig = {
+        securityJsCode: window.AMAP_SECURITY_JS_CODE
+      }
+    </script>
     <!--[if lt IE 11]><script>window.location.href='/html/ie.html';</script><![endif]-->
 	  <style>
     html,

@@ -108,6 +108,8 @@ public class CustomerModels
         public String regionCode;
         public String regionName;
         public String detailAddress;
+        public String longitude;
+        public String latitude;
         public Boolean isDefault;
     }
 
@@ -405,6 +407,8 @@ public class CustomerModels
         public String regionCode;
         public String regionName;
         public String detailAddress;
+        public String longitude;
+        public String latitude;
         public Boolean isDefault;
         public String updatedAt;
     }
