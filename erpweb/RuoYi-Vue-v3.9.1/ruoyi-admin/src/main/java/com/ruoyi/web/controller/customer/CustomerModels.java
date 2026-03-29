@@ -338,6 +338,8 @@ public class CustomerModels
         public String contactPhone;
         public String address;
         public String deliveryTime;
+        public String longitude;
+        public String latitude;
     }
 
     public static class OrderShipmentInfo
@@ -368,6 +370,8 @@ public class CustomerModels
         public String status;
         public String farmName;
         public String farmAddress;
+        public String farmLongitude;
+        public String farmLatitude;
         public String pigTypeName;
         public String weightRange;
         public Integer quantity;

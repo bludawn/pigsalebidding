@@ -79,10 +79,14 @@ export interface OrderDeliveryInfo {
   contactPhone: string;
   address: string;
   deliveryTime?: string;
+  longitude?: string;
+  latitude?: string;
 }
 
 /** 物流信息 */
 export interface OrderShipmentInfo {
+  currentLongitude?: string;
+  currentLatitude?: string;
   driverName?: string;
   driverPhone?: string;
   vehicleNo?: string;
@@ -103,6 +107,8 @@ export interface OrderDetailInfo {
   status: OrderStatus;
   farmName: string;
   farmAddress?: string;
+  farmLongitude?: string;
+  farmLatitude?: string;
   pigTypeName: string;
   weightRange: string;
   quantity: number;

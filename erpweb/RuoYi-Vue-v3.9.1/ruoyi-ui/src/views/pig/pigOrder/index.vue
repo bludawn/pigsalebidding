@@ -326,6 +326,10 @@
     </el-dialog>
 
     <el-dialog title="地图选点" :visible.sync="orderMapDialogVisible" width="700px" append-to-body>
+      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <el-input v-model="orderMapKeyword" placeholder="搜索位置" size="mini" clearable @keyup.enter.native="searchOrderMap" />
+        <el-button size="mini" type="primary" @click="searchOrderMap">搜索</el-button>
+      </div>
       <div v-loading="orderMapLoading" style="height: 360px;">
         <div :id="orderMapContainerId" style="height: 360px;"></div>
       </div>
@@ -425,6 +429,9 @@ export default {
       orderMapLoading: false,
       orderMapSelectedLat: undefined,
       orderMapSelectedLng: undefined,
+      orderMapKeyword: '',
+      orderMapPlaceSearch: null,
+      orderMapGeocoder: null,
       form: {}
     }
   },
@@ -790,62 +797,139 @@ export default {
         this.initOrderMap()
       })
     },
-    ensureLeaflet() {
-      if (window.L) {
-        return Promise.resolve()
+    ensureAmap() {
+      if (window.AMap) {
+        return Promise.resolve(window.AMap)
       }
-      if (window._leafletLoading) {
-        return window._leafletLoading
+      if (window._amapLoading) {
+        return window._amapLoading
       }
-      window._leafletLoading = new Promise((resolve, reject) => {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-        document.head.appendChild(link)
+      const amapKey = window.AMAP_KEY || ''
+      if (!amapKey) {
+        return Promise.reject(new Error('Missing AMap key'))
+      }
+      window._amapLoading = new Promise((resolve, reject) => {
         const script = document.createElement('script')
-        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-        script.onload = () => resolve()
-        script.onerror = () => reject(new Error('Leaflet 加载失败'))
+        script.src = `https://webapi.amap.com/maps?v=2.0&key=${amapKey}&plugin=AMap.Geocoder,AMap.PlaceSearch,AMap.ToolBar`
+        script.onload = () => resolve(window.AMap)
+        script.onerror = () => reject(new Error('AMap load failed'))
         document.body.appendChild(script)
       })
-      return window._leafletLoading
+      return window._amapLoading
     },
     initOrderMap() {
       this.orderMapLoading = true
       const defaultLat = this.orderMapSelectedLat || 31.2304
       const defaultLng = this.orderMapSelectedLng || 121.4737
-      this.ensureLeaflet().then(() => {
+      this.ensureAmap().then(AMap => {
         if (!this.orderMapInstance) {
-          this.orderMapInstance = window.L.map(this.orderMapContainerId).setView([defaultLat, defaultLng], 12)
-          window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-          }).addTo(this.orderMapInstance)
+          this.orderMapInstance = new AMap.Map(this.orderMapContainerId, {
+            zoom: 12,
+            center: [defaultLng, defaultLat]
+          })
+          this.orderMapInstance.addControl(new AMap.ToolBar())
+          this.orderMapGeocoder = new AMap.Geocoder({ city: '' })
+          this.orderMapPlaceSearch = new AMap.PlaceSearch({ pageSize: 5, map: this.orderMapInstance })
           this.orderMapInstance.on('click', event => {
-            this.orderMapSelectedLat = Number(event.latlng.lat.toFixed(6))
-            this.orderMapSelectedLng = Number(event.latlng.lng.toFixed(6))
+            const lng = Number(event.lnglat.lng.toFixed(6))
+            const lat = Number(event.lnglat.lat.toFixed(6))
+            this.orderMapSelectedLng = lng
+            this.orderMapSelectedLat = lat
             if (!this.orderMapMarker) {
-              this.orderMapMarker = window.L.marker([this.orderMapSelectedLat, this.orderMapSelectedLng]).addTo(this.orderMapInstance)
+              this.orderMapMarker = new AMap.Marker({ position: [lng, lat] })
+              this.orderMapInstance.add(this.orderMapMarker)
             } else {
-              this.orderMapMarker.setLatLng([this.orderMapSelectedLat, this.orderMapSelectedLng])
+              this.orderMapMarker.setPosition([lng, lat])
+            }
+            if (this.orderMapGeocoder) {
+              this.orderMapGeocoder.getAddress([lng, lat], (status, result) => {
+                if (status === 'complete' && result && result.regeocode) {
+                  this.orderMapKeyword = result.regeocode.formattedAddress || this.orderMapKeyword
+                }
+              })
             }
           })
         }
-        this.orderMapInstance.setView([defaultLat, defaultLng], 12)
+        this.orderMapInstance.setZoomAndCenter(12, [defaultLng, defaultLat])
         if (this.orderMapSelectedLat && this.orderMapSelectedLng) {
           if (!this.orderMapMarker) {
-            this.orderMapMarker = window.L.marker([this.orderMapSelectedLat, this.orderMapSelectedLng]).addTo(this.orderMapInstance)
+            this.orderMapMarker = new AMap.Marker({ position: [this.orderMapSelectedLng, this.orderMapSelectedLat] })
+            this.orderMapInstance.add(this.orderMapMarker)
           } else {
-            this.orderMapMarker.setLatLng([this.orderMapSelectedLat, this.orderMapSelectedLng])
+            this.orderMapMarker.setPosition([this.orderMapSelectedLng, this.orderMapSelectedLat])
           }
         }
         this.$nextTick(() => {
-          this.orderMapInstance.invalidateSize()
+          this.orderMapInstance && this.orderMapInstance.resize()
         })
       }).catch(() => {
-        this.$modal.msgError('地图加载失败，请稍后重试')
+        this.$modal.msgError('地图加载失败，请检查高德地图 Key 配置')
       }).finally(() => {
         this.orderMapLoading = false
+      })
+    },
+    searchOrderMap() {
+      const keyword = (this.orderMapKeyword || '').trim()
+      if (!keyword) {
+        this.$modal.msgWarning('请输入搜索关键词')
+        return
+      }
+      if (!this.orderMapInstance) {
+        this.$modal.msgWarning('地图未初始化')
+        return
+      }
+      if (!this.orderMapPlaceSearch && window.AMap) {
+        this.orderMapPlaceSearch = new AMap.PlaceSearch({ pageSize: 5, map: this.orderMapInstance })
+      }
+      if (!this.orderMapGeocoder && window.AMap) {
+        this.orderMapGeocoder = new AMap.Geocoder({ city: '' })
+      }
+      if (!this.orderMapPlaceSearch) {
+        this.$modal.msgWarning('地图搜索未初始化')
+        return
+      }
+      this.orderMapPlaceSearch.search(keyword, (status, result) => {
+        if (status === 'complete' && result && result.poiList && result.poiList.pois && result.poiList.pois.length) {
+          const poi = result.poiList.pois[0]
+          const lng = Number(poi.location.lng.toFixed(6))
+          const lat = Number(poi.location.lat.toFixed(6))
+          this.orderMapSelectedLng = lng
+          this.orderMapSelectedLat = lat
+          if (!this.orderMapMarker) {
+            this.orderMapMarker = new AMap.Marker({ position: [lng, lat] })
+            this.orderMapInstance.add(this.orderMapMarker)
+          } else {
+            this.orderMapMarker.setPosition([lng, lat])
+          }
+          this.orderMapInstance.setZoomAndCenter(15, [lng, lat])
+          if (poi.address || poi.name) {
+            this.orderMapKeyword = `${poi.address || ''}${poi.name || ''}`
+          }
+          return
+        }
+        if (this.orderMapGeocoder) {
+          this.orderMapGeocoder.getLocation(keyword, (geoStatus, geoResult) => {
+            if (geoStatus === 'complete' && geoResult && geoResult.geocodes && geoResult.geocodes.length) {
+              const location = geoResult.geocodes[0].location
+              const lng = Number(location.lng.toFixed(6))
+              const lat = Number(location.lat.toFixed(6))
+              this.orderMapSelectedLng = lng
+              this.orderMapSelectedLat = lat
+              if (!this.orderMapMarker) {
+                this.orderMapMarker = new AMap.Marker({ position: [lng, lat] })
+                this.orderMapInstance.add(this.orderMapMarker)
+              } else {
+                this.orderMapMarker.setPosition([lng, lat])
+              }
+              this.orderMapInstance.setZoomAndCenter(15, [lng, lat])
+              this.orderMapKeyword = geoResult.geocodes[0].formattedAddress || keyword
+            } else {
+              this.$modal.msgWarning('未找到匹配位置')
+            }
+          })
+          return
+        }
+        this.$modal.msgWarning('未找到匹配位置')
       })
     },
     confirmOrderMapPicker() {

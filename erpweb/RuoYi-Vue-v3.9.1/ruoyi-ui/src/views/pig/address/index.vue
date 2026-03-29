@@ -58,6 +58,8 @@
           <span>{{ formatAddressFull(scope.row.addressCode, scope.row.detailAddress) }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="经度" align="center" prop="longitude" v-if="columns.longitude.visible" />
+      <el-table-column label="纬度" align="center" prop="latitude" v-if="columns.latitude.visible" />
       <el-table-column label="默认地址" align="center" prop="isDefault" v-if="columns.isDefault.visible">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.isDefault" />
@@ -107,6 +109,13 @@
         <el-form-item label="详细地址" prop="detailAddress">
           <el-input v-model="form.detailAddress" placeholder="请输入详细地址" :disabled="viewModeOnly" />
         </el-form-item>
+        <el-form-item label="经纬度" prop="longitude">
+          <div style="display: flex; gap: 8px;">
+            <el-input v-model="form.longitude" placeholder="经度" style="width: 45%;" :disabled="viewModeOnly" />
+            <el-input v-model="form.latitude" placeholder="纬度" style="width: 45%;" :disabled="viewModeOnly" />
+            <el-button size="mini" @click="openMapPicker" v-if="!viewModeOnly">地图选点</el-button>
+          </div>
+        </el-form-item>
         <el-form-item label="是否默认" prop="isDefault">
           <el-select v-model="form.isDefault" placeholder="请选择是否默认" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.sys_yes_no" :key="dict.value" :label="dict.label" :value="dict.value" />
@@ -119,6 +128,20 @@
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm" v-if="!viewModeOnly">确 定</el-button>
         <el-button @click="cancel">关 闭</el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog title="地图选点" :visible.sync="mapDialogVisible" width="700px" append-to-body>
+      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <el-input v-model="mapKeyword" placeholder="搜索位置" size="mini" clearable @keyup.enter.native="searchMap" />
+        <el-button size="mini" type="primary" @click="searchMap">搜索</el-button>
+      </div>
+      <div v-loading="mapLoading" style="height: 360px;">
+        <div :id="mapContainerId" style="height: 360px;"></div>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="mapDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmMapPicker">确 定</el-button>
       </div>
     </el-dialog>
   </div>
@@ -157,6 +180,8 @@ export default {
         addressCode: { label: '地区', visible: true },
         detailAddress: { label: '详细地址', visible: true },
         fullAddress: { label: '完整地址', visible: true },
+        longitude: { label: '经度', visible: true },
+        latitude: { label: '纬度', visible: true },
         isDefault: { label: '是否默认', visible: true },
         createTime: { label: '创建时间', visible: true }
       },
@@ -165,12 +190,24 @@ export default {
       viewModeOnly: false,
       pcasOptions: [],
       pcasCodeMap: {},
+      pcasLabelPathList: [],
       pcasProps: {
         value: 'value',
         label: 'label',
         children: 'children'
       },
-      form: {}
+      form: {},
+      mapDialogVisible: false,
+      mapContainerId: 'address-map-picker',
+      mapInstance: null,
+      mapMarker: null,
+      mapLoading: false,
+      mapSelectedLat: undefined,
+      mapSelectedLng: undefined,
+      mapSelectedAddress: '',
+      mapKeyword: '',
+      mapPlaceSearch: null,
+      mapGeocoder: null
     }
   },
   created() {
@@ -184,7 +221,9 @@ export default {
         .sort((a, b) => Number(a) - Number(b))
         .map(key => pcasData[key])
       this.pcasCodeMap = {}
+      this.pcasLabelPathList = []
       this.pcasOptions = this.normalizePcasTree(rawList, [], [])
+      this.pcasLabelPathList.sort((a, b) => b.labelText.length - a.labelText.length)
     },
     loadUserOptions() {
       listUser({ pageNum: 1, pageSize: 1000 }).then(response => {
@@ -215,10 +254,17 @@ export default {
       return list.map(item => {
         const currentCodes = [...parentCodes, item.code]
         const currentLabels = [...parentLabels, item.name]
+        const labelText = currentLabels.join('')
         this.pcasCodeMap[item.code] = {
           codes: currentCodes,
           labels: currentLabels
         }
+        this.pcasLabelPathList.push({
+          code: item.code,
+          codes: currentCodes,
+          labels: currentLabels,
+          labelText
+        })
         const children = item.children ? this.normalizePcasTree(item.children, currentCodes, currentLabels) : undefined
         return {
           value: item.code,
@@ -233,6 +279,28 @@ export default {
     formatAddressCode(code) {
       if (!code) return ""
       return this.pcasCodeMap[code] ? this.pcasCodeMap[code].labels.join("/") : code
+    },
+    escapeRegExp(text) {
+      return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    },
+    matchAddressToPcas(address) {
+      if (!address) return null
+      const normalized = address.replace(/\s+/g, '')
+      for (const item of this.pcasLabelPathList) {
+        if (normalized.startsWith(item.labelText)) {
+          let detail = address
+          const prefixPattern = item.labels.map(label => this.escapeRegExp(label)).join('\\s*')
+          const prefixRegex = new RegExp(`^\\s*${prefixPattern}\\s*`)
+          detail = detail.replace(prefixRegex, '').replace(/^[,，\s]+/, '').trim()
+          return {
+            code: item.code,
+            codes: item.codes,
+            labels: item.labels,
+            detail: detail || address
+          }
+        }
+      }
+      return null
     },
     getList() {
       this.loading = true
@@ -256,6 +324,8 @@ export default {
         addressCode: undefined,
         addressCodeList: [],
         detailAddress: undefined,
+        longitude: undefined,
+        latitude: undefined,
         isDefault: undefined,
         remark: undefined
       }
@@ -279,6 +349,173 @@ export default {
       this.open = true
       this.title = "添加地址管理"
       this.viewModeOnly = false
+    },
+    ensureAmap() {
+      if (window.AMap) {
+        return Promise.resolve(window.AMap)
+      }
+      if (window._amapLoading) {
+        return window._amapLoading
+      }
+      const amapKey = window.AMAP_KEY || ''
+      if (!amapKey) {
+        return Promise.reject(new Error('Missing AMap key'))
+      }
+      window._amapLoading = new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = `https://webapi.amap.com/maps?v=2.0&key=${amapKey}&plugin=AMap.Geocoder,AMap.PlaceSearch,AMap.ToolBar`
+        script.onload = () => resolve(window.AMap)
+        script.onerror = () => reject(new Error('AMap load failed'))
+        document.body.appendChild(script)
+      })
+      return window._amapLoading
+    },
+    initMap() {
+      this.mapLoading = true
+      const defaultLat = this.mapSelectedLat || 31.2304
+      const defaultLng = this.mapSelectedLng || 121.4737
+      this.ensureAmap().then(AMap => {
+        if (!this.mapInstance) {
+          this.mapInstance = new AMap.Map(this.mapContainerId, {
+            zoom: 12,
+            center: [defaultLng, defaultLat]
+          })
+          this.mapInstance.addControl(new AMap.ToolBar())
+          this.mapGeocoder = new AMap.Geocoder({ city: '' })
+          this.mapPlaceSearch = new AMap.PlaceSearch({ pageSize: 5, map: this.mapInstance })
+          this.mapInstance.on('click', event => {
+            const lng = Number(event.lnglat.lng.toFixed(6))
+            const lat = Number(event.lnglat.lat.toFixed(6))
+            this.mapSelectedLng = lng
+            this.mapSelectedLat = lat
+            if (!this.mapMarker) {
+              this.mapMarker = new AMap.Marker({ position: [lng, lat] })
+              this.mapInstance.add(this.mapMarker)
+            } else {
+              this.mapMarker.setPosition([lng, lat])
+            }
+            if (this.mapGeocoder) {
+              this.mapGeocoder.getAddress([lng, lat], (status, result) => {
+                if (status === 'complete' && result && result.regeocode) {
+                  this.mapSelectedAddress = result.regeocode.formattedAddress || ''
+                  this.mapKeyword = this.mapSelectedAddress || this.mapKeyword
+                }
+              })
+            }
+          })
+        }
+        this.mapInstance.setZoomAndCenter(12, [defaultLng, defaultLat])
+        if (this.mapSelectedLat && this.mapSelectedLng) {
+          if (!this.mapMarker) {
+            this.mapMarker = new AMap.Marker({ position: [this.mapSelectedLng, this.mapSelectedLat] })
+            this.mapInstance.add(this.mapMarker)
+          } else {
+            this.mapMarker.setPosition([this.mapSelectedLng, this.mapSelectedLat])
+          }
+        }
+        this.$nextTick(() => {
+          this.mapInstance && this.mapInstance.resize()
+        })
+      }).catch(() => {
+        this.$modal.msgError('地图加载失败，请检查高德地图 Key 配置')
+      }).finally(() => {
+        this.mapLoading = false
+      })
+    },
+    openMapPicker() {
+      this.mapSelectedLng = this.form.longitude ? Number(this.form.longitude) : undefined
+      this.mapSelectedLat = this.form.latitude ? Number(this.form.latitude) : undefined
+      this.mapKeyword = this.form.detailAddress || ''
+      this.mapSelectedAddress = ''
+      this.mapDialogVisible = true
+      this.$nextTick(() => {
+        this.initMap()
+      })
+    },
+    searchMap() {
+      const keyword = (this.mapKeyword || '').trim()
+      if (!keyword) {
+        this.$modal.msgWarning('请输入搜索关键词')
+        return
+      }
+      if (!this.mapInstance) {
+        this.$modal.msgWarning('地图未初始化')
+        return
+      }
+      if (!this.mapPlaceSearch || !window.AMap) {
+        this.mapPlaceSearch = new AMap.PlaceSearch({ pageSize: 5, map: this.mapInstance })
+      }
+      if (!this.mapGeocoder || !window.AMap) {
+        this.mapGeocoder = new AMap.Geocoder({ city: '' })
+      }
+      if (!this.mapPlaceSearch) {
+        this.$modal.msgWarning('地图搜索未初始化')
+        return
+      }
+      this.mapPlaceSearch.search(keyword, (status, result) => {
+        if (status === 'complete' && result && result.poiList && result.poiList.pois && result.poiList.pois.length) {
+          const poi = result.poiList.pois[0]
+          const lng = Number(poi.location.lng.toFixed(6))
+          const lat = Number(poi.location.lat.toFixed(6))
+          this.mapSelectedLng = lng
+          this.mapSelectedLat = lat
+          if (!this.mapMarker) {
+            this.mapMarker = new AMap.Marker({ position: [lng, lat] })
+            this.mapInstance.add(this.mapMarker)
+          } else {
+            this.mapMarker.setPosition([lng, lat])
+          }
+          this.mapInstance.setZoomAndCenter(15, [lng, lat])
+          this.mapSelectedAddress = `${poi.address || ''}${poi.name || ''}`
+          if (this.mapSelectedAddress) {
+            this.mapKeyword = this.mapSelectedAddress
+          }
+          return
+        }
+        if (this.mapGeocoder) {
+          this.mapGeocoder.getLocation(keyword, (geoStatus, geoResult) => {
+            if (geoStatus === 'complete' && geoResult && geoResult.geocodes && geoResult.geocodes.length) {
+              const location = geoResult.geocodes[0].location
+              const lng = Number(location.lng.toFixed(6))
+              const lat = Number(location.lat.toFixed(6))
+              this.mapSelectedLng = lng
+              this.mapSelectedLat = lat
+              if (!this.mapMarker) {
+                this.mapMarker = new AMap.Marker({ position: [lng, lat] })
+                this.mapInstance.add(this.mapMarker)
+              } else {
+                this.mapMarker.setPosition([lng, lat])
+              }
+              this.mapInstance.setZoomAndCenter(15, [lng, lat])
+              this.mapSelectedAddress = geoResult.geocodes[0].formattedAddress || keyword
+              this.mapKeyword = this.mapSelectedAddress
+            } else {
+              this.$modal.msgWarning('未找到匹配位置')
+            }
+          })
+          return
+        }
+        this.$modal.msgWarning('未找到匹配位置')
+      })
+    },
+    confirmMapPicker() {
+      if (!this.mapSelectedLat || !this.mapSelectedLng) {
+        this.$modal.msgWarning('请在地图上选择位置')
+        return
+      }
+      this.form.longitude = String(this.mapSelectedLng)
+      this.form.latitude = String(this.mapSelectedLat)
+      if (this.mapSelectedAddress) {
+        const match = this.matchAddressToPcas(this.mapSelectedAddress)
+        if (match) {
+          this.form.addressCodeList = match.codes
+          this.form.addressCode = match.code
+          this.form.detailAddress = match.detail
+        } else {
+          this.form.detailAddress = this.mapSelectedAddress
+        }
+      }
+      this.mapDialogVisible = false
     },
     handleView(row) {
       this.reset()

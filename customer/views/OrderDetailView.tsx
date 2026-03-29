@@ -113,6 +113,15 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
     });
   }, []);
 
+  const resolveLngLat = useCallback((lng?: string, lat?: string) => {
+    const lngNum = Number(lng);
+    const latNum = Number(lat);
+    if (Number.isFinite(lngNum) && Number.isFinite(latNum)) {
+      return [lngNum, latNum] as [number, number];
+    }
+    return null;
+  }, []);
+
   const renderAmap = useCallback(async () => {
     if (!detail || deliveryInfos.length === 0) {
       return;
@@ -136,29 +145,37 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
 
       const shipFromAddress = detail.farmAddress || detail.farmName;
       const shipToAddress = detail.deliveryInfo?.address;
-      const [fromPoint, toPoint] = await Promise.all([
-        geocodeAddress(AMap, shipFromAddress),
-        geocodeAddress(AMap, shipToAddress),
-      ]);
+      const fallbackFromPoint = await geocodeAddress(AMap, shipFromAddress);
+      const fallbackToPoint = await geocodeAddress(AMap, shipToAddress);
+      const fromPoint = resolveLngLat(detail.farmLongitude, detail.farmLatitude) || fallbackFromPoint;
+      const toPoint =
+        resolveLngLat(detail.deliveryInfo?.longitude, detail.deliveryInfo?.latitude) || fallbackToPoint;
 
       const bounds: any[] = [];
       const colors = ['#EF4444', '#F59E0B', '#3B82F6', '#10B981'];
 
-      deliveryInfos.forEach((info, index) => {
-        const currentLng = Number(info.currentLongitude);
-        const currentLat = Number(info.currentLatitude);
-        const currentPoint =
-          Number.isFinite(currentLng) && Number.isFinite(currentLat) ? [currentLng, currentLat] : null;
+      if (fromPoint) {
+        const marker = new AMap.Marker({
+          position: fromPoint,
+          label: { content: '发货', direction: 'top' },
+        });
+        amapRef.current.add(marker);
+        amapOverlaysRef.current.push(marker);
+        bounds.push(fromPoint);
+      }
 
-        if (fromPoint) {
-          const marker = new AMap.Marker({
-            position: fromPoint,
-            label: { content: '发货', direction: 'top' },
-          });
-          amapRef.current.add(marker);
-          amapOverlaysRef.current.push(marker);
-          bounds.push(fromPoint);
-        }
+      if (toPoint) {
+        const marker = new AMap.Marker({
+          position: toPoint,
+          label: { content: '收货', direction: 'top' },
+        });
+        amapRef.current.add(marker);
+        amapOverlaysRef.current.push(marker);
+        bounds.push(toPoint);
+      }
+
+      deliveryInfos.forEach((info, index) => {
+        const currentPoint = resolveLngLat(info.currentLongitude, info.currentLatitude);
 
         if (currentPoint) {
           const marker = new AMap.Marker({
@@ -168,16 +185,6 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
           amapRef.current.add(marker);
           amapOverlaysRef.current.push(marker);
           bounds.push(currentPoint);
-        }
-
-        if (toPoint) {
-          const marker = new AMap.Marker({
-            position: toPoint,
-            label: { content: '收货', direction: 'top' },
-          });
-          amapRef.current.add(marker);
-          amapOverlaysRef.current.push(marker);
-          bounds.push(toPoint);
         }
 
         const path = [fromPoint, currentPoint, toPoint].filter(Boolean);
@@ -200,7 +207,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
     } catch (error) {
       setMapError('地图加载失败');
     }
-  }, [clearAmapOverlays, deliveryInfos, detail, ensureAmap, geocodeAddress]);
+  }, [clearAmapOverlays, deliveryInfos, detail, ensureAmap, geocodeAddress, resolveLngLat]);
 
   useEffect(() => {
     renderAmap();

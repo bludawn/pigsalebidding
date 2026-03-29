@@ -53,9 +53,42 @@ const buildRegionPathMap = (items: RegionItem[], parentPath: string[] = [], map 
 
 const REGION_PATH_MAP = buildRegionPathMap(REGION_TREE);
 
+const buildRegionLabelList = (items: RegionItem[], parentLabels: string[] = [], list: Array<{ code: string; labels: string[]; labelText: string }> = []) => {
+  items.forEach(item => {
+    const labels = [...parentLabels, item.name].filter(Boolean);
+    list.push({ code: item.code, labels, labelText: labels.join('') });
+    if (item.children?.length) {
+      buildRegionLabelList(item.children, labels, list);
+    }
+  });
+  return list;
+};
+
+const REGION_LABEL_LIST = buildRegionLabelList(REGION_TREE).sort((a, b) => b.labelText.length - a.labelText.length);
+
 const getRegionFullNameByCode = (code?: string) => {
   if (!code) return '';
   return REGION_PATH_MAP.get(code) || '';
+};
+
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const matchAddressToRegion = (address?: string) => {
+  if (!address) return null;
+  const normalized = address.replace(/\s+/g, '');
+  for (const item of REGION_LABEL_LIST) {
+    if (normalized.startsWith(item.labelText)) {
+      const prefixPattern = item.labels.map(label => escapeRegExp(label)).join('\\s*');
+      const prefixRegex = new RegExp(`^\\s*${prefixPattern}\\s*`);
+      const detail = address.replace(prefixRegex, '').replace(/^[,，\s]+/, '').trim();
+      return {
+        code: item.code,
+        labels: item.labels,
+        detail: detail || address,
+      };
+    }
+  }
+  return null;
 };
 
 const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, selectMode, onSelect }) => {
@@ -290,12 +323,17 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
       setError('请在地图上选择位置');
       return;
     }
-    setFormData(prev => ({
-      ...prev,
-      longitude: String(mapSelectedLng),
-      latitude: String(mapSelectedLat),
-      detailAddress: mapSelectedAddress || prev.detailAddress,
-    }));
+    setFormData(prev => {
+      const match = matchAddressToRegion(mapSelectedAddress);
+      return {
+        ...prev,
+        longitude: String(mapSelectedLng),
+        latitude: String(mapSelectedLat),
+        regionCode: match?.code || prev.regionCode,
+        regionName: match?.labels.join(' ') || prev.regionName,
+        detailAddress: match?.detail || mapSelectedAddress || prev.detailAddress,
+      };
+    });
     setShowMapPicker(false);
   };
 

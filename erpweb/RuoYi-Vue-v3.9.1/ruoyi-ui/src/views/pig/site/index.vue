@@ -244,6 +244,7 @@ export default {
       viewModeOnly: false,
       pcasOptions: [],
       pcasCodeMap: {},
+      pcasLabelPathList: [],
       pcasProps: {
         value: 'value',
         label: 'label',
@@ -308,16 +309,25 @@ export default {
         .sort((a, b) => Number(a) - Number(b))
         .map(key => pcasData[key])
       this.pcasCodeMap = {}
+      this.pcasLabelPathList = []
       this.pcasOptions = this.normalizePcasTree(rawList, [], [])
+      this.pcasLabelPathList.sort((a, b) => b.labelText.length - a.labelText.length)
     },
     normalizePcasTree(list, parentCodes, parentLabels) {
       return list.map(item => {
         const currentCodes = [...parentCodes, item.code]
         const currentLabels = [...parentLabels, item.name]
+        const labelText = currentLabels.join('')
         this.pcasCodeMap[item.code] = {
           codes: currentCodes,
           labels: currentLabels
         }
+        this.pcasLabelPathList.push({
+          code: item.code,
+          codes: currentCodes,
+          labels: currentLabels,
+          labelText
+        })
         const children = item.children ? this.normalizePcasTree(item.children, currentCodes, currentLabels) : undefined
         return {
           value: item.code,
@@ -332,6 +342,27 @@ export default {
     formatSiteAddressCode(code) {
       if (!code) return ""
       return this.pcasCodeMap[code] ? this.pcasCodeMap[code].labels.join("/") : code
+    },
+    escapeRegExp(text) {
+      return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    },
+    matchAddressToPcas(address) {
+      if (!address) return null
+      const normalized = address.replace(/\s+/g, '')
+      for (const item of this.pcasLabelPathList) {
+        if (normalized.startsWith(item.labelText)) {
+          const prefixPattern = item.labels.map(label => this.escapeRegExp(label)).join('\\s*')
+          const prefixRegex = new RegExp(`^\\s*${prefixPattern}\\s*`)
+          const detail = address.replace(prefixRegex, '').replace(/^[,，\s]+/, '').trim()
+          return {
+            code: item.code,
+            codes: item.codes,
+            labels: item.labels,
+            detail: detail || address
+          }
+        }
+      }
+      return null
     },
     getList() {
       this.loading = true
@@ -561,7 +592,14 @@ export default {
       this.form.siteLongitude = String(this.mapSelectedLng)
       this.form.siteLatitude = String(this.mapSelectedLat)
       if (this.mapSelectedAddress) {
-        this.form.siteAddress = this.mapSelectedAddress
+        const match = this.matchAddressToPcas(this.mapSelectedAddress)
+        if (match) {
+          this.form.siteAddressCodeList = match.codes
+          this.form.siteAddressCode = match.code
+          this.form.siteAddress = match.detail
+        } else {
+          this.form.siteAddress = this.mapSelectedAddress
+        }
       }
       this.mapDialogVisible = false
     },

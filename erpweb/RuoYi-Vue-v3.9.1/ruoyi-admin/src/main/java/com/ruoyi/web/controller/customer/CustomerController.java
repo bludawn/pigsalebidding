@@ -1,11 +1,14 @@
 package com.ruoyi.web.controller.customer;
 
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.ruoyi.common.config.RuoYiConfig;
@@ -100,6 +105,15 @@ public class CustomerController extends BaseController {
 
     @Autowired
     private ServerConfig serverConfig;
+
+    private static final String PCAS_RESOURCE = "pcas-code.json";
+    private static volatile Map<String, String> PCAS_FULL_PATH_MAP;
+
+    private static class RegionNode {
+        public String code;
+        public String name;
+        public List<RegionNode> children;
+    }
 
     @PostMapping("/getFarmList")
 //    @PostAuthorize("@ss.hasPermi('pig:weixincustomer:getFarmList')")
@@ -845,6 +859,8 @@ public class CustomerController extends BaseController {
         detail.status = mapOrderStatus(order.getOrderStatus());
         detail.farmName = site != null ? site.getSiteName() : null;
         detail.farmAddress = buildFarmAddress(site);
+        detail.farmLongitude = site != null ? site.getSiteLongitude() : null;
+        detail.farmLatitude = site != null ? site.getSiteLatitude() : null;
         detail.pigTypeName = pigType != null ? pigType.getPigName() : null;
         detail.weightRange = pigType != null ? pigType.getWeightRange() : null;
         detail.quantity = bidProduct != null ? bidProduct.getTotalHeadCount() : null;
@@ -870,8 +886,10 @@ public class CustomerController extends BaseController {
         OrderDeliveryInfo info = new OrderDeliveryInfo();
         info.contactName = address != null ? address.getContactName() : null;
         info.contactPhone = address != null ? address.getContactPhone() : null;
-        info.address = address != null ? address.getAddressCode() + address.getDetailAddress() : null;
+        info.address = address != null ? buildFullAddress(address.getAddressCode(), address.getDetailAddress()) : null;
         info.deliveryTime = formatDate(order.getExpectLoadTime());
+        info.longitude = address != null ? address.getLongitude() : null;
+        info.latitude = address != null ? address.getLatitude() : null;
         return info;
     }
 
@@ -879,10 +897,74 @@ public class CustomerController extends BaseController {
         if (site == null) {
             return null;
         }
-        String code = site.getSiteAddressCode() == null ? "" : site.getSiteAddressCode();
-        String address = site.getSiteAddress() == null ? "" : site.getSiteAddress();
-        String result = code + address;
-        return StringUtils.isNotEmpty(result) ? result : null;
+        return buildFullAddress(site.getSiteAddressCode(), site.getSiteAddress());
+    }
+
+    private String buildFullAddress(String code, String detail) {
+        String prefix = resolvePcasPath(code);
+        String addressDetail = detail == null ? "" : detail.trim();
+        if (StringUtils.isNotEmpty(prefix) && StringUtils.isNotEmpty(addressDetail)) {
+            return prefix + " " + addressDetail;
+        }
+        if (StringUtils.isNotEmpty(prefix)) {
+            return prefix;
+        }
+        return StringUtils.isNotEmpty(addressDetail) ? addressDetail : null;
+    }
+
+    private String resolvePcasPath(String code) {
+        if (StringUtils.isEmpty(code)) {
+            return null;
+        }
+        Map<String, String> map = loadPcasFullPathMap();
+        if (map == null || map.isEmpty()) {
+            return null;
+        }
+        return map.getOrDefault(code, code);
+    }
+
+    private Map<String, String> loadPcasFullPathMap() {
+        if (PCAS_FULL_PATH_MAP != null) {
+            return PCAS_FULL_PATH_MAP;
+        }
+        synchronized (CustomerController.class) {
+            if (PCAS_FULL_PATH_MAP != null) {
+                return PCAS_FULL_PATH_MAP;
+            }
+            Map<String, String> result = new HashMap<String, String>();
+            try (InputStream input = CustomerController.class.getClassLoader().getResourceAsStream(PCAS_RESOURCE)) {
+                if (input != null) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    List<RegionNode> roots = mapper.readValue(input, new TypeReference<List<RegionNode>>() {});
+                    buildPcasPathMap(result, roots, new ArrayList<String>());
+                }
+            } catch (Exception e) {
+                // ignore
+            }
+            PCAS_FULL_PATH_MAP = result;
+            return PCAS_FULL_PATH_MAP;
+        }
+    }
+
+    private void buildPcasPathMap(Map<String, String> map, List<RegionNode> nodes, List<String> parentLabels) {
+        if (nodes == null) {
+            return;
+        }
+        for (RegionNode node : nodes) {
+            if (node == null || StringUtils.isEmpty(node.code)) {
+                continue;
+            }
+            List<String> currentLabels = new ArrayList<String>(parentLabels);
+            if (StringUtils.isNotEmpty(node.name)) {
+                currentLabels.add(node.name);
+            }
+            if (!currentLabels.isEmpty()) {
+                map.put(node.code, StringUtils.join(currentLabels, "/"));
+            }
+            if (node.children != null && !node.children.isEmpty()) {
+                buildPcasPathMap(map, node.children, currentLabels);
+            }
+        }
     }
 
     private List<OrderShipmentInfo> buildShipmentInfos(List<DeliveryInfo> deliveries) {
