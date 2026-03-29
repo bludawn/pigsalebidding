@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AddressItem } from '../types';
+import { AddressItem, RegionItem } from '../types';
 import {
   createAddress,
   deleteAddress,
@@ -7,6 +7,7 @@ import {
   setDefaultAddress,
   updateAddress,
 } from '../AppApi';
+import regionData from '../data/pcas-code.json';
 import RegionPicker from './RegionPicker';
 
 interface AddressManagementViewProps {
@@ -26,6 +27,35 @@ const EMPTY_FORM: Omit<AddressItem, 'id'> = {
   longitude: '',
   latitude: '',
   isDefault: false,
+};
+
+const normalizeRegions = (items: any[], level: number): RegionItem[] => {
+  return items.map(item => ({
+    code: item.code,
+    name: item.name,
+    level,
+    children: item.children ? normalizeRegions(item.children, level + 1) : undefined,
+  }));
+};
+
+const REGION_TREE: RegionItem[] = normalizeRegions(regionData as any[], 1);
+
+const buildRegionPathMap = (items: RegionItem[], parentPath: string[] = [], map = new Map<string, string>()) => {
+  items.forEach(item => {
+    const currentPath = [...parentPath, item.name].filter(Boolean);
+    map.set(item.code, currentPath.join(' '));
+    if (item.children?.length) {
+      buildRegionPathMap(item.children, currentPath, map);
+    }
+  });
+  return map;
+};
+
+const REGION_PATH_MAP = buildRegionPathMap(REGION_TREE);
+
+const getRegionFullNameByCode = (code?: string) => {
+  if (!code) return '';
+  return REGION_PATH_MAP.get(code) || '';
 };
 
 const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, selectMode, onSelect }) => {
@@ -54,10 +84,15 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
     try {
       const res = await getAddressList({ current: 1, size: PAGE_SIZE, searchCount: false });
       if (res.errcode === 0 && res.data) {
-        setAddresses(res.data.records || []);
+        const normalizedRecords = (res.data.records || []).map(item => {
+          if (item.regionName) return item;
+          const fullName = getRegionFullNameByCode(item.regionCode);
+          return fullName ? { ...item, regionName: fullName } : item;
+        });
+        setAddresses(normalizedRecords);
 
-        if (res.data.records?.length === 1 && !res.data.records[0].isDefault) {
-          await setDefaultAddress({ id: res.data.records[0].id });
+        if (normalizedRecords.length === 1 && !normalizedRecords[0].isDefault) {
+          await setDefaultAddress({ id: normalizedRecords[0].id });
           setAddresses(prev => prev.map(item => ({ ...item, isDefault: true })));
         }
       }
@@ -84,11 +119,25 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
       setError('未配置高德地图 Key');
       return Promise.reject(new Error('Missing AMap key'));
     }
+    const securityJsCode = (window as any).AMAP_SECURITY_JS_CODE || '';
+    if (securityJsCode && !(window as any)._AMapSecurityConfig) {
+      (window as any)._AMapSecurityConfig = { securityJsCode };
+    }
     (window as any)._amapLoading = new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = `https://webapi.amap.com/maps?v=2.0&key=${amapKey}&plugin=AMap.Geocoder,AMap.PlaceSearch,AMap.ToolBar`;
-      script.onload = () => resolve((window as any).AMap);
-      script.onerror = () => reject(new Error('AMap load failed'));
+      script.onload = () => {
+        if ((window as any).AMap) {
+          resolve((window as any).AMap);
+        } else {
+          (window as any)._amapLoading = null;
+          reject(new Error('AMap load failed'));
+        }
+      };
+      script.onerror = () => {
+        (window as any)._amapLoading = null;
+        reject(new Error('AMap load failed'));
+      };
       document.body.appendChild(script);
     });
     return (window as any)._amapLoading;
@@ -103,7 +152,7 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
       const centerLng = mapSelectedLng ?? 121.4737;
       const centerLat = mapSelectedLat ?? 31.2304;
       if (!mapRef.current) {
-        mapRef.current = new AMap.Map(container, {
+        mapRef.current = new AMap.Map('address-map-picker', {
           zoom: 12,
           center: [centerLng, centerLat],
         });
@@ -140,9 +189,11 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
           mapMarkerRef.current.setPosition([mapSelectedLng, mapSelectedLat]);
         }
       }
-      mapRef.current.resize();
+      requestAnimationFrame(() => {
+        mapRef.current && mapRef.current.resize();
+      });
     } catch (err) {
-      setError('地图加载失败');
+      setError('地图加载失败，请检查高德地图 Key 配置');
     } finally {
       setMapLoading(false);
     }
@@ -198,11 +249,12 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
 
   const openEditForm = (item: AddressItem) => {
     setEditingAddress(item);
+    const regionName = item.regionName || getRegionFullNameByCode(item.regionCode);
     setFormData({
       contactName: item.contactName,
       contactPhone: item.contactPhone,
       regionCode: item.regionCode,
-      regionName: item.regionName,
+      regionName,
       detailAddress: item.detailAddress,
       longitude: item.longitude || '',
       latitude: item.latitude || '',
@@ -219,6 +271,13 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
   }, [showMapPicker, initMap]);
 
   const openMapPicker = () => {
+    if (mapRef.current) {
+      mapRef.current.destroy();
+      mapRef.current = null;
+    }
+    mapMarkerRef.current = null;
+    mapGeocoderRef.current = null;
+    mapPlaceSearchRef.current = null;
     setMapSelectedLng(formData.longitude ? Number(formData.longitude) : null);
     setMapSelectedLat(formData.latitude ? Number(formData.latitude) : null);
     setMapKeyword(formData.detailAddress || '');
@@ -347,6 +406,7 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
   const displayAddresses = useMemo(() => {
     return addresses.map(address => ({
       ...address,
+      regionName: address.regionName || getRegionFullNameByCode(address.regionCode),
       isDefault: address.isDefault || (hasSingleAddress && addresses[0]?.id === address.id),
     }));
   }, [addresses, hasSingleAddress]);

@@ -58,11 +58,25 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
       setMapError('未配置高德地图 Key');
       return Promise.reject(new Error('Missing AMap key'));
     }
+    const securityJsCode = (window as any).AMAP_SECURITY_JS_CODE || '';
+    if (securityJsCode && !(window as any)._AMapSecurityConfig) {
+      (window as any)._AMapSecurityConfig = { securityJsCode };
+    }
     (window as any)._amapLoading = new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = `https://webapi.amap.com/maps?v=2.0&key=${amapKey}&plugin=AMap.Geocoder,AMap.ToolBar,AMap.Scale`;
-      script.onload = () => resolve((window as any).AMap);
-      script.onerror = () => reject(new Error('AMap load failed'));
+      script.onload = () => {
+        if ((window as any).AMap) {
+          resolve((window as any).AMap);
+        } else {
+          (window as any)._amapLoading = null;
+          reject(new Error('AMap load failed'));
+        }
+      };
+      script.onerror = () => {
+        (window as any)._amapLoading = null;
+        reject(new Error('AMap load failed'));
+      };
       document.body.appendChild(script);
     });
     return (window as any)._amapLoading;
