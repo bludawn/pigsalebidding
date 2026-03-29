@@ -67,6 +67,19 @@ const API_BASE_URL = '/api'; // 可根据环境配置
 const AUTH_TOKEN_KEY = 'Admin-Token';
 const CUSTOMER_HEADER_KEY = 'customer';
 
+const withFileHost = (url?: string) => {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('//')) {
+    return `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${url}`;
+  }
+  const base = API_BASE_URL.startsWith('http')
+    ? API_BASE_URL.replace(/\/api\/?$/, '')
+    : (typeof window !== 'undefined' ? window.location.origin : '');
+  if (!base) return url;
+  return `${base}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
 /**
  * 通用请求方法
  * @param url 接口地址
@@ -348,8 +361,15 @@ export interface UserInfo {
 }
 
 /** 获取用户信息 */
-export function getUserInfo(): Promise<ApiResponse<UserInfo>> {
-  return request<UserInfo>('/v1/weixincustomer/getUserInfo');
+export async function getUserInfo(): Promise<ApiResponse<UserInfo>> {
+  const result = await request<UserInfo>('/v1/weixincustomer/getUserInfo');
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: { ...result.data, avatar: withFileHost(result.data.avatar) },
+  };
 }
 
 // ============ 个人中心相关接口 ==========
@@ -357,12 +377,26 @@ export function getUserInfo(): Promise<ApiResponse<UserInfo>> {
 
 /** 获取个人中心信息 */
 export async function getProfileInfo(): Promise<ApiResponse<UserProfile>> {
-  return request<UserProfile>('/v1/weixincustomer/getProfileInfo');
+  const result = await request<UserProfile>('/v1/weixincustomer/getProfileInfo');
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: { ...result.data, avatar: withFileHost(result.data.avatar) },
+  };
 }
 
 /** 获取设置页信息 */
 export async function getUserSettings(): Promise<ApiResponse<UserSettingsProfile>> {
-  return request<UserSettingsProfile>('/v1/weixincustomer/getUserSettings');
+  const result = await request<UserSettingsProfile>('/v1/weixincustomer/getUserSettings');
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: { ...result.data, avatar: withFileHost(result.data.avatar) },
+  };
 }
 
 /** 上传图片 */
@@ -384,7 +418,13 @@ export async function uploadImage(params: {
     });
 
     const result: ApiResponse<{ url: string }> = await response.json();
-    return result;
+    if (result.errcode !== 0 || !result.data) {
+      return result;
+    }
+    return {
+      ...result,
+      data: { ...result.data, url: withFileHost(result.data.url) },
+    };
   } catch (error) {
     console.error('Upload Error:', error);
     return {
@@ -397,7 +437,14 @@ export async function uploadImage(params: {
 
 /** 保存个人信息 */
 export async function saveUserProfile(params: { name: string; avatar: string }): Promise<ApiResponse<UserSettingsProfile>> {
-  return request<UserSettingsProfile>('/v1/weixincustomer/saveUserProfile', params);
+  const result = await request<UserSettingsProfile>('/v1/weixincustomer/saveUserProfile', params);
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: { ...result.data, avatar: withFileHost(result.data.avatar) },
+  };
 }
 
 /** 提交公司认证资料 */

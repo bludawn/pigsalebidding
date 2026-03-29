@@ -216,7 +216,7 @@
           <el-date-picker v-model="form.expectLoadTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择期望装车时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="生猪资源" prop="pigResourceId">
-          <el-select v-model="form.pigResourceId" placeholder="请选择生猪资源" filterable clearable :disabled="viewModeOnly">
+          <el-select v-model="form.pigResourceId" placeholder="请选择生猪资源" filterable clearable :disabled="viewModeOnly" @change="handlePigResourceChange">
             <el-option v-for="item in pigResourceOptions" :key="item.id" :label="getPigResourceOptionLabel(item)" :value="item.id" />
           </el-select>
         </el-form-item>
@@ -669,12 +669,27 @@ export default {
     },
     getPigResourceOptionLabel(item) {
       if (!item) return ''
-      return item.resourceCode || item.id
+      const code = item.resourceCode || item.id
+      const pigType = this.getPigTypeName(item.pigTypeId)
+      const site = this.getSiteName(item.siteId)
+      const count = item.resourceCount != null ? `数量${item.resourceCount}头` : ''
+      const price = item.resourceUnitPrice != null ? `单价${item.resourceUnitPrice}` : ''
+      return [code, pigType, site, count, price].filter(Boolean).join(' ')
     },
     getPigResourceLabel(id) {
       if (!id) return '-'
       const item = this.pigResourceMap[id]
       return item ? this.getPigResourceOptionLabel(item) : id
+    },
+    getPigTypeName(id) {
+      if (!id) return ''
+      const item = this.pigTypeMap[id]
+      return item ? (item.pigName || item.pigCode || item.id) : id
+    },
+    getSiteName(id) {
+      if (!id) return ''
+      const item = this.siteMap[id]
+      return item ? (item.siteName || item.id) : id
     },
     calcUnitPrice(orderAmount, bidQuantity) {
       const amount = Number(orderAmount)

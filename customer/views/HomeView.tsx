@@ -96,7 +96,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
     [datePicker.year, datePicker.month]
   );
 
-  const getQueryDate = () => filter.date || formatDate(new Date());
+  const getQueryDate = () => filter.date || undefined;
 
   const applyClientFilters = (records: AuctionItem[]) => {
     let nextRecords = records;
@@ -542,7 +542,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             <div className="bg-slate-50 rounded-custom p-4">
               <div className="text-xs text-slate-400 mb-2">选择日期</div>
               <div className="text-sm font-bold text-slate-800">{formattedDate}</div>
-              <div className="text-[11px] text-slate-400 mt-1">不选择默认查询今天</div>
+              <div className="text-[11px] text-slate-400 mt-1">不选择则查询全部</div>
               <div className="mt-4 relative">
                 <div className="flex">
                   {[
@@ -784,6 +784,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
               tags={item.tags}
               startingCount={item.startingCount}
               startingPrice={item.startingPrice}
+              bidStartTime={item.bidStartTime}
               customerBidStatus={item.customerBidStatus}
             />
           ))}

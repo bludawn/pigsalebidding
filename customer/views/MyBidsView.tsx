@@ -206,6 +206,7 @@ const MyBidsView: React.FC<MyBidsViewProps> = ({ onBack, onNavigate }) => {
               tags={item.tags}
               startingCount={item.startingCount}
               startingPrice={item.startingPrice}
+              bidStartTime={item.bidStartTime}
             />
           ))}
 

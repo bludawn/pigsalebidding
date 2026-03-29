@@ -102,13 +102,14 @@ export interface OrderDetailInfo {
   orderId: string;
   status: OrderStatus;
   farmName: string;
+  farmAddress?: string;
   pigTypeName: string;
   weightRange: string;
   quantity: number;
   price: number;
   priceInfo: OrderPriceInfo;
   deliveryInfo: OrderDeliveryInfo;
-  shipmentInfo?: OrderShipmentInfo;
+  deliveryInfos: OrderShipmentInfo[];
   timeline: OrderTimelineNode[];
   contractName?: string;
 }
@@ -161,6 +162,7 @@ export interface MyBidItem {
   endTime: Date;
   imageUrl: string;
   bidStatus: MyBidStatus;
+  bidStartTime?: string;
 }
 
 /** 我的竞拍状态数量 */

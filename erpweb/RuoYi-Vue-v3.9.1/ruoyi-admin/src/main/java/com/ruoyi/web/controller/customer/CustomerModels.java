@@ -182,6 +182,7 @@ public class CustomerModels
         public Date endTime;
         public String imageUrl;
         public String bidStatus;
+        public String bidStartTime;
     }
 
     public static class MyBidStatusCounts
@@ -339,9 +340,15 @@ public class CustomerModels
 
     public static class OrderShipmentInfo
     {
+        public String transportCode;
+        public String currentLongitude;
+        public String currentLatitude;
         public String driverName;
         public String driverPhone;
         public String vehicleNo;
+        public String vehicleType;
+        public Integer loadCount;
+        public String deliveryStatus;
         public String estimatedArrival;
         public String remark;
     }
@@ -358,13 +365,14 @@ public class CustomerModels
         public String orderId;
         public String status;
         public String farmName;
+        public String farmAddress;
         public String pigTypeName;
         public String weightRange;
         public Integer quantity;
         public BigDecimal price;
         public OrderPriceInfo priceInfo;
         public OrderDeliveryInfo deliveryInfo;
-        public OrderShipmentInfo shipmentInfo;
+        public List<OrderShipmentInfo> deliveryInfos;
         public List<OrderTimelineNode> timeline;
         public String contractName;
     }

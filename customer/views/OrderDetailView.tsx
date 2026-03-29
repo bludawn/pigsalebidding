@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { OrderDetailInfo, OrderStatus } from '../types';
 import { cancelOrder, confirmReceipt, getOrderDetail, payOrder } from '../AppApi';
 
@@ -19,6 +19,11 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
   const [detail, setDetail] = useState<OrderDetailInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const amapRef = useRef<any>(null);
+  const amapOverlaysRef = useRef<any[]>([]);
+  const amapReadyRef = useRef(false);
 
   const loadDetail = useCallback(async () => {
     setLoading(true);
@@ -39,6 +44,153 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
   }, [loadDetail]);
 
   const statusMeta = useMemo(() => (detail ? statusMetaMap[detail.status] : null), [detail]);
+  const deliveryInfos = useMemo(() => (detail?.deliveryInfos || []).filter(Boolean), [detail]);
+
+  const ensureAmap = useCallback(() => {
+    if ((window as any).AMap) {
+      return Promise.resolve((window as any).AMap);
+    }
+    if ((window as any)._amapLoading) {
+      return (window as any)._amapLoading;
+    }
+    const amapKey = (window as any).AMAP_KEY || '';
+    if (!amapKey) {
+      setMapError('未配置高德地图 Key');
+      return Promise.reject(new Error('Missing AMap key'));
+    }
+    (window as any)._amapLoading = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = `https://webapi.amap.com/maps?v=2.0&key=${amapKey}&plugin=AMap.Geocoder,AMap.ToolBar,AMap.Scale`;
+      script.onload = () => resolve((window as any).AMap);
+      script.onerror = () => reject(new Error('AMap load failed'));
+      document.body.appendChild(script);
+    });
+    return (window as any)._amapLoading;
+  }, []);
+
+  const clearAmapOverlays = useCallback(() => {
+    if (amapRef.current && amapOverlaysRef.current.length) {
+      amapOverlaysRef.current.forEach((overlay) => {
+        try {
+          amapRef.current.remove(overlay);
+        } catch (error) {
+          // ignore
+        }
+      });
+      amapOverlaysRef.current = [];
+    }
+  }, []);
+
+  const geocodeAddress = useCallback((AMap: any, address?: string) => {
+    return new Promise<[number, number] | null>((resolve) => {
+      if (!address) {
+        resolve(null);
+        return;
+      }
+      const geocoder = new AMap.Geocoder({ city: '' });
+      geocoder.getLocation(address, (status: string, result: any) => {
+        if (status === 'complete' && result?.geocodes?.length) {
+          const location = result.geocodes[0].location;
+          resolve([location.lng, location.lat]);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }, []);
+
+  const renderAmap = useCallback(async () => {
+    if (!detail || deliveryInfos.length === 0) {
+      return;
+    }
+    const container = document.getElementById('order-delivery-map');
+    mapRef.current = container as HTMLDivElement | null;
+    if (!container) {
+      return;
+    }
+    try {
+      const AMap = await ensureAmap();
+      if (!amapRef.current) {
+        amapRef.current = new AMap.Map(container, {
+          zoom: 11,
+          center: [116.397428, 39.90923],
+        });
+        amapRef.current.addControl(new AMap.ToolBar());
+        amapRef.current.addControl(new AMap.Scale());
+      }
+      clearAmapOverlays();
+
+      const shipFromAddress = detail.farmAddress || detail.farmName;
+      const shipToAddress = detail.deliveryInfo?.address;
+      const [fromPoint, toPoint] = await Promise.all([
+        geocodeAddress(AMap, shipFromAddress),
+        geocodeAddress(AMap, shipToAddress),
+      ]);
+
+      const bounds: any[] = [];
+      const colors = ['#EF4444', '#F59E0B', '#3B82F6', '#10B981'];
+
+      deliveryInfos.forEach((info, index) => {
+        const currentLng = Number(info.currentLongitude);
+        const currentLat = Number(info.currentLatitude);
+        const currentPoint =
+          Number.isFinite(currentLng) && Number.isFinite(currentLat) ? [currentLng, currentLat] : null;
+
+        if (fromPoint) {
+          const marker = new AMap.Marker({
+            position: fromPoint,
+            label: { content: '发货', direction: 'top' },
+          });
+          amapRef.current.add(marker);
+          amapOverlaysRef.current.push(marker);
+          bounds.push(fromPoint);
+        }
+
+        if (currentPoint) {
+          const marker = new AMap.Marker({
+            position: currentPoint,
+            label: { content: `当前${index + 1}`, direction: 'top' },
+          });
+          amapRef.current.add(marker);
+          amapOverlaysRef.current.push(marker);
+          bounds.push(currentPoint);
+        }
+
+        if (toPoint) {
+          const marker = new AMap.Marker({
+            position: toPoint,
+            label: { content: '收货', direction: 'top' },
+          });
+          amapRef.current.add(marker);
+          amapOverlaysRef.current.push(marker);
+          bounds.push(toPoint);
+        }
+
+        const path = [fromPoint, currentPoint, toPoint].filter(Boolean);
+        if (path.length >= 2) {
+          const polyline = new AMap.Polyline({
+            path,
+            strokeColor: colors[index % colors.length],
+            strokeWeight: 4,
+          });
+          amapRef.current.add(polyline);
+          amapOverlaysRef.current.push(polyline);
+        }
+      });
+
+      if (bounds.length) {
+        amapRef.current.setFitView(bounds);
+      }
+      amapReadyRef.current = true;
+      setMapError(null);
+    } catch (error) {
+      setMapError('地图加载失败');
+    }
+  }, [clearAmapOverlays, deliveryInfos, detail, ensureAmap, geocodeAddress]);
+
+  useEffect(() => {
+    renderAmap();
+  }, [renderAmap]);
 
   const handleCancel = async () => {
     if (!detail) return;
@@ -157,24 +309,39 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
           </div>
         </div>
 
-        {detail.shipmentInfo && (
+        {deliveryInfos.length > 0 && (
           <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
             <h2 className="text-sm font-bold mb-3">物流信息</h2>
-            <div className="text-xs text-slate-500 space-y-2">
-              {detail.shipmentInfo.vehicleNo && (
-                <div className="flex justify-between"><span>车牌号</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.vehicleNo}</span></div>
-              )}
-              {detail.shipmentInfo.driverName && (
-                <div className="flex justify-between"><span>司机</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.driverName}</span></div>
-              )}
-              {detail.shipmentInfo.driverPhone && (
-                <div className="flex justify-between"><span>联系电话</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.driverPhone}</span></div>
-              )}
-              {detail.shipmentInfo.estimatedArrival && (
-                <div className="flex justify-between"><span>预计到达</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.estimatedArrival}</span></div>
-              )}
-              {detail.shipmentInfo.remark && (
-                <div className="flex justify-between"><span>备注</span><span className="text-slate-800 font-bold">{detail.shipmentInfo.remark}</span></div>
+            <div className="space-y-3">
+              {deliveryInfos.map((info, index) => (
+                <div key={`${info.transportCode || 'delivery'}-${index}`} className="border border-slate-100 rounded-custom p-3">
+                  <div className="text-xs text-slate-500 space-y-2">
+                    {info.transportCode && (
+                      <div className="flex justify-between"><span>运输编码</span><span className="text-slate-800 font-bold">{info.transportCode}</span></div>
+                    )}
+                    {info.vehicleNo && (
+                      <div className="flex justify-between"><span>车牌号</span><span className="text-slate-800 font-bold">{info.vehicleNo}</span></div>
+                    )}
+                    {info.driverName && (
+                      <div className="flex justify-between"><span>司机</span><span className="text-slate-800 font-bold">{info.driverName}</span></div>
+                    )}
+                    {info.driverPhone && (
+                      <div className="flex justify-between"><span>联系电话</span><span className="text-slate-800 font-bold">{info.driverPhone}</span></div>
+                    )}
+                    {info.deliveryStatus && (
+                      <div className="flex justify-between"><span>状态</span><span className="text-slate-800 font-bold">{info.deliveryStatus}</span></div>
+                    )}
+                    {info.remark && (
+                      <div className="flex justify-between"><span>备注</span><span className="text-slate-800 font-bold">{info.remark}</span></div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3">
+              <div id="order-delivery-map" className="h-64 w-full rounded-custom border border-slate-100" />
+              {mapError && (
+                <div className="text-[10px] text-amber-600 mt-2">{mapError}</div>
               )}
             </div>
           </div>

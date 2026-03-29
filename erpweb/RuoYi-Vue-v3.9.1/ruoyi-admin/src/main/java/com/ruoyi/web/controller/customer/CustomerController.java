@@ -58,8 +58,7 @@ import com.ruoyi.web.controller.customer.CustomerModels.*;
  */
 @RestController
 @RequestMapping("/api/v1/weixincustomer")
-public class CustomerController extends BaseController
-{
+public class CustomerController extends BaseController {
     @Autowired
     private ISiteService siteService;
 
@@ -104,11 +103,9 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getFarmList")
 //    @PostAuthorize("@ss.hasPermi('pig:weixincustomer:getFarmList')")
-    public CustomerApiResult<List<FarmItem>> getFarmList(@RequestBody(required = false) FarmListRequest request)
-    {
+    public CustomerApiResult<List<FarmItem>> getFarmList(@RequestBody(required = false) FarmListRequest request) {
         Site query = new Site();
-        if (request != null && StringUtils.isNotEmpty(request.regionCode))
-        {
+        if (request != null && StringUtils.isNotEmpty(request.regionCode)) {
             query.setSiteAddressCode(request.regionCode);
         }
         List<Site> sites = siteService.selectSiteList(query);
@@ -124,8 +121,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getProductTags")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getProductTags')")
-    public CustomerApiResult<List<ProductTagItem>> getProductTags()
-    {
+    public CustomerApiResult<List<ProductTagItem>> getProductTags() {
         List<PigTag> tags = pigTagService.selectPigTagList(new PigTag());
         List<ProductTagItem> result = tags.stream().map(tag -> {
             ProductTagItem item = new ProductTagItem();
@@ -138,25 +134,22 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getRegionList")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getRegionList')")
-    public CustomerApiResult<List<RegionItem>> getRegionList(@RequestBody(required = false) RegionListRequest request)
-    {
+    public CustomerApiResult<List<RegionItem>> getRegionList(@RequestBody(required = false) RegionListRequest request) {
         return ok(Collections.emptyList());
     }
 
     @PostMapping("/getAuctionList")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAuctionList')")
-    public CustomerApiResult<ListResponseData<AuctionItem>> getAuctionList(@RequestBody(required = false) AuctionListParams params)
-    {
+    public CustomerApiResult<ListResponseData<AuctionItem>> getAuctionList(@RequestBody(required = false) AuctionListParams params) {
         int current = getPageCurrent(params);
         int size = getPageSize(params);
         PageHelper.startPage(current, size);
+        PageHelper.orderBy("f_startTime desc");
         BidProduct query = new BidProduct();
-        if (params != null && StringUtils.isNotEmpty(params.bidStatus))
-        {
+        if (params != null && StringUtils.isNotEmpty(params.bidStatus)) {
             query.setBidStatus(params.bidStatus);
         }
-        if (params != null && StringUtils.isNotEmpty(params.farmId))
-        {
+        if (params != null && StringUtils.isNotEmpty(params.farmId)) {
             query.setSiteId(toLong(params.farmId));
         }
         List<BidProduct> list = bidProductService.selectBidProductList(query);
@@ -167,15 +160,13 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getMyBidList")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getMyBidList')")
-    public CustomerApiResult<ListResponseData<MyBidItem>> getMyBidList(@RequestBody(required = false) MyBidListParams params)
-    {
+    public CustomerApiResult<ListResponseData<MyBidItem>> getMyBidList(@RequestBody(required = false) MyBidListParams params) {
         int current = getPageCurrent(params);
         int size = getPageSize(params);
         PageHelper.startPage(current, size);
         UserBid query = new UserBid();
         query.setUserId(getUserId());
-        if (params != null && StringUtils.isNotEmpty(params.status))
-        {
+        if (params != null && StringUtils.isNotEmpty(params.status)) {
             query.setStatus(params.status);
         }
         List<UserBid> list = userBidService.selectUserBidList(query);
@@ -186,8 +177,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getMyBidStatusCounts")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getMyBidStatusCounts')")
-    public CustomerApiResult<MyBidStatusCounts> getMyBidStatusCounts()
-    {
+    public CustomerApiResult<MyBidStatusCounts> getMyBidStatusCounts() {
         UserBid query = new UserBid();
         query.setUserId(getUserId());
         List<UserBid> list = userBidService.selectUserBidList(query);
@@ -200,11 +190,9 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getAuctionDetail")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAuctionDetail')")
-    public CustomerApiResult<AuctionDetailInfo> getAuctionDetail(@RequestBody AuctionIdRequest request)
-    {
+    public CustomerApiResult<AuctionDetailInfo> getAuctionDetail(@RequestBody AuctionIdRequest request) {
         BidProduct bidProduct = bidProductService.selectBidProductById(toLong(request.auctionId));
-        if (bidProduct == null)
-        {
+        if (bidProduct == null) {
             return ok(null);
         }
         PigResource resource = pigResourceService.selectPigResourceById(bidProduct.getPigResourceId());
@@ -238,14 +226,12 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getAuctionMaintenance")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAuctionMaintenance')")
-    public CustomerApiResult<AuctionMaintenanceInfo> getAuctionMaintenance(@RequestBody AuctionIdRequest request)
-    {
+    public CustomerApiResult<AuctionMaintenanceInfo> getAuctionMaintenance(@RequestBody AuctionIdRequest request) {
         UserBidInfo query = new UserBidInfo();
         query.setUserId(getUserId());
         query.setBidProductId(toLong(request.auctionId));
         List<UserBidInfo> list = userBidInfoService.selectUserBidInfoList(query);
-        if (list.isEmpty())
-        {
+        if (list.isEmpty()) {
             return ok(null);
         }
         UserBidInfo info = list.get(0);
@@ -265,8 +251,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/saveAuctionMaintenance")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:saveAuctionMaintenance')")
-    public CustomerApiResult<AuctionMaintenanceInfo> saveAuctionMaintenance(@RequestBody AuctionMaintenanceSaveRequest request)
-    {
+    public CustomerApiResult<AuctionMaintenanceInfo> saveAuctionMaintenance(@RequestBody AuctionMaintenanceSaveRequest request) {
         UserBidInfo query = new UserBidInfo();
         query.setUserId(getUserId());
         query.setBidProductId(toLong(request.auctionId));
@@ -277,13 +262,10 @@ public class CustomerController extends BaseController
         info.setAddressId(toLong(request.addressId));
         info.setLoadingTime(DateUtils.parseDate(request.appointmentTime));
         info.setRemark(request.remark);
-        if (info.getId() == null)
-        {
+        if (info.getId() == null) {
             info.setCreateBy(String.valueOf(getUserId()));
             userBidInfoService.insertUserBidInfo(info);
-        }
-        else
-        {
+        } else {
             info.setUpdateBy(String.valueOf(getUserId()));
             userBidInfoService.updateUserBidInfo(info);
         }
@@ -303,15 +285,13 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getBidRecords")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getBidRecords')")
-    public CustomerApiResult<ListResponseData<BidRecordItem>> getBidRecords(@RequestBody BidRecordsRequest request)
-    {
+    public CustomerApiResult<ListResponseData<BidRecordItem>> getBidRecords(@RequestBody BidRecordsRequest request) {
         int current = getPageCurrent(request);
         int size = getPageSize(request);
         PageHelper.startPage(current, size);
         UserBid query = new UserBid();
         query.setBidProductId(toLong(request.auctionId));
-        if (Boolean.TRUE.equals(request.isMine))
-        {
+        if (Boolean.TRUE.equals(request.isMine)) {
             query.setUserId(getUserId());
         }
         List<UserBid> list = userBidService.selectUserBidList(query);
@@ -333,8 +313,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/submitBid")
 //    // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:submitBid')")
-    public CustomerApiResult<SimpleResult> submitBid(@RequestBody SubmitBidRequest request)
-    {
+    public CustomerApiResult<SimpleResult> submitBid(@RequestBody SubmitBidRequest request) {
         UserBid bid = new UserBid();
         bid.setUserId(getUserId());
         bid.setBidProductId(toLong(request.auctionId));
@@ -342,17 +321,14 @@ public class CustomerController extends BaseController
         bid.setQuantity(request.bidCount);
         bid.setBidTime(new Date());
         bid.setStatus("BIDDING");
-        if (request.bidPrice != null && request.bidCount != null)
-        {
+        if (request.bidPrice != null && request.bidCount != null) {
             bid.setTotalPrice(request.bidPrice.multiply(new BigDecimal(request.bidCount)));
         }
         bid.setCreateBy(String.valueOf(getUserId()));
         userBidService.insertUserBid(bid);
         BidProduct product = bidProductService.selectBidProductById(toLong(request.auctionId));
-        if (product != null && request.bidPrice != null)
-        {
-            if (product.getCurrentHighestPrice() == null || product.getCurrentHighestPrice().compareTo(request.bidPrice) < 0)
-            {
+        if (product != null && request.bidPrice != null) {
+            if (product.getCurrentHighestPrice() == null || product.getCurrentHighestPrice().compareTo(request.bidPrice) < 0) {
                 product.setCurrentHighestPrice(request.bidPrice);
                 product.setUpdateBy(String.valueOf(getUserId()));
                 bidProductService.updateBidProduct(product);
@@ -366,12 +342,10 @@ public class CustomerController extends BaseController
 
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:cancelBidRecord')")
     @PostMapping("/cancelBidRecord")
-    public CustomerApiResult<SimpleResult> cancelBidRecord(@RequestBody CancelBidRequest request)
-    {
+    public CustomerApiResult<SimpleResult> cancelBidRecord(@RequestBody CancelBidRequest request) {
         UserBid bid = userBidService.selectUserBidById(toLong(request.bidRecordId));
         SimpleResult result = new SimpleResult();
-        if (bid == null)
-        {
+        if (bid == null) {
             result.success = false;
             return ok(result);
         }
@@ -384,8 +358,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getUserInfo")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getUserInfo')")
-    public CustomerApiResult<UserInfo> getUserInfo()
-    {
+    public CustomerApiResult<UserInfo> getUserInfo() {
         SysUser user = sysUserService.selectUserById(getUserId());
         UserInfo info = new UserInfo();
         info.userId = String.valueOf(getUserId());
@@ -403,8 +376,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getProfileInfo")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getProfileInfo')")
-    public CustomerApiResult<UserProfile> getProfileInfo()
-    {
+    public CustomerApiResult<UserProfile> getProfileInfo() {
         SysUser user = sysUserService.selectUserById(getUserId());
         Enterprise enterprise = getEnterpriseByUser();
         UserProfile profile = new UserProfile();
@@ -418,8 +390,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getUserSettings")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getUserSettings')")
-    public CustomerApiResult<UserSettingsProfile> getUserSettings()
-    {
+    public CustomerApiResult<UserSettingsProfile> getUserSettings() {
         SysUser user = sysUserService.selectUserById(getUserId());
         UserExt userExt = userExtService.selectUserExtById(getUserId());
         Enterprise enterprise = getEnterpriseByUser();
@@ -444,8 +415,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/uploadImage")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:uploadImage')")
-    public CustomerApiResult<UploadImageResponse> uploadImage(MultipartFile file, String scene) throws Exception
-    {
+    public CustomerApiResult<UploadImageResponse> uploadImage(MultipartFile file, String scene) throws Exception {
         String filePath = RuoYiConfig.getUploadPath();
         String fileName = FileUploadUtils.upload(filePath, file);
         String url = serverConfig.getUrl() + fileName;
@@ -456,17 +426,13 @@ public class CustomerController extends BaseController
 
     @PostMapping("/saveUserProfile")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:saveUserProfile')")
-    public CustomerApiResult<UserSettingsProfile> saveUserProfile(@RequestBody SaveUserProfileRequest request)
-    {
+    public CustomerApiResult<UserSettingsProfile> saveUserProfile(@RequestBody SaveUserProfileRequest request) {
         SysUser user = sysUserService.selectUserById(getUserId());
-        if (user != null)
-        {
-            if (StringUtils.isNotEmpty(request.name))
-            {
+        if (user != null) {
+            if (StringUtils.isNotEmpty(request.name)) {
                 user.setNickName(request.name);
             }
-            if (StringUtils.isNotEmpty(request.avatar))
-            {
+            if (StringUtils.isNotEmpty(request.avatar)) {
                 user.setAvatar(request.avatar);
             }
             sysUserService.updateUserProfile(user);
@@ -476,11 +442,9 @@ public class CustomerController extends BaseController
 
     @PostMapping("/submitCompanyVerification")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:submitCompanyVerification')")
-    public CustomerApiResult<UserSettingsProfile> submitCompanyVerification(@RequestBody SubmitCompanyVerificationRequest request)
-    {
+    public CustomerApiResult<UserSettingsProfile> submitCompanyVerification(@RequestBody SubmitCompanyVerificationRequest request) {
         Enterprise enterprise = getEnterpriseByUser();
-        if (enterprise != null)
-        {
+        if (enterprise != null) {
             enterprise.setBusinessLicenseUrl(joinList(request.licenseUrls));
             enterprise.setOtherMaterialUrls(joinList(request.materialUrls));
             enterprise.setIsVerified(0);
@@ -492,18 +456,14 @@ public class CustomerController extends BaseController
 
     @PostMapping("/verifyPersonalIdentity")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:verifyPersonalIdentity')")
-    public CustomerApiResult<UserSettingsProfile> verifyPersonalIdentity()
-    {
+    public CustomerApiResult<UserSettingsProfile> verifyPersonalIdentity() {
         UserExt userExt = userExtService.selectUserExtById(getUserId());
-        if (userExt == null)
-        {
+        if (userExt == null) {
             userExt = new UserExt();
             userExt.setId(getUserId());
             userExt.setIsRealName(1);
             userExtService.insertUserExt(userExt);
-        }
-        else
-        {
+        } else {
             userExt.setIsRealName(1);
             userExt.setUpdateBy(String.valueOf(getUserId()));
             userExtService.updateUserExt(userExt);
@@ -513,8 +473,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/logout")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:logout')")
-    public CustomerApiResult<SimpleResult> logout()
-    {
+    public CustomerApiResult<SimpleResult> logout() {
         SimpleResult result = new SimpleResult();
         result.success = true;
         return ok(result);
@@ -522,8 +481,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getOrderCounts")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderCounts')")
-    public CustomerApiResult<OrderCounts> getOrderCounts()
-    {
+    public CustomerApiResult<OrderCounts> getOrderCounts() {
         List<PigOrder> orders = selectOrdersByUser();
         OrderCounts counts = new OrderCounts();
         counts.paymentCount = countOrderStatus(orders, "WAITING");
@@ -540,8 +498,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getAssetSummary")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAssetSummary')")
-    public CustomerApiResult<AssetSummary> getAssetSummary()
-    {
+    public CustomerApiResult<AssetSummary> getAssetSummary() {
         Enterprise enterprise = getEnterpriseByUser();
         AssetSummary summary = new AssetSummary();
         summary.depositAmount = enterprise != null ? defaultZero(enterprise.getDepositAmount()) : BigDecimal.ZERO;
@@ -552,8 +509,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getBusinessStats")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getBusinessStats')")
-    public CustomerApiResult<BusinessStats> getBusinessStats()
-    {
+    public CustomerApiResult<BusinessStats> getBusinessStats() {
         BusinessStats stats = new BusinessStats();
         stats.totalTradeAmount = BigDecimal.ZERO;
         stats.totalPurchaseCount = 0;
@@ -562,8 +518,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getContactInfo")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getContactInfo')")
-    public CustomerApiResult<ContactInfo> getContactInfo()
-    {
+    public CustomerApiResult<ContactInfo> getContactInfo() {
         ContactInfo info = new ContactInfo();
         info.phone = "";
         info.address = "";
@@ -573,8 +528,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getAddressList")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAddressList')")
-    public CustomerApiResult<ListResponseData<AddressItem>> getAddressList(@RequestBody(required = false) ListRequestParams request)
-    {
+    public CustomerApiResult<ListResponseData<AddressItem>> getAddressList(@RequestBody(required = false) ListRequestParams request) {
         int current = getPageCurrent(request);
         int size = getPageSize(request);
         PageHelper.startPage(current, size);
@@ -588,8 +542,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/createAddress")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:createAddress')")
-    public CustomerApiResult<AddressItem> createAddress(@RequestBody AddressCreateRequest request)
-    {
+    public CustomerApiResult<AddressItem> createAddress(@RequestBody AddressCreateRequest request) {
         Address address = new Address();
         address.setUserId(getUserId());
         address.setContactName(request.contactName);
@@ -604,12 +557,10 @@ public class CustomerController extends BaseController
 
     @PostMapping("/updateAddress")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:updateAddress')")
-    public CustomerApiResult<SimpleResult> updateAddress(@RequestBody AddressItem request)
-    {
+    public CustomerApiResult<SimpleResult> updateAddress(@RequestBody AddressItem request) {
         Address address = addressService.selectAddressById(toLong(request.id));
         SimpleResult result = new SimpleResult();
-        if (address == null)
-        {
+        if (address == null) {
             result.success = false;
             return ok(result);
         }
@@ -626,8 +577,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/deleteAddress")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:deleteAddress')")
-    public CustomerApiResult<SimpleResult> deleteAddress(@RequestBody AddressIdRequest request)
-    {
+    public CustomerApiResult<SimpleResult> deleteAddress(@RequestBody AddressIdRequest request) {
         SimpleResult result = new SimpleResult();
         int rows = addressService.deleteAddressById(toLong(request.id));
         result.success = rows > 0;
@@ -636,11 +586,9 @@ public class CustomerController extends BaseController
 
     @PostMapping("/setDefaultAddress")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:setDefaultAddress')")
-    public CustomerApiResult<SimpleResult> setDefaultAddress(@RequestBody AddressIdRequest request)
-    {
+    public CustomerApiResult<SimpleResult> setDefaultAddress(@RequestBody AddressIdRequest request) {
         List<Address> list = addressService.selectAddressList(buildUserAddressQuery());
-        for (Address address : list)
-        {
+        for (Address address : list) {
             address.setIsDefault(address.getId().equals(toLong(request.id)) ? 1 : 0);
             address.setUpdateBy(String.valueOf(getUserId()));
             addressService.updateAddress(address);
@@ -652,14 +600,12 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getDefaultAddress")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getDefaultAddress')")
-    public CustomerApiResult<AddressItem> getDefaultAddress()
-    {
+    public CustomerApiResult<AddressItem> getDefaultAddress() {
         Address query = new Address();
         query.setUserId(getUserId());
         query.setIsDefault(1);
         List<Address> list = addressService.selectAddressList(query);
-        if (list.isEmpty())
-        {
+        if (list.isEmpty()) {
             return ok(null);
         }
         return ok(buildAddressItem(list.get(0)));
@@ -667,8 +613,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getAccountBalance")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getAccountBalance')")
-    public CustomerApiResult<AccountBalance> getAccountBalance()
-    {
+    public CustomerApiResult<AccountBalance> getAccountBalance() {
         AccountBalance balance = new AccountBalance();
         balance.totalBalance = BigDecimal.ZERO;
         balance.availableBalance = BigDecimal.ZERO;
@@ -678,8 +623,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getTransactionList")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getTransactionList')")
-    public CustomerApiResult<ListResponseData<TransactionItem>> getTransactionList(@RequestBody(required = false) ListRequestParams request)
-    {
+    public CustomerApiResult<ListResponseData<TransactionItem>> getTransactionList(@RequestBody(required = false) ListRequestParams request) {
         int current = getPageCurrent(request);
         int size = getPageSize(request);
         PageHelper.startPage(current, size);
@@ -701,8 +645,7 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getOrderStats")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderStats')")
-    public CustomerApiResult<OrderStats> getOrderStats()
-    {
+    public CustomerApiResult<OrderStats> getOrderStats() {
         List<PigOrder> orders = selectOrdersByUser();
         OrderStats stats = new OrderStats();
         stats.unpaid = countOrderStatus(orders, "WAITING");
@@ -715,15 +658,13 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getOrderList")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderList')")
-    public CustomerApiResult<ListResponseData<OrderListItem>> getOrderList(@RequestBody(required = false) OrderListRequest request)
-    {
+    public CustomerApiResult<ListResponseData<OrderListItem>> getOrderList(@RequestBody(required = false) OrderListRequest request) {
         int current = getPageCurrent(request);
         int size = getPageSize(request);
         PageHelper.startPage(current, size);
         PigOrder query = new PigOrder();
         query.setCreateBy(String.valueOf(getUserId()));
-        if (request != null && StringUtils.isNotEmpty(request.status) && !"ALL".equalsIgnoreCase(request.status))
-        {
+        if (request != null && StringUtils.isNotEmpty(request.status) && !"ALL".equalsIgnoreCase(request.status)) {
             query.setOrderStatus(mapOrderStatusToDb(request.status));
         }
         List<PigOrder> list = pigOrderService.selectPigOrderList(query);
@@ -734,11 +675,9 @@ public class CustomerController extends BaseController
 
     @PostMapping("/getOrderDetail")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getOrderDetail')")
-    public CustomerApiResult<OrderDetailInfo> getOrderDetail(@RequestBody OrderDetailRequest request)
-    {
+    public CustomerApiResult<OrderDetailInfo> getOrderDetail(@RequestBody OrderDetailRequest request) {
         PigOrder order = pigOrderService.selectPigOrderById(toLong(request.orderId));
-        if (order == null)
-        {
+        if (order == null) {
             return ok(null);
         }
         OrderDetailInfo detail = buildOrderDetailInfo(order);
@@ -747,12 +686,10 @@ public class CustomerController extends BaseController
 
     @PostMapping("/cancelOrder")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:cancelOrder')")
-    public CustomerApiResult<SimpleResult> cancelOrder(@RequestBody OrderActionRequest request)
-    {
+    public CustomerApiResult<SimpleResult> cancelOrder(@RequestBody OrderActionRequest request) {
         PigOrder order = pigOrderService.selectPigOrderById(toLong(request.orderId));
         SimpleResult result = new SimpleResult();
-        if (order == null)
-        {
+        if (order == null) {
             result.success = false;
             return ok(result);
         }
@@ -765,12 +702,10 @@ public class CustomerController extends BaseController
 
     @PostMapping("/payOrder")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:payOrder')")
-    public CustomerApiResult<SimpleResult> payOrder(@RequestBody OrderActionRequest request)
-    {
+    public CustomerApiResult<SimpleResult> payOrder(@RequestBody OrderActionRequest request) {
         PigOrder order = pigOrderService.selectPigOrderById(toLong(request.orderId));
         SimpleResult result = new SimpleResult();
-        if (order == null)
-        {
+        if (order == null) {
             result.success = false;
             return ok(result);
         }
@@ -784,12 +719,10 @@ public class CustomerController extends BaseController
 
     @PostMapping("/confirmReceipt")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:confirmReceipt')")
-    public CustomerApiResult<SimpleResult> confirmReceipt(@RequestBody OrderActionRequest request)
-    {
+    public CustomerApiResult<SimpleResult> confirmReceipt(@RequestBody OrderActionRequest request) {
         PigOrder order = pigOrderService.selectPigOrderById(toLong(request.orderId));
         SimpleResult result = new SimpleResult();
-        if (order == null)
-        {
+        if (order == null) {
             result.success = false;
             return ok(result);
         }
@@ -801,23 +734,19 @@ public class CustomerController extends BaseController
         return ok(result);
     }
 
-    protected <T> CustomerApiResult<T> ok(T data)
-    {
+    protected <T> CustomerApiResult<T> ok(T data) {
         return CustomerApiResult.success(data);
     }
 
-    protected CustomerApiResult<Void> ok()
-    {
+    protected CustomerApiResult<Void> ok() {
         return CustomerApiResult.success();
     }
 
-    protected <T> CustomerApiResult<T> fail(int errcode, String errmsg)
-    {
+    protected <T> CustomerApiResult<T> fail(int errcode, String errmsg) {
         return CustomerApiResult.error(errcode, errmsg);
     }
 
-    private AuctionItem buildAuctionItem(BidProduct bidProduct)
-    {
+    private AuctionItem buildAuctionItem(BidProduct bidProduct) {
         PigResource resource = bidProduct.getPigResourceId() != null ? pigResourceService.selectPigResourceById(bidProduct.getPigResourceId()) : null;
         PigType pigType = resource != null ? pigTypeService.selectPigTypeById(resource.getPigTypeId()) : null;
         Site site = bidProduct.getSiteId() != null ? siteService.selectSiteById(bidProduct.getSiteId()) : null;
@@ -840,8 +769,7 @@ public class CustomerController extends BaseController
         return item;
     }
 
-    private MyBidItem buildMyBidItem(UserBid bid)
-    {
+    private MyBidItem buildMyBidItem(UserBid bid) {
         BidProduct bidProduct = bid.getBidProductId() != null ? bidProductService.selectBidProductById(bid.getBidProductId()) : null;
         PigResource resource = bidProduct != null ? pigResourceService.selectPigResourceById(bidProduct.getPigResourceId()) : null;
         PigType pigType = resource != null ? pigTypeService.selectPigTypeById(resource.getPigTypeId()) : null;
@@ -859,15 +787,14 @@ public class CustomerController extends BaseController
         item.startingPrice = bidProduct != null ? bidProduct.getStartPrice() : null;
         item.startingCount = bidProduct != null ? bidProduct.getStartBidCount() : null;
         item.endTime = bidProduct != null ? bidProduct.getEndTime() : null;
+        item.bidStartTime = formatDate(bidProduct != null ? bidProduct.getStartTime() : null);
         item.imageUrl = firstImageUrl(pigType);
         item.bidStatus = resolveMyBidStatus(getUserId(), bid.getBidProductId());
         return item;
     }
 
-    private AddressItem buildAddressItem(Address address)
-    {
-        if (address == null)
-        {
+    private AddressItem buildAddressItem(Address address) {
+        if (address == null) {
             return null;
         }
         AddressItem item = new AddressItem();
@@ -882,8 +809,7 @@ public class CustomerController extends BaseController
         return item;
     }
 
-    private OrderListItem buildOrderListItem(PigOrder order)
-    {
+    private OrderListItem buildOrderListItem(PigOrder order) {
         BidProduct bidProduct = order.getBidProductId() != null ? bidProductService.selectBidProductById(order.getBidProductId()) : null;
         PigResource resource = bidProduct != null ? pigResourceService.selectPigResourceById(bidProduct.getPigResourceId()) : null;
         PigType pigType = resource != null ? pigTypeService.selectPigTypeById(resource.getPigTypeId()) : null;
@@ -901,32 +827,31 @@ public class CustomerController extends BaseController
         return item;
     }
 
-    private OrderDetailInfo buildOrderDetailInfo(PigOrder order)
-    {
+    private OrderDetailInfo buildOrderDetailInfo(PigOrder order) {
         BidProduct bidProduct = order.getBidProductId() != null ? bidProductService.selectBidProductById(order.getBidProductId()) : null;
         PigResource resource = bidProduct != null ? pigResourceService.selectPigResourceById(bidProduct.getPigResourceId()) : null;
         PigType pigType = resource != null ? pigTypeService.selectPigTypeById(resource.getPigTypeId()) : null;
         Site site = bidProduct != null && bidProduct.getSiteId() != null ? siteService.selectSiteById(bidProduct.getSiteId()) : null;
         Address address = order.getAddressId() != null ? addressService.selectAddressById(order.getAddressId()) : null;
-        DeliveryInfo delivery = resolveDeliveryInfo(order.getDeliveryInfoIds());
+        List<DeliveryInfo> deliveries = resolveDeliveryInfos(order.getDeliveryInfoIds());
         OrderDetailInfo detail = new OrderDetailInfo();
         detail.orderId = String.valueOf(order.getId());
         detail.status = mapOrderStatus(order.getOrderStatus());
         detail.farmName = site != null ? site.getSiteName() : null;
+        detail.farmAddress = buildFarmAddress(site);
         detail.pigTypeName = pigType != null ? pigType.getPigName() : null;
         detail.weightRange = pigType != null ? pigType.getWeightRange() : null;
         detail.quantity = bidProduct != null ? bidProduct.getTotalHeadCount() : null;
         detail.price = bidProduct != null ? bidProduct.getCurrentHighestPrice() : null;
         detail.priceInfo = buildPriceInfo(order);
         detail.deliveryInfo = buildDeliveryInfo(address, order);
-        detail.shipmentInfo = buildShipmentInfo(delivery);
+        detail.deliveryInfos = buildShipmentInfos(deliveries);
         detail.timeline = buildTimeline(order);
         detail.contractName = order.getOrderNo();
         return detail;
     }
 
-    private OrderPriceInfo buildPriceInfo(PigOrder order)
-    {
+    private OrderPriceInfo buildPriceInfo(PigOrder order) {
         OrderPriceInfo priceInfo = new OrderPriceInfo();
         priceInfo.depositAmount = BigDecimal.ZERO;
         priceInfo.goodsAmount = defaultZero(order.getOrderAmount());
@@ -935,8 +860,7 @@ public class CustomerController extends BaseController
         return priceInfo;
     }
 
-    private OrderDeliveryInfo buildDeliveryInfo(Address address, PigOrder order)
-    {
+    private OrderDeliveryInfo buildDeliveryInfo(Address address, PigOrder order) {
         OrderDeliveryInfo info = new OrderDeliveryInfo();
         info.contactName = address != null ? address.getContactName() : null;
         info.contactPhone = address != null ? address.getContactPhone() : null;
@@ -945,23 +869,50 @@ public class CustomerController extends BaseController
         return info;
     }
 
-    private OrderShipmentInfo buildShipmentInfo(DeliveryInfo delivery)
-    {
-        if (delivery == null)
-        {
+    private String buildFarmAddress(Site site) {
+        if (site == null) {
+            return null;
+        }
+        String code = site.getSiteAddressCode() == null ? "" : site.getSiteAddressCode();
+        String address = site.getSiteAddress() == null ? "" : site.getSiteAddress();
+        String result = code + address;
+        return StringUtils.isNotEmpty(result) ? result : null;
+    }
+
+    private List<OrderShipmentInfo> buildShipmentInfos(List<DeliveryInfo> deliveries) {
+        if (deliveries == null || deliveries.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<OrderShipmentInfo> list = new ArrayList<OrderShipmentInfo>();
+        for (DeliveryInfo delivery : deliveries) {
+            OrderShipmentInfo info = buildShipmentInfo(delivery);
+            if (info != null) {
+                list.add(info);
+            }
+        }
+        return list;
+    }
+
+    private OrderShipmentInfo buildShipmentInfo(DeliveryInfo delivery) {
+        if (delivery == null) {
             return null;
         }
         OrderShipmentInfo info = new OrderShipmentInfo();
+        info.transportCode = delivery.getTransportCode();
+        info.currentLongitude = delivery.getCurrentLongitude();
+        info.currentLatitude = delivery.getCurrentLatitude();
         info.driverName = delivery.getDelivererName();
         info.driverPhone = delivery.getDelivererPhone();
         info.vehicleNo = delivery.getVehicleNo();
+        info.vehicleType = delivery.getVehicleType();
+        info.loadCount = delivery.getLoadCount();
+        info.deliveryStatus = delivery.getDeliveryStatus();
         info.estimatedArrival = null;
         info.remark = delivery.getRemark();
         return info;
     }
 
-    private List<OrderTimelineNode> buildTimeline(PigOrder order)
-    {
+    private List<OrderTimelineNode> buildTimeline(PigOrder order) {
         List<OrderTimelineNode> timeline = new ArrayList<OrderTimelineNode>();
         timeline.add(buildTimelineNode("下单", formatDate(order.getCreateTime()), null));
         timeline.add(buildTimelineNode("支付", formatDate(order.getPayTime()), null));
@@ -970,8 +921,7 @@ public class CustomerController extends BaseController
         return timeline;
     }
 
-    private OrderTimelineNode buildTimelineNode(String label, String time, String desc)
-    {
+    private OrderTimelineNode buildTimelineNode(String label, String time, String desc) {
         OrderTimelineNode node = new OrderTimelineNode();
         node.label = label;
         node.time = time;
@@ -979,37 +929,37 @@ public class CustomerController extends BaseController
         return node;
     }
 
-    private Address buildUserAddressQuery()
-    {
+    private Address buildUserAddressQuery() {
         Address query = new Address();
         query.setUserId(getUserId());
         return query;
     }
 
-    private Enterprise getEnterpriseByUser()
-    {
+    private Enterprise getEnterpriseByUser() {
         UserExt userExt = userExtService.selectUserExtById(getUserId());
-        if (userExt != null && userExt.getEnterpriseId() != null)
-        {
+        if (userExt != null && userExt.getEnterpriseId() != null) {
             return enterpriseService.selectEnterpriseById(userExt.getEnterpriseId());
         }
         return null;
     }
 
-    private DeliveryInfo resolveDeliveryInfo(String deliveryInfoIds)
-    {
+    private List<DeliveryInfo> resolveDeliveryInfos(String deliveryInfoIds) {
         List<String> ids = splitToList(deliveryInfoIds);
-        if (ids.isEmpty())
-        {
-            return null;
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
         }
-        return deliveryInfoService.selectDeliveryInfoById(toLong(ids.get(0)));
+        List<DeliveryInfo> deliveries = new ArrayList<DeliveryInfo>();
+        for (String id : ids) {
+            DeliveryInfo info = deliveryInfoService.selectDeliveryInfoById(toLong(id));
+            if (info != null) {
+                deliveries.add(info);
+            }
+        }
+        return deliveries;
     }
 
-    private String resolveMyBidStatus(Long userId, Long bidProductId)
-    {
-        if (userId == null || bidProductId == null)
-        {
+    private String resolveMyBidStatus(Long userId, Long bidProductId) {
+        if (userId == null || bidProductId == null) {
             return "NO_BID";
         }
         UserBid query = new UserBid();
@@ -1019,46 +969,37 @@ public class CustomerController extends BaseController
         // todo 查询条件移除 已经取消的
 
         list.removeIf(item -> "CANCELED".equalsIgnoreCase(item.getStatus()));
-        if (list.isEmpty())
-        {
+        if (list.isEmpty()) {
             return "NO_BID";
         }
         String status = list.get(0).getStatus();
-        if (StringUtils.isEmpty(status))
-        {
+        if (StringUtils.isEmpty(status)) {
             return "BIDDING";
         }
-        if (status.toUpperCase().contains("SUCCESS"))
-        {
+        if (status.toUpperCase().contains("SUCCESS")) {
             return "BID_SUCCESS";
         }
-        if (status.toUpperCase().contains("FAIL"))
-        {
+        if (status.toUpperCase().contains("FAIL")) {
             return "BID_FAILED";
         }
         return "BIDDING";
     }
 
-    private int getPageCurrent(ListRequestParams params)
-    {
-        if (params != null && params.current != null && params.current > 0)
-        {
+    private int getPageCurrent(ListRequestParams params) {
+        if (params != null && params.current != null && params.current > 0) {
             return params.current;
         }
         return 1;
     }
 
-    private int getPageSize(ListRequestParams params)
-    {
-        if (params != null && params.size != null && params.size > 0)
-        {
+    private int getPageSize(ListRequestParams params) {
+        if (params != null && params.size != null && params.size > 0) {
             return params.size;
         }
         return 10;
     }
 
-    private <T> ListResponseData<T> buildPage(List<T> records, PageInfo<?> pageInfo, int current, int size)
-    {
+    private <T> ListResponseData<T> buildPage(List<T> records, PageInfo<?> pageInfo, int current, int size) {
         ListResponseData<T> page = new ListResponseData<T>();
         page.current = (long) current;
         page.size = (long) size;
@@ -1068,181 +1009,144 @@ public class CustomerController extends BaseController
         return page;
     }
 
-    private List<String> resolveTagNames(PigType pigType)
-    {
-        if (pigType == null)
-        {
+    private List<String> resolveTagNames(PigType pigType) {
+        if (pigType == null) {
             return new ArrayList<String>();
         }
         List<String> tagIds = splitToList(pigType.getPigTagIds());
         List<String> names = new ArrayList<String>();
-        for (String id : tagIds)
-        {
+        for (String id : tagIds) {
             PigTag tag = pigTagService.selectPigTagById(toLong(id));
-            if (tag != null && StringUtils.isNotEmpty(tag.getTagName()))
-            {
+            if (tag != null && StringUtils.isNotEmpty(tag.getTagName())) {
                 names.add(tag.getTagName());
             }
         }
         return names;
     }
 
-    private List<String> splitToList(String value)
-    {
-        if (StringUtils.isEmpty(value))
-        {
+    private List<String> splitToList(String value) {
+        if (StringUtils.isEmpty(value)) {
             return new ArrayList<String>();
         }
         return Arrays.stream(value.split(","))
-            .filter(StringUtils::isNotEmpty)
-            .collect(Collectors.toList());
+                .filter(StringUtils::isNotEmpty)
+                .collect(Collectors.toList());
     }
 
-    private String joinList(List<String> list)
-    {
-        if (list == null || list.isEmpty())
-        {
+    private String joinList(List<String> list) {
+        if (list == null || list.isEmpty()) {
             return null;
         }
         return StringUtils.join(list, ",");
     }
 
-    private String formatDate(Date date)
-    {
+    private String formatDate(Date date) {
         return date != null ? DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD_HH_MM_SS, date) : null;
     }
 
 
-    private String firstImageUrl(PigType pigType)
-    {
-        if (pigType == null || StringUtils.isEmpty(pigType.getPigMedia()))
-        {
+    private String firstImageUrl(PigType pigType) {
+        if (pigType == null || StringUtils.isEmpty(pigType.getPigMedia())) {
             return "";
         }
         List<String> media = splitToList(pigType.getPigMedia());
-        for (String url : media)
-        {
-            if (!isVideoUrl(url))
-            {
+        for (String url : media) {
+            if (!isVideoUrl(url)) {
                 return url;
             }
         }
         return media.isEmpty() ? "" : media.get(0);
     }
-    private List<String> mergeMediaUrls(PigType pigType)
-    {
+
+    private List<String> mergeMediaUrls(PigType pigType) {
         List<String> urls = new ArrayList<String>();
-        if (pigType == null)
-        {
+        if (pigType == null) {
             return urls;
         }
         urls.addAll(splitToList(pigType.getPigMedia()));
         return urls;
     }
 
-    private boolean isVideoUrl(String url)
-    {
+    private boolean isVideoUrl(String url) {
         return StringUtils.isNotEmpty(url) && url.matches("(?i).*\\.(mp4|webm|mov|m4v|avi)(\\?.*)?$");
     }
 
-    private Long calcRemainSeconds(Date endTime)
-    {
-        if (endTime == null)
-        {
+    private Long calcRemainSeconds(Date endTime) {
+        if (endTime == null) {
             return 0L;
         }
         long diff = endTime.getTime() - System.currentTimeMillis();
         return diff > 0 ? diff / 1000 : 0L;
     }
 
-    private List<PigOrder> selectOrdersByUser()
-    {
+    private List<PigOrder> selectOrdersByUser() {
         PigOrder query = new PigOrder();
         query.setCreateBy(String.valueOf(getUserId()));
         return pigOrderService.selectPigOrderList(query);
     }
 
-    private int countOrderStatus(List<PigOrder> orders, String status)
-    {
+    private int countOrderStatus(List<PigOrder> orders, String status) {
         return (int) orders.stream().filter(order -> status.equalsIgnoreCase(order.getOrderStatus())).count();
     }
 
-    private String mapOrderStatus(String dbStatus)
-    {
-        if ("WAITING".equalsIgnoreCase(dbStatus))
-        {
+    private String mapOrderStatus(String dbStatus) {
+        if ("WAITING".equalsIgnoreCase(dbStatus)) {
             return "ORDER_PAYMENT";
         }
-        if ("PAID".equalsIgnoreCase(dbStatus))
-        {
+        if ("PAID".equalsIgnoreCase(dbStatus)) {
             return "ORDER_SHIPMENT";
         }
-        if ("SHIPPED".equalsIgnoreCase(dbStatus))
-        {
+        if ("SHIPPED".equalsIgnoreCase(dbStatus)) {
             return "ORDER_RECEIPT";
         }
-        if ("COMPLETED".equalsIgnoreCase(dbStatus))
-        {
+        if ("COMPLETED".equalsIgnoreCase(dbStatus)) {
             return "ORDER_COMPLETED";
         }
-        if ("CANCELED".equalsIgnoreCase(dbStatus))
-        {
+        if ("CANCELED".equalsIgnoreCase(dbStatus)) {
             return "ORDER_CANCELLED";
         }
         return "ORDER_PAYMENT";
     }
 
-    private String mapOrderStatusToDb(String status)
-    {
-        if ("ORDER_PAYMENT".equalsIgnoreCase(status))
-        {
+    private String mapOrderStatusToDb(String status) {
+        if ("ORDER_PAYMENT".equalsIgnoreCase(status)) {
             return "WAITING";
         }
-        if ("ORDER_SHIPMENT".equalsIgnoreCase(status))
-        {
+        if ("ORDER_SHIPMENT".equalsIgnoreCase(status)) {
             return "PAID";
         }
-        if ("ORDER_RECEIPT".equalsIgnoreCase(status))
-        {
+        if ("ORDER_RECEIPT".equalsIgnoreCase(status)) {
             return "SHIPPED";
         }
-        if ("ORDER_COMPLETED".equalsIgnoreCase(status))
-        {
+        if ("ORDER_COMPLETED".equalsIgnoreCase(status)) {
             return "COMPLETED";
         }
-        if ("ORDER_CANCELLED".equalsIgnoreCase(status))
-        {
+        if ("ORDER_CANCELLED".equalsIgnoreCase(status)) {
             return "CANCELED";
         }
         return status;
     }
 
-    private BigDecimal defaultZero(BigDecimal value)
-    {
+    private BigDecimal defaultZero(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
     }
 
-    private BigDecimal safeAdd(BigDecimal left, BigDecimal right)
-    {
+    private BigDecimal safeAdd(BigDecimal left, BigDecimal right) {
         return defaultZero(left).add(defaultZero(right));
     }
 
-    private Long toLong(String value)
-    {
-        if (StringUtils.isEmpty(value))
-        {
+    private Long toLong(String value) {
+        if (StringUtils.isEmpty(value)) {
             return null;
         }
         return Long.valueOf(value);
     }
 
-    private String toStr(BigDecimal value)
-    {
+    private String toStr(BigDecimal value) {
         return value != null ? value.toPlainString() : null;
     }
 
-    public static class UploadImageResponse
-    {
+    public static class UploadImageResponse {
         public String url;
     }
 }

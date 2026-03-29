@@ -446,7 +446,8 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
                     </span>
                   ))}
             </div>
-            <div className="text-xs text-slate-400 mb-2">场点：{detail?.farmName || params.farmName}</div>
+            <div className="text-xs text-slate-400 mb-1">场点：{detail?.farmName || params.farmName}</div>
+            <div className="text-[11px] text-slate-500">竞价开始时间：{detail?.bidStartTime || params.bidStartTime || '-'}</div>
           </div>
           <div className="bg-industry-red/5 px-2 py-1 rounded-sm border border-industry-red/20">
             <span className="text-industry-red text-[10px] font-bold">最高价</span>

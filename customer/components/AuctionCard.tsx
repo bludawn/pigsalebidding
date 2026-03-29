@@ -14,6 +14,7 @@ interface AuctionCardProps {
   tags: string[];
   startingCount: number;
   startingPrice: number;
+  bidStartTime?: string;
   customerBidStatus?: MyBidStatus;
 }
 
@@ -30,6 +31,7 @@ const AuctionCard: React.FC<AuctionCardProps> = ({
   tags,
   startingCount,
   startingPrice,
+  bidStartTime,
   customerBidStatus,
 }) => {
   const customerStatusConfig: Record<MyBidStatus, { label: string; className: string }> = {
@@ -82,6 +84,9 @@ const AuctionCard: React.FC<AuctionCardProps> = ({
         <div className="flex-1 flex flex-col justify-between h-28 py-0.5">
           <div>
             <h3 className="text-[15px] font-bold text-slate-800 line-clamp-1">{`${breed} ${weightRange} KG`}</h3>
+            {bidStartTime && (
+              <div className="text-[10px] text-slate-500 mt-1">竞价开始时间：{bidStartTime}</div>
+            )}
             <div className="flex flex-wrap gap-2 mt-2">
               {tags.map(tag => (
                 <span key={tag} className="bg-slate-100 text-slate-500 text-[10px] px-2 py-1 rounded-sm font-medium">

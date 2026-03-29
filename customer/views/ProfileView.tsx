@@ -177,7 +177,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ onNavigate }) => {
 
         <div className="flex items-center gap-4">
           <div className="relative">
-            <img src={profile?.avatar || 'https://images.unsplash.com/photo-1610216705422-caa3fcb6d158?w=150&h=150&fit=crop'} alt="" className="w-18 h-18 rounded-full border-4 border-industry-red/5 object-cover shadow-sm" />
+            <img src={profile?.avatar || 'https://images.unsplash.com/photo-1610216705422-caa3fcb6d158?w=150&h=150&fit=crop'} alt="" className="w-16 h-16 rounded-full border-4 border-industry-red/5 object-cover shadow-sm shrink-0" />
             <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1.5 shadow-md border border-slate-50">
               <svg className="w-3.5 h-3.5 text-industry-red" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1.5 1.5 0 00-1.414-1.414L9 10.586 7.707 9.293a1.5 1.5 0 00-1.414 1.414l2 2a1.5 1.5 0 002.414 0l4-4z" clipRule="evenodd" />
