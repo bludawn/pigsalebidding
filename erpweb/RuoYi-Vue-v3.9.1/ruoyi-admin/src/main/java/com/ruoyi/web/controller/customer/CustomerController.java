@@ -777,7 +777,8 @@ public class CustomerController extends BaseController {
         item.quantity = bidProduct.getTotalHeadCount();
         item.weightRange = pigType != null ? pigType.getWeightRange() : null;
         item.tags = resolveTagNames(pigType);
-        item.startingPrice = bidProduct.getCurrentHighestPrice();
+        item.startingPrice = bidProduct.getCurrentHighestPrice() == null ?
+                bidProduct.getStartPrice() : bidProduct.getCurrentHighestPrice();
         item.startingCount = bidProduct.getStartBidCount();
         item.endTime = bidProduct.getEndTime();
         item.imageUrl = firstImageUrl(pigType);

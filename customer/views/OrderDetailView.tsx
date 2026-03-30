@@ -15,6 +15,12 @@ const statusMetaMap: Record<OrderStatus, { label: string; desc: string; badgeCla
   ORDER_CANCELLED: { label: '已取消', desc: '订单已取消，可重新下单', badgeClass: 'bg-slate-200 text-slate-600' },
 };
 
+const deliveryStatusLabelMap: Record<string, string> = {
+  WAITING: '待发货',
+  ON_THE_WAY: '运输中',
+  ARRIVED: '已送达',
+};
+
 const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => {
   const [detail, setDetail] = useState<OrderDetailInfo | null>(null);
   const [loading, setLoading] = useState(false);
@@ -133,13 +139,33 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
     }
     try {
       const AMap = await ensureAmap();
+      const existingContainer = amapRef.current?.getContainer?.();
+      if (amapRef.current && existingContainer && existingContainer !== container) {
+        try {
+          amapRef.current.destroy();
+        } catch (err) {
+          // ignore
+        }
+        amapRef.current = null;
+        amapOverlaysRef.current = [];
+      }
       if (!amapRef.current) {
         amapRef.current = new AMap.Map(container, {
           zoom: 11,
           center: [116.397428, 39.90923],
         });
-        amapRef.current.addControl(new AMap.ToolBar());
-        amapRef.current.addControl(new AMap.Scale());
+        if (AMap.ToolBar) {
+          amapRef.current.addControl(new AMap.ToolBar());
+        }
+        if (AMap.Scale) {
+          amapRef.current.addControl(new AMap.Scale());
+        } else if (AMap.plugin) {
+          AMap.plugin(['AMap.Scale'], () => {
+            if (AMap.Scale && amapRef.current) {
+              amapRef.current.addControl(new AMap.Scale());
+            }
+          });
+        }
       }
       clearAmapOverlays();
 
@@ -199,12 +225,13 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
         }
       });
 
-      if (bounds.length) {
-        amapRef.current.setFitView(bounds);
+      if (amapOverlaysRef.current.length) {
+        amapRef.current.setFitView(amapOverlaysRef.current);
       }
       amapReadyRef.current = true;
       setMapError(null);
     } catch (error) {
+      console.error('AMap render failed:', error);
       setMapError('地图加载失败');
     }
   }, [clearAmapOverlays, deliveryInfos, detail, ensureAmap, geocodeAddress, resolveLngLat]);
@@ -349,8 +376,11 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
                     {info.driverPhone && (
                       <div className="flex justify-between"><span>联系电话</span><span className="text-slate-800 font-bold">{info.driverPhone}</span></div>
                     )}
+                    {info.loadCount !== undefined && info.loadCount !== null && (
+                      <div className="flex justify-between"><span>数量</span><span className="text-slate-800 font-bold">{info.loadCount}头</span></div>
+                    )}
                     {info.deliveryStatus && (
-                      <div className="flex justify-between"><span>状态</span><span className="text-slate-800 font-bold">{info.deliveryStatus}</span></div>
+                      <div className="flex justify-between"><span>状态</span><span className="text-slate-800 font-bold">{deliveryStatusLabelMap[info.deliveryStatus] || info.deliveryStatus}</span></div>
                     )}
                     {info.remark && (
                       <div className="flex justify-between"><span>备注</span><span className="text-slate-800 font-bold">{info.remark}</span></div>

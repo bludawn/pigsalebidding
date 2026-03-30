@@ -149,6 +149,7 @@ f_createTime
 <if test="remark != null and remark != ''">#{remark},</if>
 <if test="pigResourceId != null">#{pigResourceId},</if>
 <if test="orderAmount != null">#{orderAmount},</if>
+<if test="unitPrice != null">#{unitPrice},</if>
 <if test="bidQuantity != null">#{bidQuantity},</if>
 <if test="payChannel != null and payChannel != ''">#{payChannel},</if>
 <if test="payTime != null">#{payTime},</if>

@@ -87,6 +87,8 @@ export interface OrderDeliveryInfo {
 export interface OrderShipmentInfo {
   currentLongitude?: string;
   currentLatitude?: string;
+  loadCount?: number;
+  deliveryStatus?: string;
   driverName?: string;
   driverPhone?: string;
   vehicleNo?: string;
