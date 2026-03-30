@@ -65,6 +65,10 @@ public class PigOrder extends BaseEntity
     @Excel(name = "订单金额")
     private BigDecimal orderAmount;
 
+    /** 总重量(kg) */
+    @Excel(name = "总重量(kg)")
+    private BigDecimal totalWeight;
+
     /** 单价 */
     @Excel(name = "单价")
     private BigDecimal unitPrice;
@@ -230,6 +234,16 @@ public class PigOrder extends BaseEntity
         return orderAmount;
     }
 
+    public void setTotalWeight(BigDecimal totalWeight)
+    {
+        this.totalWeight = totalWeight;
+    }
+
+    public BigDecimal getTotalWeight()
+    {
+        return totalWeight;
+    }
+
     public void setBidQuantity(Integer bidQuantity)
     {
         this.bidQuantity = bidQuantity;
@@ -316,6 +330,7 @@ public class PigOrder extends BaseEntity
             .append("remark", getRemark())
             .append("pigResourceId", getPigResourceId())
             .append("orderAmount", getOrderAmount())
+            .append("totalWeight", getTotalWeight())
             .append("unitPrice", getUnitPrice())
             .append("bidQuantity", getBidQuantity())
             .append("payChannel", getPayChannel())

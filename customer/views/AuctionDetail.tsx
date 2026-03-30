@@ -34,6 +34,20 @@ const parsePriceValue = (value: string) => {
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
+const parseWeightRange = (value?: string) => {
+  if (!value) return 0;
+  const normalized = value.split('/')[0].trim();
+  const parts = normalized.split('-').map(item => parseFloat(item));
+  if (parts.length < 2 || parts.some(num => Number.isNaN(num))) {
+    return 0;
+  }
+  const [min, max] = parts;
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    return 0;
+  }
+  return (min + max) / 2;
+};
+
 const isStepValid = (value: number, step: number) => {
   if (!step || step <= 0) return true;
   const ratio = value / step;
@@ -79,6 +93,11 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
     const parsed = parsePriceValue(detail.price);
     return parsed > 0 ? parsed : params.startingPrice;
   }, [detail, params.startingPrice]);
+
+  const avgWeight = useMemo(() => {
+    const rangeText = detail?.weightRanges?.[0] || params.weightRange || '';
+    return parseWeightRange(rangeText);
+  }, [detail?.weightRanges, params.weightRange]);
 
   const loadDetail = async (force = false) => {
     const key = `${params.id}-${refreshKey}`;
@@ -289,8 +308,12 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
 
   const totalPrice = useMemo(() => {
     if (!bidPrice || !bidCount) return 0;
-    return Number((bidPrice * bidCount).toFixed(2));
-  }, [bidPrice, bidCount]);
+    const weight = avgWeight > 0 ? avgWeight : 0;
+    if (weight <= 0) {
+      return Number((bidPrice * bidCount).toFixed(2));
+    }
+    return Number((bidPrice * bidCount * weight).toFixed(2));
+  }, [avgWeight, bidCount, bidPrice]);
 
   const isCurrentMediaVideo = isVideoUrl(mediaList[currentMediaIndex] || '');
   const progressPercent = currentVideoDuration > 0 ? Math.min(100, (currentVideoTime / currentVideoDuration) * 100) : 0;
@@ -691,6 +714,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
         {bidValidationMessage && (
           <div className="mt-2 text-[10px] text-industry-red">{bidValidationMessage}</div>
         )}
+        <div className="mt-2 text-[11px] text-slate-500">预计总价为 <span className="text-industry-red font-bold">¥{totalPrice.toFixed(2)}</span></div>
 
         <button
           onClick={() => setIsDialogOpen(true)}
@@ -712,7 +736,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
               <div className="flex justify-between"><span>生猪类型</span><span className="text-slate-800 font-bold">{detail?.pigTypeName || params.breed}</span></div>
               <div className="flex justify-between"><span>数量</span><span className="text-slate-800 font-bold">{bidCount}头</span></div>
               <div className="flex justify-between"><span>价格</span><span className="text-slate-800 font-bold">¥{bidPrice.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>总价</span><span className="text-industry-red font-bold">¥{totalPrice.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>预计总价</span><span className="text-industry-red font-bold">¥{totalPrice.toFixed(2)}</span></div>
             </div>
             {bidValidationMessage && (
               <div className="mt-3 text-[10px] text-industry-red">{bidValidationMessage}</div>

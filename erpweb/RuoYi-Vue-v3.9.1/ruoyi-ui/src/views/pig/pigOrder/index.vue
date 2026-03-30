@@ -91,6 +91,7 @@
         </template>
       </el-table-column>
       <el-table-column label="订单金额" align="center" prop="orderAmount" v-if="columns.orderAmount.visible" />
+      <el-table-column label="总重量(kg)" align="center" prop="totalWeight" v-if="columns.totalWeight.visible" />
       <el-table-column label="竞拍数量(头)" align="center" prop="bidQuantity" v-if="columns.bidQuantity.visible">
         <template slot-scope="scope">
           <span>{{ scope.row.bidQuantity ? scope.row.bidQuantity + '头' : '-' }}</span>
@@ -157,6 +158,7 @@
             <div>竞拍数量：{{ item.bidQuantity ? item.bidQuantity + '头' : '-' }}</div>
             <div>单价：{{ item.unitPrice }}</div>
             <div>订单金额：{{ item.orderAmount }}</div>
+            <div>总重量(kg)：{{ item.totalWeight }}</div>
             <div>支付渠道：{{ item.payChannel }}</div>
             <div>支付时间：{{ parseTime(item.payTime) }}</div>
             <div>期望装车时间：{{ parseTime(item.expectLoadTime) }}</div>
@@ -225,6 +227,9 @@
         </el-form-item>
         <el-form-item label="单价" prop="unitPrice">
           <el-input v-model="form.unitPrice" placeholder="请输入单价" :disabled="viewModeOnly" />
+        </el-form-item>
+        <el-form-item label="总重量(kg)" prop="totalWeight">
+          <el-input v-model="form.totalWeight" placeholder="请输入总重量" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="订单金额" prop="orderAmount">
           <el-input v-model="form.orderAmount" placeholder="自动计算，可手工修改" :disabled="viewModeOnly" />
@@ -388,6 +393,7 @@ export default {
         expectLoadTime: { label: '期望装车时间', visible: true },
         pigResourceId: { label: '生猪资源', visible: true },
         orderAmount: { label: '订单金额', visible: true },
+        totalWeight: { label: '总重量(kg)', visible: true },
         unitPrice: { label: '单价', visible: true },
         bidQuantity: { label: '竞拍数量', visible: true },
         payChannel: { label: '支付渠道', visible: true },
@@ -450,6 +456,9 @@ export default {
     },
     'form.bidQuantity'() {
       this.updateOrderAmount()
+    },
+    'form.totalWeight'() {
+      this.updateOrderAmount()
     }
   },
   methods: {
@@ -480,6 +489,7 @@ export default {
         remark: undefined,
         pigResourceId: undefined,
         orderAmount: undefined,
+        totalWeight: undefined,
         bidQuantity: undefined,
         unitPrice: undefined,
         payChannel: undefined,
@@ -521,7 +531,7 @@ export default {
       getPigOrder(id).then(async response => {
         this.form = response.data
         if (this.form.unitPrice == null) {
-          this.form.unitPrice = this.calcUnitPrice(this.form.orderAmount, this.form.bidQuantity)
+          this.form.unitPrice = this.calcUnitPrice(this.form.orderAmount, this.form.totalWeight, this.form.bidQuantity)
         }
         this.open = true
         this.title = "修改订单"
@@ -534,7 +544,7 @@ export default {
       const id = row.id || this.ids
       getPigOrder(id).then(async response => {
         this.form = response.data
-        this.form.unitPrice = this.calcUnitPrice(this.form.orderAmount, this.form.bidQuantity)
+        this.form.unitPrice = this.calcUnitPrice(this.form.orderAmount, this.form.totalWeight, this.form.bidQuantity)
         this.open = true
         this.title = "查看订单"
         await this.loadDeliveryInfosByIds(this.form.deliveryInfoIds)
@@ -698,10 +708,17 @@ export default {
       const item = this.siteMap[id]
       return item ? (item.siteName || item.id) : id
     },
-    calcUnitPrice(orderAmount, bidQuantity) {
+    calcUnitPrice(orderAmount, totalWeight, bidQuantity) {
       const amount = Number(orderAmount)
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return undefined
+      }
+      const weight = Number(totalWeight)
+      if (Number.isFinite(weight) && weight > 0) {
+        return Number((amount / weight).toFixed(2))
+      }
       const quantity = Number(bidQuantity)
-      if (!Number.isFinite(amount) || !Number.isFinite(quantity) || quantity <= 0) {
+      if (!Number.isFinite(quantity) || quantity <= 0) {
         return undefined
       }
       return Number((amount / quantity).toFixed(2))
@@ -711,8 +728,17 @@ export default {
         return
       }
       const unitPrice = Number(this.form.unitPrice)
+      if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+        return
+      }
+      const totalWeight = Number(this.form.totalWeight)
+      if (Number.isFinite(totalWeight) && totalWeight > 0) {
+        const amount = Number((unitPrice * totalWeight).toFixed(2))
+        this.$set(this.form, 'orderAmount', amount)
+        return
+      }
       const quantity = Number(this.form.bidQuantity)
-      if (!Number.isFinite(unitPrice) || !Number.isFinite(quantity) || quantity <= 0) {
+      if (!Number.isFinite(quantity) || quantity <= 0) {
         return
       }
       const amount = Number((unitPrice * quantity).toFixed(2))

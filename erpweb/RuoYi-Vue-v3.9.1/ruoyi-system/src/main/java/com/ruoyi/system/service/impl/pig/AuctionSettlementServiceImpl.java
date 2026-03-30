@@ -165,7 +165,6 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
         BigDecimal price = bid.getPrice() == null ? BigDecimal.ZERO : bid.getPrice();
         order.setUnitPrice(price);
         order.setBidQuantity(allocated);
-        order.setOrderAmount(price.multiply(new BigDecimal(allocated)));
         order.setCreateBy(String.valueOf(bid.getUserId()));
 
         pigOrderService.insertPigOrder(order);
