@@ -297,7 +297,7 @@ export interface FilterState {
   weightRange?: string;
   tags?: string[];
   date?: string;
-  distance: number;
+  distance?: number;
 }
 
 /** 分页状态 */

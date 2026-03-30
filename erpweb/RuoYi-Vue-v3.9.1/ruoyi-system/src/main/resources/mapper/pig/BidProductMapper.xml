@@ -48,9 +48,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="enterpriseGroupId != null">
                 AND f_enterpriseGroupId = #{enterpriseGroupId}
             </if>
-            <if test="siteId != null">
-                AND f_siteId = #{siteId}
-            </if>
+    <if test="siteId != null">
+        AND f_siteId = #{siteId}
+    </if>
+    <if test="siteIds != null and siteIds.size > 0">
+        AND f_siteId in
+        <foreach collection="siteIds" item="siteId" open="(" separator="," close=")">
+            #{siteId}
+        </foreach>
+    </if>
+
             <if test="startPrice != null">
                 AND f_startPrice = #{startPrice}
             </if>

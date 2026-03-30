@@ -157,15 +157,28 @@ public class CustomerController extends BaseController {
     public CustomerApiResult<ListResponseData<AuctionItem>> getAuctionList(@RequestBody(required = false) AuctionListParams params) {
         int current = getPageCurrent(params);
         int size = getPageSize(params);
-        PageHelper.startPage(current, size);
-        PageHelper.orderBy("f_startTime desc");
+
         BidProduct query = new BidProduct();
         if (params != null && StringUtils.isNotEmpty(params.bidStatus)) {
             query.setBidStatus(params.bidStatus);
         }
         if (params != null && StringUtils.isNotEmpty(params.farmId)) {
             query.setSiteId(toLong(params.farmId));
+        } else if (params != null && params.distance != null) {
+            Double latitude = parseDouble(params.latitude);
+            Double longitude = parseDouble(params.longitude);
+            if (latitude != null && longitude != null) {
+                List<Long> siteIds = resolveNearbySiteIds(latitude, longitude, params.distance);
+                if (siteIds.isEmpty()) {
+                    List<AuctionItem> emptyRecords = Collections.emptyList();
+                    PageInfo<BidProduct> emptyPage = new PageInfo<BidProduct>(Collections.emptyList());
+                    return ok(buildPage(emptyRecords, emptyPage, current, size));
+                }
+                query.setSiteIds(siteIds);
+            }
         }
+        PageHelper.startPage(current, size);
+        PageHelper.orderBy("f_startTime desc");
         List<BidProduct> list = bidProductService.selectBidProductList(query);
         PageInfo<BidProduct> pageInfo = new PageInfo<BidProduct>(list);
         List<AuctionItem> records = list.stream().map(this::buildAuctionItem).collect(Collectors.toList());
@@ -1072,6 +1085,53 @@ public class CustomerController extends BaseController {
             return "BID_FAILED";
         }
         return "BIDDING";
+    }
+
+    private List<Long> resolveNearbySiteIds(double latitude, double longitude, double distanceKm) {
+        List<Site> sites = siteService.selectSiteList(new Site());
+        if (sites == null || sites.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return sites.stream()
+                .filter(site -> isWithinDistance(site, latitude, longitude, distanceKm))
+                .map(Site::getId)
+                .filter(id -> id != null)
+                .collect(Collectors.toList());
+    }
+
+    private boolean isWithinDistance(Site site, double latitude, double longitude, double distanceKm) {
+        if (site == null || distanceKm < 0) {
+            return false;
+        }
+        Double siteLatitude = parseDouble(site.getSiteLatitude());
+        Double siteLongitude = parseDouble(site.getSiteLongitude());
+        if (siteLatitude == null || siteLongitude == null) {
+            return false;
+        }
+        double realDistance = calcDistanceKm(latitude, longitude, siteLatitude, siteLongitude);
+        return realDistance <= distanceKm;
+    }
+
+    private double calcDistanceKm(double lat1, double lon1, double lat2, double lon2) {
+        final double earthRadius = 6371.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadius * c;
+    }
+
+    private Double parseDouble(String value) {
+        if (StringUtils.isEmpty(value)) {
+            return null;
+        }
+        try {
+            return Double.valueOf(value);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     private int getPageCurrent(ListRequestParams params) {

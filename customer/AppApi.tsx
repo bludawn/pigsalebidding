@@ -215,6 +215,8 @@ export interface AuctionListParams extends ListRequestParams {
   tags?: string[];       // 产品标签（多选）
   date?: string;         // 日期 (YYYY-MM-DD)
   distance?: number;     // 距离
+  latitude?: number;
+  longitude?: number;
 }
 
 /** 获取竞价列表 */

@@ -2,6 +2,7 @@ package com.ruoyi.system.domain.pig;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -35,6 +36,9 @@ public class BidProduct extends BaseEntity
     /** 场点id */
     @Excel(name = "场点id")
     private Long siteId;
+
+    /** 场点id列表（筛选用） */
+    private List<Long> siteIds;
 
     /** 起始单价 */
     @Excel(name = "起始单价")
@@ -134,6 +138,16 @@ public class BidProduct extends BaseEntity
     public Long getSiteId()
     {
         return siteId;
+    }
+
+    public void setSiteIds(List<Long> siteIds)
+    {
+        this.siteIds = siteIds;
+    }
+
+    public List<Long> getSiteIds()
+    {
+        return siteIds;
     }
 
     public void setStartPrice(BigDecimal startPrice)
@@ -265,6 +279,7 @@ public class BidProduct extends BaseEntity
             .append("pigResourceId", getPigResourceId())
             .append("enterpriseGroupId", getEnterpriseGroupId())
             .append("siteId", getSiteId())
+            .append("siteIds", getSiteIds())
             .append("startPrice", getStartPrice())
             .append("startTime", getStartTime())
             .append("endTime", getEndTime())

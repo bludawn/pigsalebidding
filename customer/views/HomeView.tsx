@@ -41,8 +41,9 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   // 筛选条件状态
   const [filter, setFilter] = useState<FilterState>({
     bidStatus: 'BIDDING',
-    distance: 500,
   });
+  const [location, setLocation] = useState<{ latitude?: number; longitude?: number }>({});
+  const [pendingDistance, setPendingDistance] = useState<number | null>(null);
   const [datePicker, setDatePicker] = useState(() => {
     const now = new Date();
     return {
@@ -184,6 +185,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         date: getQueryDate(),
         distance: filter.distance,
+        latitude: location.latitude,
+        longitude: location.longitude,
       });
 
       if (res.errcode === 0 && res.data) {
@@ -222,12 +225,12 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         loading: false,
       }));
     }
-  }, [searchQuery, filter, selectedTags, pagination.loading]);
+  }, [searchQuery, filter, selectedTags, pagination.loading, location.latitude, location.longitude]);
 
   // 初始加载
   useEffect(() => {
     loadAuctionList(1, false);
-  }, [filter, selectedTags]); // 依赖筛选条件变化
+  }, [filter, selectedTags, location.latitude, location.longitude]); // 依赖筛选条件变化
 
   // 获取地理位置并写入请求头
   useEffect(() => {
@@ -235,6 +238,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
+        setLocation({ latitude, longitude });
         setRequestHeaders({
           'X-Geo-Latitude': String(latitude),
           'X-Geo-Longitude': String(longitude),
@@ -302,6 +306,9 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   // 打开筛选抽屉
   const openFilter = (tab: string) => {
     setActiveFilterTab(tab);
+    if (tab === '距离') {
+      setPendingDistance(filter.distance ?? 500);
+    }
     setShowFilterDrawer(true);
   };
 
@@ -445,16 +452,17 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           </div>
         );
 
-      case '距离':
+      case '距离': {
+        const distanceValue = pendingDistance ?? filter.distance ?? 500;
         return (
           <div className="pb-8">
             <div className="flex justify-between items-center mb-6">
               <span className="text-sm text-slate-500">距离范围 (100km - 900km)</span>
-              <span className="text-industry-red font-black text-lg">{filter.distance}km</span>
+              <span className="text-industry-red font-black text-lg">{distanceValue}km</span>
             </div>
             <div className="flex items-center gap-6">
               <button
-                onClick={() => setFilter(prev => ({ ...prev, distance: Math.max(100, prev.distance - 100) }))}
+                onClick={() => setPendingDistance(Math.max(100, distanceValue - 100))}
                 className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full text-slate-600 font-bold active:bg-slate-200"
               >
                 -
@@ -464,12 +472,12 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                 min="100"
                 max="900"
                 step="100"
-                value={filter.distance}
-                onChange={(e) => setFilter(prev => ({ ...prev, distance: parseInt(e.target.value) }))}
+                value={distanceValue}
+                onChange={(e) => setPendingDistance(parseInt(e.target.value))}
                 className="flex-1 accent-industry-red h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
               />
               <button
-                onClick={() => setFilter(prev => ({ ...prev, distance: Math.min(900, prev.distance + 100) }))}
+                onClick={() => setPendingDistance(Math.min(900, distanceValue + 100))}
                 className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-full text-slate-600 font-bold active:bg-slate-200"
               >
                 +
@@ -478,7 +486,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             <div className="mt-8 flex gap-3">
               <button
                 onClick={() => {
-                  setFilter(prev => ({ ...prev, distance: 500 }));
+                  setFilter(prev => ({ ...prev, distance: undefined }));
+                  setPendingDistance(null);
                   setShowFilterDrawer(false);
                 }}
                 className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-custom font-bold"
@@ -486,7 +495,11 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
                 重置
               </button>
               <button
-                onClick={() => setShowFilterDrawer(false)}
+                onClick={() => {
+                  setFilter(prev => ({ ...prev, distance: distanceValue }));
+                  setPendingDistance(null);
+                  setShowFilterDrawer(false);
+                }}
                 className="flex-1 py-3 bg-industry-red text-white rounded-custom font-bold"
               >
                 确定
@@ -494,6 +507,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             </div>
           </div>
         );
+      }
 
       case '日期':
         const handleWheelScroll = (
@@ -628,7 +642,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
       case '产品标签':
         return selectedTags.length > 0 ? `标签(${selectedTags.length})` : '产品标签';
       case '距离':
-        return `距离(${filter.distance}km)`;
+        return filter.distance ? `距离(${filter.distance}km)` : '距离';
       case '日期':
         return filter.date || '日期';
       default:

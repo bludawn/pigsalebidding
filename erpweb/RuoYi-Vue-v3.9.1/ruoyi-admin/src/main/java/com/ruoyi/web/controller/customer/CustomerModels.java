@@ -44,7 +44,9 @@ public class CustomerModels
         public String weightRange;
         public List<String> tags;
         public String date;
-        public String distance;
+        public Double distance;
+        public String longitude;
+        public String latitude;
     }
 
     public static class MyBidListParams extends ListRequestParams
