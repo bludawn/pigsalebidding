@@ -6,19 +6,19 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       server: {
-        port: 3000,
+        port: 1025,
         host: '0.0.0.0',
         proxy: {
           '/api': {
-            target: 'http://localhost:8080',
+            target: 'http://localhost:8090',
             changeOrigin: true,
           },
           '/profile': {
-            target: 'http://localhost:8080',
+            target: 'http://localhost:8090',
             changeOrigin: true,
           },
           '/login': {
-            target: 'http://localhost:8080',
+            target: 'http://localhost:8090',
             changeOrigin: true,
           },
         },

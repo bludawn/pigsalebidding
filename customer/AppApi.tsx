@@ -12,6 +12,7 @@ import {
   BidRecordItem,
   BidStatus,
   BusinessStats,
+  CompanyVerificationInfo,
   ContactInfo,
   FarmItem,
   MyBidItem,
@@ -64,8 +65,11 @@ interface ListResponseData<T> {
 // ============ 请求基础配置 ============
 
 const API_BASE_URL = '/api'; // 可根据环境配置
+const FILE_BASE_URL = import.meta.env.VITE_FILE_BASE_URL || '';
 const AUTH_TOKEN_KEY = 'Admin-Token';
 const CUSTOMER_HEADER_KEY = 'customer';
+
+const normalizeBaseUrl = (base: string) => base.replace(/\/$/, '');
 
 const withFileHost = (url?: string) => {
   if (!url) return '';
@@ -73,8 +77,12 @@ const withFileHost = (url?: string) => {
   if (url.startsWith('//')) {
     return `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}${url}`;
   }
+  const envBase = FILE_BASE_URL ? normalizeBaseUrl(FILE_BASE_URL) : '';
+  if (envBase) {
+    return `${envBase}${url.startsWith('/') ? url : `/${url}`}`;
+  }
   const base = API_BASE_URL.startsWith('http')
-    ? API_BASE_URL.replace(/\/api\/?$/, '')
+    ? normalizeBaseUrl(API_BASE_URL.replace(/\/api\/?$/, ''))
     : (typeof window !== 'undefined' ? window.location.origin : '');
   if (!base) return url;
   return `${base}${url.startsWith('/') ? url : `/${url}`}`;
@@ -202,9 +210,30 @@ const mapAuctionRecord = (record: AuctionRecordDto): AuctionItem => {
 
   return {
     ...record,
+    farmIcon: withFileHost(record.farmIcon),
+    imageUrl: withFileHost(record.imageUrl),
     endTime: Number.isNaN(parsedEndTime.getTime()) ? new Date() : parsedEndTime,
   };
 };
+
+const mapAuctionDetail = (detail: AuctionDetailInfo): AuctionDetailInfo => ({
+  ...detail,
+  mediaUrls: (detail.mediaUrls || []).map(withFileHost),
+});
+
+const mapCompanyVerificationInfo = (info?: CompanyVerificationInfo): CompanyVerificationInfo | undefined => {
+  if (!info) return info;
+  return {
+    ...info,
+    licenseUrls: (info.licenseUrls || []).map(withFileHost),
+    materialUrls: (info.materialUrls || []).map(withFileHost),
+  };
+};
+
+const mapContactInfo = (info: ContactInfo): ContactInfo => ({
+  ...info,
+  wechatQrCodeUrl: withFileHost(info.wechatQrCodeUrl),
+});
 
 /** 竞价列表请求参数 */
 export interface AuctionListParams extends ListRequestParams {
@@ -246,6 +275,8 @@ const mapMyBidRecord = (record: MyBidRecordDto): MyBidItem => {
 
   return {
     ...record,
+    farmIcon: withFileHost(record.farmIcon),
+    imageUrl: withFileHost(record.imageUrl),
     endTime: Number.isNaN(parsedEndTime.getTime()) ? new Date() : parsedEndTime,
   };
 };
@@ -278,8 +309,15 @@ export async function getMyBidStatusCounts(): Promise<ApiResponse<MyBidStatusCou
 }
 
 /** 获取竞价详情 */
-export function getAuctionDetail(params: { auctionId: string }): Promise<ApiResponse<AuctionDetailInfo>> {
-  return request<AuctionDetailInfo>('/v1/weixincustomer/getAuctionDetail', params);
+export async function getAuctionDetail(params: { auctionId: string }): Promise<ApiResponse<AuctionDetailInfo>> {
+  const result = await request<AuctionDetailInfo>('/v1/weixincustomer/getAuctionDetail', params);
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: mapAuctionDetail(result.data),
+  };
 }
 
 /** 获取竞价维护信息 */
@@ -397,7 +435,11 @@ export async function getUserSettings(): Promise<ApiResponse<UserSettingsProfile
   }
   return {
     ...result,
-    data: { ...result.data, avatar: withFileHost(result.data.avatar) },
+    data: {
+      ...result.data,
+      avatar: withFileHost(result.data.avatar),
+      companyVerification: mapCompanyVerificationInfo(result.data.companyVerification),
+    },
   };
 }
 
@@ -445,7 +487,11 @@ export async function saveUserProfile(params: { name: string; avatar: string }):
   }
   return {
     ...result,
-    data: { ...result.data, avatar: withFileHost(result.data.avatar) },
+    data: {
+      ...result.data,
+      avatar: withFileHost(result.data.avatar),
+      companyVerification: mapCompanyVerificationInfo(result.data.companyVerification),
+    },
   };
 }
 
@@ -454,12 +500,34 @@ export async function submitCompanyVerification(params: {
   licenseUrls: string[];
   materialUrls: string[];
 }): Promise<ApiResponse<UserSettingsProfile>> {
-  return request<UserSettingsProfile>('/v1/weixincustomer/submitCompanyVerification', params);
+  const result = await request<UserSettingsProfile>('/v1/weixincustomer/submitCompanyVerification', params);
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: {
+      ...result.data,
+      avatar: withFileHost(result.data.avatar),
+      companyVerification: mapCompanyVerificationInfo(result.data.companyVerification),
+    },
+  };
 }
 
 /** 微信实名认证 */
 export async function verifyPersonalIdentity(): Promise<ApiResponse<UserSettingsProfile>> {
-  return request<UserSettingsProfile>('/v1/weixincustomer/verifyPersonalIdentity');
+  const result = await request<UserSettingsProfile>('/v1/weixincustomer/verifyPersonalIdentity');
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: {
+      ...result.data,
+      avatar: withFileHost(result.data.avatar),
+      companyVerification: mapCompanyVerificationInfo(result.data.companyVerification),
+    },
+  };
 }
 
 /** 登出 */
@@ -484,7 +552,14 @@ export async function getBusinessStats(): Promise<ApiResponse<BusinessStats>> {
 
 /** 获取联系我们信息 */
 export async function getContactInfo(): Promise<ApiResponse<ContactInfo>> {
-  return request<ContactInfo>('/v1/weixincustomer/getContactInfo');
+  const result = await request<ContactInfo>('/v1/weixincustomer/getContactInfo');
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: mapContactInfo(result.data),
+  };
 }
 
 /** 获取地址列表 */
