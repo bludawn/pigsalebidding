@@ -74,6 +74,10 @@ public class BidProduct extends BaseEntity
     @Excel(name = "起拍头数")
     private Integer startBidCount;
 
+    /** 竞价数量梯度 */
+    @Excel(name = "竞价数量梯度")
+    private Integer bidCountStep;
+
     /** 加价幅度 */
     @Excel(name = "加价幅度")
     private BigDecimal priceStep;
@@ -200,6 +204,14 @@ public class BidProduct extends BaseEntity
         return bidNotice;
     }
 
+    public Integer getBidCountStep() {
+        return bidCountStep;
+    }
+
+    public void setBidCountStep(Integer bidCountStep) {
+        this.bidCountStep = bidCountStep;
+    }
+
     public void setRemark(String remark)
     {
         this.remark = remark;
@@ -288,6 +300,7 @@ public class BidProduct extends BaseEntity
             .append("remark", getRemark())
             .append("totalHeadCount", getTotalHeadCount())
             .append("startBidCount", getStartBidCount())
+            .append("bidCountStep", getBidCountStep())
             .append("priceStep", getPriceStep())
             .append("addPrice", getAddPrice())
             .append("bidStatus", getBidStatus())

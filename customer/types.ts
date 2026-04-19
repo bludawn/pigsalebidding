@@ -78,13 +78,14 @@ export interface OrderDeliveryInfo {
   contactName: string;
   contactPhone: string;
   address: string;
-  deliveryTime?: string;
+  expectedDeliveryTime?: string;
   longitude?: string;
   latitude?: string;
 }
 
 /** 物流信息 */
 export interface OrderShipmentInfo {
+  transportCode?: string;
   currentLongitude?: string;
   currentLatitude?: string;
   loadCount?: number;
@@ -92,6 +93,9 @@ export interface OrderShipmentInfo {
   driverName?: string;
   driverPhone?: string;
   vehicleNo?: string;
+  vehicleType?: string;
+  vehicleSource?: string;
+  attachmentUrls?: string[];
   estimatedArrival?: string;
   remark?: string;
 }
@@ -195,6 +199,7 @@ export interface AuctionDetailInfo {
   remark: string;
   startingCount: number;
   bidStep: number;
+  bidCountStep: number;
   addPrice: number;
   quantity: number;
   quarantineRegion: string;
@@ -216,7 +221,7 @@ export interface AuctionMaintenanceInfo {
   contactPhone: string;
   regionName: string;
   detailAddress: string;
-  appointmentTime: string;
+  expectedDeliveryTime: string;
   remark?: string;
   updatedAt?: string;
 }

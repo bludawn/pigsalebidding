@@ -52,7 +52,28 @@
       <el-table-column label="送货人姓名" align="center" prop="delivererName" v-if="columns.delivererName.visible" />
       <el-table-column label="送货人电话" align="center" prop="delivererPhone" v-if="columns.delivererPhone.visible" />
       <el-table-column label="车牌号" align="center" prop="vehicleNo" v-if="columns.vehicleNo.visible" />
-      <el-table-column label="车辆类型" align="center" prop="vehicleType" v-if="columns.vehicleType.visible" />
+      <el-table-column label="车辆类型" align="center" prop="vehicleTypeId" v-if="columns.vehicleTypeId.visible">
+        <template slot-scope="scope">
+          <span>{{ getVehicleTypeName(scope.row.vehicleTypeId) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="车辆来源" align="center" prop="vehicleSource" v-if="columns.vehicleSource.visible" />
+      <el-table-column label="附件" align="center" prop="attachmentUrls" v-if="columns.attachmentUrls.visible" min-width="180">
+        <template slot-scope="scope">
+          <div v-if="splitAttachmentUrls(scope.row.attachmentUrls).length" class="attachment-list">
+            <el-link
+              v-for="(url, idx) in splitAttachmentUrls(scope.row.attachmentUrls)"
+              :key="`${scope.row.id || 'row'}-${idx}`"
+              :href="normalizeFileUrl(url)"
+              target="_blank"
+              :underline="false"
+              type="primary"
+              style="margin-right: 8px;"
+            >附件{{ idx + 1 }}</el-link>
+          </div>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column label="装猪数量" align="center" prop="loadCount" v-if="columns.loadCount.visible" />
       <el-table-column label="送货状态" align="center" prop="deliveryStatus" v-if="columns.deliveryStatus.visible">
         <template slot-scope="scope">
@@ -91,9 +112,24 @@
             <div>运输编码：{{ item.transportCode }}</div>
             <div>送货人电话：{{ item.delivererPhone }}</div>
             <div>车牌号：{{ item.vehicleNo }}</div>
-            <div>车辆类型：{{ item.vehicleType }}</div>
+            <div>车辆类型：{{ getVehicleTypeName(item.vehicleTypeId) }}</div>
+            <div>车辆来源：{{ item.vehicleSource || '-' }}</div>
             <div>装猪数量：{{ item.loadCount }}</div>
             <div>当前位置：{{ item.currentLongitude || '-' }}, {{ item.currentLatitude || '-' }}</div>
+            <div>附件：
+              <template v-if="splitAttachmentUrls(item.attachmentUrls).length">
+                <el-link
+                  v-for="(url, idx) in splitAttachmentUrls(item.attachmentUrls)"
+                  :key="`${item.id || 'card'}-${idx}`"
+                  :href="normalizeFileUrl(url)"
+                  target="_blank"
+                  :underline="false"
+                  type="primary"
+                  style="margin-right: 8px;"
+                >附件{{ idx + 1 }}</el-link>
+              </template>
+              <span v-else>-</span>
+            </div>
             <div>备注：{{ item.remark }}</div>
           </div>
           <div v-if="item.currentLongitude && item.currentLatitude" style="margin-top: 8px;">
@@ -134,8 +170,16 @@
         <el-form-item label="车牌号" prop="vehicleNo">
           <el-input v-model="form.vehicleNo" placeholder="请输入车牌号" />
         </el-form-item>
-        <el-form-item label="车辆类型" prop="vehicleType">
-          <el-input v-model="form.vehicleType" placeholder="请输入车辆类型" />
+        <el-form-item label="车辆类型" prop="vehicleTypeId">
+          <el-select v-model="form.vehicleTypeId" placeholder="请选择车辆类型" filterable clearable>
+            <el-option v-for="item in vehicleTypeOptions" :key="item.id" :label="item.vehicleTypeName" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="车辆来源" prop="vehicleSource">
+          <el-input v-model="form.vehicleSource" placeholder="请输入车辆来源" />
+        </el-form-item>
+        <el-form-item label="附件" prop="attachmentUrls">
+          <file-upload v-model="form.attachmentUrls" :limit="6" :file-size="50" :allow-any-type="true" action="/common/uploadAny" />
         </el-form-item>
         <el-form-item label="装猪数量" prop="loadCount">
           <el-input v-model="form.loadCount" placeholder="请输入装猪数量" />
@@ -173,6 +217,7 @@
 
 <script>
 import { listDeliveryInfo, getDeliveryInfo, delDeliveryInfo, addDeliveryInfo, updateDeliveryInfo, getNextTransportCode } from "@/api/pig/deliveryInfo"
+import { listVehicleType } from "@/api/pig/vehicleType"
 
 export default {
   name: "DeliveryInfo",
@@ -203,7 +248,9 @@ export default {
         delivererName: { label: '送货人姓名', visible: true },
         delivererPhone: { label: '送货人电话', visible: true },
         vehicleNo: { label: '车牌号', visible: true },
-        vehicleType: { label: '车辆类型', visible: true },
+        vehicleTypeId: { label: '车辆类型', visible: true },
+        vehicleSource: { label: '车辆来源', visible: true },
+        attachmentUrls: { label: '附件', visible: true },
         loadCount: { label: '装猪数量', visible: true },
         deliveryStatus: { label: '送货状态', visible: true },
         remark: { label: '备注', visible: true },
@@ -212,6 +259,9 @@ export default {
         updateBy: { label: '更新人', visible: true },
         updateTime: { label: '更新时间', visible: true }
       },
+      baseApi: process.env.VUE_APP_BASE_API,
+      vehicleTypeOptions: [],
+      vehicleTypeMap: {},
       mapDialogVisible: false,
       mapTarget: 'deliveryForm',
       mapContainerId: 'delivery-map-picker',
@@ -227,6 +277,7 @@ export default {
     }
   },
   created() {
+    this.loadVehicleTypeOptions()
     this.getList()
   },
   methods: {
@@ -237,6 +288,29 @@ export default {
         this.total = response.total
         this.loading = false
       })
+    },
+    loadVehicleTypeOptions() {
+      listVehicleType({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.vehicleTypeOptions = response.rows || []
+        this.vehicleTypeMap = this.vehicleTypeOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    getVehicleTypeName(id) {
+      if (!id) return '-'
+      const item = this.vehicleTypeMap[id]
+      return item ? item.vehicleTypeName : id
+    },
+    splitAttachmentUrls(value) {
+      if (!value) return []
+      return String(value).split(',').map(item => item.trim()).filter(Boolean)
+    },
+    normalizeFileUrl(url) {
+      if (!url) return ''
+      if (/^https?:\/\//i.test(url)) return url
+      return `${this.baseApi}${url.startsWith('/') ? '' : '/'}${url}`
     },
     cancel() {
       this.open = false
@@ -251,7 +325,9 @@ export default {
         delivererName: undefined,
         delivererPhone: undefined,
         vehicleNo: undefined,
-        vehicleType: undefined,
+        vehicleTypeId: undefined,
+        vehicleSource: undefined,
+        attachmentUrls: undefined,
         loadCount: undefined,
         deliveryStatus: undefined,
         remark: undefined

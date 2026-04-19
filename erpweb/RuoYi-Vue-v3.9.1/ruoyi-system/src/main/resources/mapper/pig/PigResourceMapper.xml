@@ -10,7 +10,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="pigTypeId" column="f_pigTypeId" />
         <result property="siteId" column="f_siteId" />
         <result property="resourceSource" column="f_resourceSource" />
-        <result property="purchaseOrderId" column="f_purchaseOrderId" />
         <result property="resourceCount" column="f_resourceCount" />
         <result property="resourceUnitPrice" column="f_resourceUnitPrice" />
         <result property="resourceTotalPrice" column="f_resourceTotalPrice" />
@@ -21,7 +20,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectPigResourceVo">
-        select f_id, f_resourceCode, f_pigTypeId, f_siteId, f_resourceSource, f_purchaseOrderId, f_resourceCount, f_resourceUnitPrice, f_resourceTotalPrice, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_resourceCode, f_pigTypeId, f_siteId, f_resourceSource, f_resourceCount, f_resourceUnitPrice, f_resourceTotalPrice, f_creator, f_createTime, f_updator, f_updateTime
         from t_pigResource
     </sql>
 
@@ -42,9 +41,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
             <if test="resourceSource != null and resourceSource != ''">
                 AND f_resourceSource like concat('%', #{resourceSource}, '%')
-            </if>
-            <if test="purchaseOrderId != null">
-                AND f_purchaseOrderId = #{purchaseOrderId}
             </if>
             <if test="resourceCount != null">
                 AND f_resourceCount = #{resourceCount}
@@ -70,7 +66,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="pigTypeId != null">f_pigTypeId,</if>
 <if test="siteId != null">f_siteId,</if>
 <if test="resourceSource != null and resourceSource != ''">f_resourceSource,</if>
-<if test="purchaseOrderId != null">f_purchaseOrderId,</if>
 <if test="resourceCount != null">f_resourceCount,</if>
 <if test="resourceUnitPrice != null">f_resourceUnitPrice,</if>
 <if test="resourceTotalPrice != null">f_resourceTotalPrice,</if>
@@ -82,7 +77,6 @@ f_createTime
 <if test="pigTypeId != null">#{pigTypeId},</if>
 <if test="siteId != null">#{siteId},</if>
 <if test="resourceSource != null and resourceSource != ''">#{resourceSource},</if>
-<if test="purchaseOrderId != null">#{purchaseOrderId},</if>
 <if test="resourceCount != null">#{resourceCount},</if>
 <if test="resourceUnitPrice != null">#{resourceUnitPrice},</if>
 <if test="resourceTotalPrice != null">#{resourceTotalPrice},</if>
@@ -98,7 +92,6 @@ sysdate()
             <if test="pigTypeId != null">f_pigTypeId = #{pigTypeId},</if>
             <if test="siteId != null">f_siteId = #{siteId},</if>
             <if test="resourceSource != null and resourceSource != ''">f_resourceSource = #{resourceSource},</if>
-            <if test="purchaseOrderId != null">f_purchaseOrderId = #{purchaseOrderId},</if>
             <if test="resourceCount != null">f_resourceCount = #{resourceCount},</if>
             <if test="resourceUnitPrice != null">f_resourceUnitPrice = #{resourceUnitPrice},</if>
             <if test="resourceTotalPrice != null">f_resourceTotalPrice = #{resourceTotalPrice},</if>

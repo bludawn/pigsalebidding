@@ -351,8 +351,8 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
             <div className="flex justify-between"><span>联系人</span><span className="text-slate-800 font-bold">{detail.deliveryInfo.contactName}</span></div>
             <div className="flex justify-between"><span>联系电话</span><span className="text-slate-800 font-bold">{detail.deliveryInfo.contactPhone}</span></div>
             <div className="flex justify-between"><span>收货地址</span><span className="text-slate-800 font-bold text-right">{detail.deliveryInfo.address}</span></div>
-            {detail.deliveryInfo.deliveryTime && (
-              <div className="flex justify-between"><span>装猪时间</span><span className="text-slate-800 font-bold">{detail.deliveryInfo.deliveryTime}</span></div>
+            {detail.deliveryInfo.expectedDeliveryTime && (
+              <div className="flex justify-between"><span>期望送达时间</span><span className="text-slate-800 font-bold">{detail.deliveryInfo.expectedDeliveryTime}</span></div>
             )}
           </div>
         </div>
@@ -382,8 +382,26 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
                     {info.deliveryStatus && (
                       <div className="flex justify-between"><span>状态</span><span className="text-slate-800 font-bold">{deliveryStatusLabelMap[info.deliveryStatus] || info.deliveryStatus}</span></div>
                     )}
+                    {info.vehicleType && (
+                      <div className="flex justify-between"><span>车辆类型</span><span className="text-slate-800 font-bold">{info.vehicleType}</span></div>
+                    )}
+                    {info.vehicleSource && (
+                      <div className="flex justify-between"><span>车辆来源</span><span className="text-slate-800 font-bold">{info.vehicleSource}</span></div>
+                    )}
                     {info.remark && (
                       <div className="flex justify-between"><span>备注</span><span className="text-slate-800 font-bold">{info.remark}</span></div>
+                    )}
+                    {info.attachmentUrls && info.attachmentUrls.length > 0 && (
+                      <div>
+                        <div className="text-slate-500 mb-1">附件</div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {info.attachmentUrls.map((url, attachIndex) => (
+                            <a key={`${url}-${attachIndex}`} href={url} target="_blank" rel="noreferrer" className="block">
+                              <img src={url} alt="附件" className="w-full h-20 object-cover rounded border border-slate-100" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

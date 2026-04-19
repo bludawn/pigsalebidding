@@ -165,6 +165,7 @@
 
 <script>
 import { listEnterprise, getEnterprise, delEnterprise, addEnterprise, updateEnterprise } from "@/api/pig/enterprise"
+import { buildFileUrlList } from "@/utils/ruoyi"
 
 export default {
   name: "Enterprise",
@@ -215,17 +216,28 @@ export default {
   },
   methods: {
     getUrlList(value) {
-      if (!value) return []
-      return value.split(',').map(item => item.trim()).filter(Boolean)
+      return buildFileUrlList(value)
     },
     getFirstUrl(value) {
       const list = this.getUrlList(value)
       return list.length ? list[0] : ""
     },
+    normalizeUrlField(value) {
+      const list = buildFileUrlList(value)
+      return list.length ? list.join(',') : value
+    },
+    normalizeEnterpriseData(data) {
+      if (!data) return data
+      return {
+        ...data,
+        businessLicenseUrl: this.normalizeUrlField(data.businessLicenseUrl),
+        otherMaterialUrls: this.normalizeUrlField(data.otherMaterialUrls)
+      }
+    },
     getList() {
       this.loading = true
       listEnterprise(this.queryParams).then(response => {
-        this.enterpriseList = response.rows
+        this.enterpriseList = (response.rows || []).map(item => this.normalizeEnterpriseData(item))
         this.total = response.total
         this.loading = false
       })
@@ -278,7 +290,7 @@ export default {
       this.viewModeOnly = false
       const id = row.id || this.ids
       getEnterprise(id).then(response => {
-        this.form = response.data
+        this.form = this.normalizeEnterpriseData(response.data) || {}
         this.open = true
         this.title = "修改企业信息"
       })
@@ -287,7 +299,7 @@ export default {
       this.reset()
       const id = row.id || this.ids
       getEnterprise(id).then(response => {
-        this.form = response.data
+        this.form = this.normalizeEnterpriseData(response.data) || {}
         this.viewModeOnly = true
         this.open = true
         this.title = "查看企业信息"

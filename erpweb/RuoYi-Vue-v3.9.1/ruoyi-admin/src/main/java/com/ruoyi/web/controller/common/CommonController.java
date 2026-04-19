@@ -95,6 +95,30 @@ public class CommonController
     }
 
     /**
+     * 通用上传请求（单个，任意文件类型）
+     */
+    @PostMapping("/uploadAny")
+    public AjaxResult uploadAnyFile(MultipartFile file) throws Exception
+    {
+        try
+        {
+            String filePath = RuoYiConfig.getUploadPath();
+            String fileName = FileUploadUtils.upload(filePath, file, null);
+            String url = serverConfig.getUrl() + fileName;
+            AjaxResult ajax = AjaxResult.success();
+            ajax.put("url", url);
+            ajax.put("fileName", fileName);
+            ajax.put("newFileName", FileUtils.getName(fileName));
+            ajax.put("originalFilename", file.getOriginalFilename());
+            return ajax;
+        }
+        catch (Exception e)
+        {
+            return AjaxResult.error(e.getMessage());
+        }
+    }
+
+    /**
      * 通用上传请求（多个）
      */
     @PostMapping("/uploads")

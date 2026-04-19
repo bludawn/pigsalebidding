@@ -57,7 +57,6 @@
           <dict-tag :options="dict.type.pig_resource_source" :value="scope.row.resourceSource" />
         </template>
       </el-table-column>
-      <el-table-column label="采购单" align="center" prop="purchaseOrderId" v-if="columns.purchaseOrderId.visible" />
       <el-table-column label="资源数量" align="center" prop="resourceCount" v-if="columns.resourceCount.visible" />
       <el-table-column label="资源单价" align="center" prop="resourceUnitPrice" v-if="columns.resourceUnitPrice.visible" />
       <el-table-column label="资源总价" align="center" prop="resourceTotalPrice" v-if="columns.resourceTotalPrice.visible" />
@@ -105,9 +104,6 @@
           <el-select v-model="form.resourceSource" placeholder="请选择资源来源" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.pig_resource_source" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
-        </el-form-item>
-        <el-form-item label="采购单id" prop="purchaseOrderId">
-          <el-input v-model="form.purchaseOrderId" placeholder="请输入采购单id" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="资源数量" prop="resourceCount">
           <el-input v-model="form.resourceCount" placeholder="请输入资源数量" :disabled="viewModeOnly" />
@@ -181,7 +177,7 @@ export default {
         pigTypeId: { label: '生猪类型', visible: true },
         siteId: { label: '场点', visible: true },
         resourceSource: { label: '资源来源', visible: true },
-        purchaseOrderId: { label: '采购单', visible: true },
+
         resourceCount: { label: '资源数量', visible: true },
         resourceUnitPrice: { label: '资源单价', visible: true },
         resourceTotalPrice: { label: '资源总价', visible: true },
@@ -261,7 +257,6 @@ export default {
         pigTypeId: undefined,
         siteId: undefined,
         resourceSource: undefined,
-        purchaseOrderId: undefined,
         resourceCount: undefined,
         resourceUnitPrice: undefined,
         resourceTotalPrice: undefined,

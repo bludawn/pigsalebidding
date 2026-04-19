@@ -60,9 +60,9 @@
           <span>{{ getAddressLabel(scope.row.addressId) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="装车时间" align="center" prop="loadingTime" v-if="columns.loadingTime.visible" width="160">
+      <el-table-column label="期望送达时间" align="center" prop="expectedDeliveryTime" v-if="columns.expectedDeliveryTime.visible" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.loadingTime) }}</span>
+          <span>{{ parseTime(scope.row.expectedDeliveryTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
@@ -112,8 +112,8 @@
             <el-option v-for="item in addressOptions" :key="item.id" :label="getAddressLabel(item.id)" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="装车时间" prop="loadingTime">
-          <el-date-picker v-model="form.loadingTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择装车时间" :disabled="viewModeOnly"></el-date-picker>
+        <el-form-item label="期望送达时间" prop="expectedDeliveryTime">
+          <el-date-picker v-model="form.expectedDeliveryTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择期望送达时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
@@ -160,7 +160,7 @@ export default {
         enterpriseId: { label: '企业', visible: true },
         bidProductId: { label: '竞价商品', visible: true },
         addressId: { label: '收货地址', visible: true },
-        loadingTime: { label: '装车时间', visible: true },
+        expectedDeliveryTime: { label: '期望送达时间', visible: true },
         remark: { label: '备注', visible: true },
         createBy: { label: '创建人', visible: true },
         createTime: { label: '创建时间', visible: true },
@@ -301,7 +301,7 @@ export default {
         enterpriseId: undefined,
         bidProductId: undefined,
         addressId: undefined,
-        loadingTime: undefined,
+        expectedDeliveryTime: undefined,
         remark: undefined
       }
       this.resetForm("form")

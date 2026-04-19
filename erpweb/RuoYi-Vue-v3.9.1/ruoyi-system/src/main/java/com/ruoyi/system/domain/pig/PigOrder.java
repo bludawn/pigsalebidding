@@ -48,10 +48,10 @@ public class PigOrder extends BaseEntity
     @Excel(name = "收货地址id")
     private Long addressId;
 
-    /** 期望装车时间 */
+    /** 期望送达时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Excel(name = "期望装车时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
-    private Date expectLoadTime;
+    @Excel(name = "期望送达时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date expectedDeliveryTime;
 
     /** 备注 */
     @Excel(name = "备注")
@@ -194,14 +194,14 @@ public class PigOrder extends BaseEntity
         return addressId;
     }
 
-    public void setExpectLoadTime(Date expectLoadTime)
+    public void setExpectedDeliveryTime(Date expectedDeliveryTime)
     {
-        this.expectLoadTime = expectLoadTime;
+        this.expectedDeliveryTime = expectedDeliveryTime;
     }
 
-    public Date getExpectLoadTime()
+    public Date getExpectedDeliveryTime()
     {
-        return expectLoadTime;
+        return expectedDeliveryTime;
     }
 
     public void setRemark(String remark)
@@ -326,7 +326,7 @@ public class PigOrder extends BaseEntity
             .append("bidProductId", getBidProductId())
             .append("userBidId", getUserBidId())
             .append("addressId", getAddressId())
-            .append("expectLoadTime", getExpectLoadTime())
+            .append("expectedDeliveryTime", getExpectedDeliveryTime())
             .append("remark", getRemark())
             .append("pigResourceId", getPigResourceId())
             .append("orderAmount", getOrderAmount())

@@ -18,6 +18,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="remark" column="f_remark" />
         <result property="totalHeadCount" column="f_totalHeadCount" />
         <result property="startBidCount" column="f_startBidCount" />
+        <result property="bidCountStep" column="f_bidCountStep" />
         <result property="priceStep" column="f_priceStep" />
         <result property="addPrice" column="f_addPrice" />
         <result property="bidStatus" column="f_bidStatus" />
@@ -82,6 +83,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="startBidCount != null">
                 AND f_startBidCount = #{startBidCount}
             </if>
+            <if test="bidCountStep != null">
+                AND f_bidCountStep = #{bidCountStep}
+            </if>
             <if test="priceStep != null">
                 AND f_priceStep = #{priceStep}
             </if>
@@ -117,6 +121,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="remark != null and remark != ''">f_remark,</if>
 <if test="totalHeadCount != null">f_totalHeadCount,</if>
 <if test="startBidCount != null">f_startBidCount,</if>
+<if test="bidCountStep != null">f_bidCountStep,</if>
 <if test="priceStep != null">f_priceStep,</if>
 <if test="addPrice != null">f_addPrice,</if>
 <if test="bidStatus != null and bidStatus != ''">f_bidStatus,</if>
@@ -161,6 +166,7 @@ sysdate()
             <if test="remark != null and remark != ''">f_remark = #{remark},</if>
             <if test="totalHeadCount != null">f_totalHeadCount = #{totalHeadCount},</if>
             <if test="startBidCount != null">f_startBidCount = #{startBidCount},</if>
+            <if test="bidCountStep != null">f_bidCountStep = #{bidCountStep},</if>
             <if test="priceStep != null">f_priceStep = #{priceStep},</if>
             <if test="addPrice != null">f_addPrice = #{addPrice},</if>
             <if test="bidStatus != null and bidStatus != ''">f_bidStatus = #{bidStatus},</if>

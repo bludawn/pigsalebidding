@@ -222,6 +222,30 @@ export function getNormalPath(p) {
   return res
 }
 
+// 文件URL补全
+export function buildFileUrl(url) {
+  if (!url) return ""
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('//')) {
+    const protocol = typeof window !== 'undefined' ? window.location.protocol : 'https:'
+    return `${protocol}${url}`
+  }
+  const base = (process.env.VUE_APP_FILE_BASE_URL || '')
+    .replace(/^['"]|['"]$/g, '')
+    .replace(/\/$/, '')
+  if (!base) return url
+  return `${base}${url.startsWith('/') ? url : `/${url}`}`
+}
+
+export function buildFileUrlList(value) {
+  if (!value) return []
+  return String(value)
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(buildFileUrl)
+}
+
 // 验证是否为blob格式
 export function blobValidate(data) {
   return data.type !== 'application/json'

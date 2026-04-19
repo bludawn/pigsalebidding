@@ -12,9 +12,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="delivererName" column="f_delivererName" />
         <result property="delivererPhone" column="f_delivererPhone" />
         <result property="vehicleNo" column="f_vehicleNo" />
-        <result property="vehicleType" column="f_vehicleType" />
+        <result property="vehicleTypeId" column="f_vehicleTypeId" />
+        <result property="vehicleSource" column="f_vehicleSource" />
         <result property="loadCount" column="f_loadCount" />
         <result property="deliveryStatus" column="f_deliveryStatus" />
+        <result property="attachmentUrls" column="f_attachmentUrls" />
         <result property="remark" column="f_remark" />
         <result property="createBy" column="f_creator" />
         <result property="createTime" column="f_createTime" />
@@ -23,7 +25,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectDeliveryInfoVo">
-        select f_id, f_transportCode, f_currentLongitude, f_currentLatitude, f_delivererName, f_delivererPhone, f_vehicleNo, f_vehicleType, f_loadCount, f_deliveryStatus, f_remark, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_transportCode, f_currentLongitude, f_currentLatitude, f_delivererName, f_delivererPhone, f_vehicleNo, f_vehicleTypeId, f_vehicleSource, f_loadCount, f_deliveryStatus, f_attachmentUrls, f_remark, f_creator, f_createTime, f_updator, f_updateTime
         from t_deliveryInfo
     </sql>
 
@@ -45,8 +47,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="vehicleNo != null and vehicleNo != ''">
                 AND f_vehicleNo like concat('%', #{vehicleNo}, '%')
             </if>
-            <if test="vehicleType != null and vehicleType != ''">
-                AND f_vehicleType like concat('%', #{vehicleType}, '%')
+            <if test="vehicleTypeId != null">
+                AND f_vehicleTypeId = #{vehicleTypeId}
             </if>
             <if test="loadCount != null">
                 AND f_loadCount = #{loadCount}
@@ -74,9 +76,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="delivererName != null and delivererName != ''">f_delivererName,</if>
 <if test="delivererPhone != null and delivererPhone != ''">f_delivererPhone,</if>
 <if test="vehicleNo != null and vehicleNo != ''">f_vehicleNo,</if>
-<if test="vehicleType != null and vehicleType != ''">f_vehicleType,</if>
+<if test="vehicleTypeId != null">f_vehicleTypeId,</if>
+<if test="vehicleSource != null and vehicleSource != ''">f_vehicleSource,</if>
 <if test="loadCount != null">f_loadCount,</if>
 <if test="deliveryStatus != null and deliveryStatus != ''">f_deliveryStatus,</if>
+<if test="attachmentUrls != null and attachmentUrls != ''">f_attachmentUrls,</if>
 <if test="remark != null and remark != ''">f_remark,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
 f_createTime
@@ -88,7 +92,9 @@ f_createTime
 <if test="delivererName != null and delivererName != ''">#{delivererName},</if>
 <if test="delivererPhone != null and delivererPhone != ''">#{delivererPhone},</if>
 <if test="vehicleNo != null and vehicleNo != ''">#{vehicleNo},</if>
-<if test="vehicleType != null and vehicleType != ''">#{vehicleType},</if>
+<if test="vehicleTypeId != null">#{vehicleTypeId},</if>
+<if test="vehicleSource != null and vehicleSource != ''">#{vehicleSource},</if>
+<if test="attachmentUrls != null and attachmentUrls != ''">#{attachmentUrls},</if>
 <if test="loadCount != null">#{loadCount},</if>
 <if test="deliveryStatus != null and deliveryStatus != ''">#{deliveryStatus},</if>
 <if test="remark != null and remark != ''">#{remark},</if>
@@ -106,9 +112,11 @@ sysdate()
             <if test="delivererName != null and delivererName != ''">f_delivererName = #{delivererName},</if>
             <if test="delivererPhone != null and delivererPhone != ''">f_delivererPhone = #{delivererPhone},</if>
             <if test="vehicleNo != null and vehicleNo != ''">f_vehicleNo = #{vehicleNo},</if>
-            <if test="vehicleType != null and vehicleType != ''">f_vehicleType = #{vehicleType},</if>
+            <if test="vehicleTypeId != null">f_vehicleTypeId = #{vehicleTypeId},</if>
+            <if test="vehicleSource != null and vehicleSource != ''">f_vehicleSource = #{vehicleSource},</if>
             <if test="loadCount != null">f_loadCount = #{loadCount},</if>
             <if test="deliveryStatus != null and deliveryStatus != ''">f_deliveryStatus = #{deliveryStatus},</if>
+            <if test="attachmentUrls != null and attachmentUrls != ''">f_attachmentUrls = #{attachmentUrls},</if>
             <if test="remark != null and remark != ''">f_remark = #{remark},</if>
             <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
             f_updateTime = sysdate()

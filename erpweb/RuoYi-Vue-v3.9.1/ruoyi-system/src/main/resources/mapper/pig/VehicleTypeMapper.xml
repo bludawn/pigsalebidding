@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.VehicleTypeMapper">
+
+    <resultMap type="VehicleType" id="VehicleTypeResult">
+        <id property="id" column="f_id" />
+        <result property="vehicleTypeName" column="f_vehicleTypeName" />
+        <result property="vehicleTypeDesc" column="f_vehicleTypeDesc" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectVehicleTypeVo">
+        select f_id, f_vehicleTypeName, f_vehicleTypeDesc, f_creator, f_createTime, f_updator, f_updateTime
+        from t_vehicleType
+    </sql>
+
+    <select id="selectVehicleTypeList" parameterType="VehicleType" resultMap="VehicleTypeResult">
+        <include refid="selectVehicleTypeVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="vehicleTypeName != null and vehicleTypeName != ''">
+                AND f_vehicleTypeName like concat('%', #{vehicleTypeName}, '%')
+            </if>
+            <if test="vehicleTypeDesc != null and vehicleTypeDesc != ''">
+                AND f_vehicleTypeDesc like concat('%', #{vehicleTypeDesc}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectVehicleTypeById" parameterType="Long" resultMap="VehicleTypeResult">
+        <include refid="selectVehicleTypeVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertVehicleType" parameterType="VehicleType" useGeneratedKeys="true" keyProperty="id">
+        insert into t_vehicleType(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="vehicleTypeName != null and vehicleTypeName != ''">f_vehicleTypeName,</if>
+<if test="vehicleTypeDesc != null and vehicleTypeDesc != ''">f_vehicleTypeDesc,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="vehicleTypeName != null and vehicleTypeName != ''">#{vehicleTypeName},</if>
+<if test="vehicleTypeDesc != null and vehicleTypeDesc != ''">#{vehicleTypeDesc},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate()
+        )
+    </insert>
+
+    <update id="updateVehicleType" parameterType="VehicleType">
+        update t_vehicleType
+        <set>
+            <if test="vehicleTypeName != null and vehicleTypeName != ''">f_vehicleTypeName = #{vehicleTypeName},</if>
+            <if test="vehicleTypeDesc != null and vehicleTypeDesc != ''">f_vehicleTypeDesc = #{vehicleTypeDesc},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteVehicleTypeById" parameterType="Long">
+        delete from t_vehicleType where f_id = #{id}
+    </delete>
+
+    <delete id="deleteVehicleTypeByIds" parameterType="Long">
+        delete from t_vehicleType where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

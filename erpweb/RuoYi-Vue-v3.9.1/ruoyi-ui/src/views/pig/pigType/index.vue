@@ -168,6 +168,7 @@ import { listPigType, getPigType, delPigType, addPigType, updatePigType, getNext
 import { listPigTag } from "@/api/pig/pigTag"
 import ImageUpload from "@/components/ImageUpload"
 import { getToken } from "@/utils/auth"
+import { buildFileUrlList } from "@/utils/ruoyi"
 
 export default {
   name: "PigType",
@@ -229,8 +230,11 @@ export default {
   },
   methods: {
     getUrlList(value) {
-      if (!value) return []
-      return value.split(',').map(item => item.trim()).filter(Boolean)
+      return buildFileUrlList(value)
+    },
+    normalizeMedia(value) {
+      const list = buildFileUrlList(value)
+      return list.length ? list.join(',') : value
     },
     isVideoUrl(url) {
       return !!url && /\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i.test(url)
@@ -270,7 +274,10 @@ export default {
     getList() {
       this.loading = true
       listPigType(this.queryParams).then(response => {
-        this.pigTypeList = response.rows
+        this.pigTypeList = (response.rows || []).map(item => ({
+          ...item,
+          pigMedia: this.normalizeMedia(item.pigMedia)
+        }))
         this.total = response.total
         this.loading = false
       })
@@ -327,7 +334,8 @@ export default {
       this.viewModeOnly = false
       const id = row.id || this.ids
       getPigType(id).then(response => {
-        this.form = response.data
+        this.form = response.data || {}
+        this.form.pigMedia = this.normalizeMedia(this.form.pigMedia)
         this.form.pigTagIds = this.normalizePigTagIds(this.form.pigTagIds)
         this.open = true
         this.title = "修改生猪类型"
@@ -337,7 +345,8 @@ export default {
       this.reset()
       const id = row.id || this.ids
       getPigType(id).then(response => {
-        this.form = response.data
+        this.form = response.data || {}
+        this.form.pigMedia = this.normalizeMedia(this.form.pigMedia)
         this.form.pigTagIds = this.normalizePigTagIds(this.form.pigTagIds)
         this.viewModeOnly = true
         this.open = true

@@ -22,7 +22,7 @@
       <div class="el-upload__tip" slot="tip" v-if="showTip">
         请上传
         <template v-if="fileSize"> 大小不超过 <b style="color: #f56c6c">{{ fileSize }}MB</b> </template>
-        <template v-if="fileType"> 格式为 <b style="color: #f56c6c">{{ fileType.join("/") }}</b> </template>
+        <template v-if="!allowAnyType && fileType && fileType.length"> 格式为 <b style="color: #f56c6c">{{ fileType.join("/") }}</b> </template>
         的文件
       </div>
     </el-upload>
@@ -73,6 +73,11 @@ export default {
     fileType: {
       type: Array,
       default: () => ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "pdf"]
+    },
+    // 是否允许任意文件类型
+    allowAnyType: {
+      type: Boolean,
+      default: false
     },
     // 是否显示提示
     isShowTip: {
@@ -151,7 +156,7 @@ export default {
     // 上传前校检格式和大小
     handleBeforeUpload(file) {
       // 校检文件类型
-      if (this.fileType) {
+      if (!this.allowAnyType && this.fileType && this.fileType.length) {
         const fileName = file.name.split('.')
         const fileExt = fileName[fileName.length - 1]
         const isTypeOk = this.fileType.indexOf(fileExt) >= 0

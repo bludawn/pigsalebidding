@@ -100,16 +100,6 @@ public class PigResource extends BaseEntity
         return resourceSource;
     }
 
-    public void setPurchaseOrderId(Long purchaseOrderId)
-    {
-        this.purchaseOrderId = purchaseOrderId;
-    }
-
-    public Long getPurchaseOrderId()
-    {
-        return purchaseOrderId;
-    }
-
     public void setResourceCount(Integer resourceCount)
     {
         this.resourceCount = resourceCount;
@@ -149,7 +139,6 @@ public class PigResource extends BaseEntity
             .append("pigTypeId", getPigTypeId())
             .append("siteId", getSiteId())
             .append("resourceSource", getResourceSource())
-            .append("purchaseOrderId", getPurchaseOrderId())
             .append("resourceCount", getResourceCount())
             .append("resourceUnitPrice", getResourceUnitPrice())
             .append("resourceTotalPrice", getResourceTotalPrice())

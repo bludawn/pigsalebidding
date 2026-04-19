@@ -199,6 +199,7 @@
 import { listSite, getSite, delSite, addSite, updateSite } from "@/api/pig/site"
 import { listEnterprise } from "@/api/pig/enterprise"
 import { getToken } from "@/utils/auth"
+import { buildFileUrlList } from "@/utils/ruoyi"
 import pcasData from "@/assets/pcas-code.json"
 
 export default {
@@ -279,12 +280,23 @@ export default {
   },
   methods: {
     getUrlList(value) {
-      if (!value) return []
-      return value.split(',').map(item => item.trim()).filter(Boolean)
+      return buildFileUrlList(value)
     },
     getFirstUrl(value) {
       const list = this.getUrlList(value)
       return list.length ? list[0] : ""
+    },
+    normalizeUrlField(value) {
+      const list = buildFileUrlList(value)
+      return list.length ? list.join(',') : value
+    },
+    normalizeSiteData(data) {
+      if (!data) return data
+      return {
+        ...data,
+        siteImages: this.normalizeUrlField(data.siteImages),
+        siteVideos: this.normalizeUrlField(data.siteVideos)
+      }
     },
     loadEnterpriseOptions() {
       listEnterprise({ pageNum: 1, pageSize: 1000 }).then(response => {
@@ -367,7 +379,7 @@ export default {
     getList() {
       this.loading = true
       listSite(this.queryParams).then(response => {
-        this.siteList = response.rows
+        this.siteList = (response.rows || []).map(item => this.normalizeSiteData(item))
         this.total = response.total
         this.loading = false
       })
@@ -419,7 +431,7 @@ export default {
       this.viewModeOnly = false
       const id = row.id || this.ids
       getSite(id).then(response => {
-        this.form = response.data
+        this.form = this.normalizeSiteData(response.data) || {}
         this.form.siteAddressCodeList = this.getCodePath(this.form.siteAddressCode)
         this.open = true
         this.title = "修改场点"
@@ -429,7 +441,7 @@ export default {
       this.reset()
       const id = row.id || this.ids
       getSite(id).then(response => {
-        this.form = response.data
+        this.form = this.normalizeSiteData(response.data) || {}
         this.form.siteAddressCodeList = this.getCodePath(this.form.siteAddressCode)
         this.viewModeOnly = true
         this.open = true

@@ -29,7 +29,6 @@ CREATE TABLE t_pigResource (
   f_pigTypeId bigint(20) DEFAULT NULL COMMENT '生猪类型id',
   f_siteId bigint(20) DEFAULT NULL COMMENT '场点id',
   f_resourceSource varchar(32) DEFAULT NULL COMMENT '资源来源',
-  f_purchaseOrderId bigint(20) DEFAULT NULL COMMENT '采购单id',
   f_resourceCount int(4) DEFAULT NULL COMMENT '资源数量',
   f_resourceUnitPrice decimal(19,6) DEFAULT NULL COMMENT '资源单价',
   f_resourceTotalPrice decimal(19,6) DEFAULT NULL COMMENT '资源总价',
@@ -55,6 +54,7 @@ CREATE TABLE t_bidProduct (
   f_remark varchar(500) DEFAULT NULL COMMENT '备注',
   f_totalHeadCount int(4) DEFAULT NULL COMMENT '总头数',
   f_startBidCount int(4) DEFAULT NULL COMMENT '起拍头数',
+  f_bidCountStep int(4) DEFAULT NULL COMMENT '竞价数量梯度',
   f_priceStep decimal(19,6) DEFAULT NULL COMMENT '加价幅度',
   f_addPrice decimal(19,6) DEFAULT NULL COMMENT '加拍价',
   f_bidStatus varchar(32) DEFAULT NULL COMMENT '竞价状态',
@@ -105,7 +105,7 @@ CREATE TABLE t_userBidInfo (
   f_enterpriseId bigint(20) DEFAULT NULL COMMENT '企业id',
   f_bidProductId bigint(20) DEFAULT NULL COMMENT '竞价商品id',
   f_addressId bigint(20) DEFAULT NULL COMMENT '收货地址id',
-  f_loadingTime datetime COMMENT '装车时间',
+  f_expectedDeliveryTime datetime COMMENT '期望送达时间',
   f_remark varchar(500) DEFAULT NULL COMMENT '备注',
   f_creator bigint(20) DEFAULT NULL COMMENT '创建人',
   f_createTime datetime COMMENT '创建时间',
@@ -155,7 +155,7 @@ CREATE TABLE t_order (
   f_bidProductId bigint(20) DEFAULT NULL COMMENT '竞价商品id',
   f_userBidId bigint(20) DEFAULT NULL COMMENT '用户出价id',
   f_addressId bigint(20) DEFAULT NULL COMMENT '收货地址id',
-  f_expectLoadTime datetime COMMENT '期望装车时间',
+  f_expectedDeliveryTime datetime COMMENT '期望送达时间',
   f_remark varchar(500) DEFAULT NULL COMMENT '备注',
   f_pigResourceId bigint(20) DEFAULT NULL COMMENT '生猪资源id',
   f_orderAmount decimal(19,6) DEFAULT NULL COMMENT '订单金额',
@@ -184,9 +184,11 @@ CREATE TABLE t_deliveryInfo (
   f_delivererName varchar(100) DEFAULT '' COMMENT '送货人姓名',
   f_delivererPhone varchar(50) DEFAULT NULL COMMENT '送货人电话',
   f_vehicleNo varchar(50) DEFAULT NULL COMMENT '车牌号',
-  f_vehicleType varchar(50) DEFAULT NULL COMMENT '车辆类型',
+  f_vehicleTypeId bigint(20) DEFAULT NULL COMMENT '车辆类型id',
+  f_vehicleSource varchar(100) DEFAULT NULL COMMENT '车辆来源',
   f_loadCount int(4) DEFAULT NULL COMMENT '装猪数量',
   f_deliveryStatus varchar(32) DEFAULT NULL COMMENT '送货状态',
+  f_attachmentUrls varchar(2000) DEFAULT NULL COMMENT '附件',
   f_remark varchar(500) DEFAULT NULL COMMENT '备注',
   f_creator bigint(20) DEFAULT NULL COMMENT '创建人',
   f_createTime datetime COMMENT '创建时间',
@@ -246,6 +248,18 @@ CREATE TABLE t_userExt (
   f_updateTime datetime COMMENT '更新时间',
   PRIMARY KEY (f_id)
 ) ENGINE=InnoDB COMMENT='用户信息拓展表';
+
+DROP TABLE IF EXISTS t_vehicleType;
+CREATE TABLE t_vehicleType (
+  f_id bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  f_vehicleTypeName varchar(100) DEFAULT '' COMMENT '车辆类型名称',
+  f_vehicleTypeDesc varchar(500) DEFAULT NULL COMMENT '车辆类型描述',
+  f_creator varchar(64) DEFAULT '' COMMENT '创建人',
+  f_createTime datetime COMMENT '创建时间',
+  f_updator varchar(64) DEFAULT '' COMMENT '更新人',
+  f_updateTime datetime COMMENT '更新时间',
+  PRIMARY KEY (f_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='车辆类型表';
 
 DROP TABLE IF EXISTS t_businessMessage;
 CREATE TABLE t_businessMessage (
@@ -372,6 +386,13 @@ WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_delivery_st
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
 SELECT 3, '已送达', 'ARRIVED', 'pig_delivery_status', '', 'success', 'N', '0', 'admin', sysdate(), '送货状态-已送达'
 WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_delivery_status' AND dict_value = 'ARRIVED');
+
+INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+SELECT 1, '自有', 'OWN', 'pig_vehicle_source', '', 'primary', 'Y', '0', 'admin', sysdate(), '车辆来源-自有'
+WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_vehicle_source' AND dict_value = 'OWN');
+INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+SELECT 2, '外雇', 'HIRE', 'pig_vehicle_source', '', 'warning', 'N', '0', 'admin', sysdate(), '车辆来源-外雇'
+WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_vehicle_source' AND dict_value = 'HIRE');
 
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
 SELECT 1, '系统', 'SYSTEM', 'pig_message_type', '', 'primary', 'Y', '0', 'admin', sysdate(), '消息类型-系统'
@@ -696,3 +717,24 @@ WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @businessMessageMenuI
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '导出', @businessMessageMenuId, 5, '', '', 'F', '0', '0', 'pig:businessMessage:export', '#', 'admin', sysdate(), ''
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @businessMessageMenuId AND perms = 'pig:businessMessage:export');
+
+-- 车辆类型
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '车辆类型', @pigMenuId, 15, 'vehicleType', 'pig/vehicleType/index', '', '', 1, 0, 'C', '0', '0', 'pig:vehicleType:list', 'table', 'admin', sysdate(), '车辆类型菜单'
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '车辆类型' AND parent_id = @pigMenuId);
+SET @vehicleTypeMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '车辆类型' AND parent_id = @pigMenuId ORDER BY menu_id DESC LIMIT 1);
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '查询', @vehicleTypeMenuId, 1, '', '', 'F', '0', '0', 'pig:vehicleType:query', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @vehicleTypeMenuId AND perms = 'pig:vehicleType:query');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '新增', @vehicleTypeMenuId, 2, '', '', 'F', '0', '0', 'pig:vehicleType:add', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @vehicleTypeMenuId AND perms = 'pig:vehicleType:add');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '修改', @vehicleTypeMenuId, 3, '', '', 'F', '0', '0', 'pig:vehicleType:edit', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @vehicleTypeMenuId AND perms = 'pig:vehicleType:edit');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '删除', @vehicleTypeMenuId, 4, '', '', 'F', '0', '0', 'pig:vehicleType:remove', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @vehicleTypeMenuId AND perms = 'pig:vehicleType:remove');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '导出', @vehicleTypeMenuId, 5, '', '', 'F', '0', '0', 'pig:vehicleType:export', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @vehicleTypeMenuId AND perms = 'pig:vehicleType:export');

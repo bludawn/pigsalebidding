@@ -63,7 +63,7 @@ public class CustomerModels
     {
         public String auctionId;
         public String addressId;
-        public String appointmentTime;
+        public String expectedDeliveryTime;
         public String remark;
     }
 
@@ -208,6 +208,7 @@ public class CustomerModels
         public String price;
         public String remark;
         public Integer startingCount;
+        public Integer bidCountStep;
         public BigDecimal bidStep;
         public BigDecimal addPrice;
         public Integer quantity;
@@ -230,7 +231,7 @@ public class CustomerModels
         public String contactPhone;
         public String regionName;
         public String detailAddress;
-        public String appointmentTime;
+        public String expectedDeliveryTime;
         public String remark;
         public String updatedAt;
     }
@@ -339,7 +340,7 @@ public class CustomerModels
         public String contactName;
         public String contactPhone;
         public String address;
-        public String deliveryTime;
+        public String expectedDeliveryTime;
         public String longitude;
         public String latitude;
     }
@@ -353,8 +354,10 @@ public class CustomerModels
         public String driverPhone;
         public String vehicleNo;
         public String vehicleType;
+        public String vehicleSource;
         public Integer loadCount;
         public String deliveryStatus;
+        public List<String> attachmentUrls;
         public String estimatedArrival;
         public String remark;
     }

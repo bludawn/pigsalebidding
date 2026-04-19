@@ -46,7 +46,7 @@ const getDaysInMonth = (year: number, month: number) => new Date(year, month, 0)
 const AuctionMaintenanceView: React.FC<AuctionMaintenanceViewProps> = ({ auctionId, onBack, onSaved, onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [selectedAddress, setSelectedAddress] = useState<SelectedAddress | null>(null);
-  const [appointmentTime, setAppointmentTime] = useState('');
+  const [expectedDeliveryTime, setExpectedDeliveryTime] = useState('');
   const [remark, setRemark] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -101,8 +101,8 @@ const AuctionMaintenanceView: React.FC<AuctionMaintenanceViewProps> = ({ auction
             regionName: data.regionName,
             detailAddress: data.detailAddress,
           });
-          const normalizedTime = data.appointmentTime ? data.appointmentTime.replace('T', ' ').slice(0, 16) : '';
-          setAppointmentTime(normalizedTime);
+          const normalizedTime = data.expectedDeliveryTime ? data.expectedDeliveryTime.replace('T', ' ').slice(0, 16) : '';
+          setExpectedDeliveryTime(normalizedTime);
           setRemark(data.remark || '');
         }
       } catch (err) {
@@ -159,7 +159,7 @@ const AuctionMaintenanceView: React.FC<AuctionMaintenanceViewProps> = ({ auction
   }, [showTimePicker, timePicker, yearOptions, monthOptions, dayOptions, hourOptions, minuteOptions]);
 
   const openTimePicker = () => {
-    const parsed = parseDateTime(appointmentTime);
+    const parsed = parseDateTime(expectedDeliveryTime);
     const nextState = parsed || (() => {
       const now = new Date();
       return {
@@ -211,16 +211,16 @@ const AuctionMaintenanceView: React.FC<AuctionMaintenanceViewProps> = ({ auction
   };
 
   const canSubmit = useMemo(() => {
-    return Boolean(selectedAddress && appointmentTime && !submitting);
-  }, [appointmentTime, selectedAddress, submitting]);
+    return Boolean(selectedAddress && expectedDeliveryTime && !submitting);
+  }, [expectedDeliveryTime, selectedAddress, submitting]);
 
   const handleSubmit = async () => {
     if (!selectedAddress) {
       setError('请选择收货地址');
       return;
     }
-    if (!appointmentTime) {
-      setError('请选择装猪时间');
+    if (!expectedDeliveryTime) {
+      setError('请选择期望送达时间');
       return;
     }
     setError('');
@@ -229,7 +229,7 @@ const AuctionMaintenanceView: React.FC<AuctionMaintenanceViewProps> = ({ auction
       const res = await saveAuctionMaintenance({
         auctionId,
         addressId: selectedAddress.id,
-        appointmentTime: appointmentTime,
+        expectedDeliveryTime,
         remark: remark.trim(),
       });
       if (res.errcode === 0) {
@@ -291,14 +291,14 @@ const AuctionMaintenanceView: React.FC<AuctionMaintenanceViewProps> = ({ auction
           </div>
 
           <div className="bg-white rounded-custom p-4 shadow-sm border border-slate-100">
-            <h2 className="text-sm font-bold mb-3">装猪时间</h2>
+            <h2 className="text-sm font-bold mb-3">期望送达时间</h2>
             <button
               type="button"
               onClick={openTimePicker}
               className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-100 rounded-custom flex items-center justify-between"
             >
-              <span className={appointmentTime ? 'text-slate-700' : 'text-slate-400'}>
-                {appointmentTime || '请选择年月日时分'}
+              <span className={expectedDeliveryTime ? 'text-slate-700' : 'text-slate-400'}>
+                {expectedDeliveryTime || '请选择年月日时分'}
               </span>
               <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -339,7 +339,7 @@ const AuctionMaintenanceView: React.FC<AuctionMaintenanceViewProps> = ({ auction
             onClick={event => event.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-slate-800">选择装猪时间</h3>
+              <h3 className="font-bold text-slate-800">选择期望送达时间</h3>
               <button onClick={() => setShowTimePicker(false)} className="text-slate-400">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -402,7 +402,7 @@ const AuctionMaintenanceView: React.FC<AuctionMaintenanceViewProps> = ({ auction
               </button>
               <button
                 onClick={() => {
-                  setAppointmentTime(formatDateTime(timePicker));
+                  setExpectedDeliveryTime(formatDateTime(timePicker));
                   setShowTimePicker(false);
                 }}
                 className="flex-1 py-3 bg-industry-red text-white rounded-custom font-bold"

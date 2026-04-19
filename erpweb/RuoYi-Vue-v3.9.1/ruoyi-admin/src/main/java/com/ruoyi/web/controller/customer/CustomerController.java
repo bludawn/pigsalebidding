@@ -43,6 +43,7 @@ import com.ruoyi.system.domain.pig.Site;
 import com.ruoyi.system.domain.pig.UserBid;
 import com.ruoyi.system.domain.pig.UserBidInfo;
 import com.ruoyi.system.domain.pig.UserExt;
+import com.ruoyi.system.domain.pig.VehicleType;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.pig.IAddressService;
 import com.ruoyi.system.service.pig.IBidProductService;
@@ -56,6 +57,7 @@ import com.ruoyi.system.service.pig.ISiteService;
 import com.ruoyi.system.service.pig.IUserBidInfoService;
 import com.ruoyi.system.service.pig.IUserBidService;
 import com.ruoyi.system.service.pig.IUserExtService;
+import com.ruoyi.system.service.pig.IVehicleTypeService;
 import com.ruoyi.web.controller.customer.CustomerModels.*;
 
 /**
@@ -102,6 +104,9 @@ public class CustomerController extends BaseController {
 
     @Autowired
     private IDeliveryInfoService deliveryInfoService;
+
+    @Autowired
+    private IVehicleTypeService vehicleTypeService;
 
     @Autowired
     private ServerConfig serverConfig;
@@ -236,6 +241,7 @@ public class CustomerController extends BaseController {
         info.price = bidProduct.getCurrentHighestPrice() != null ? bidProduct.getCurrentHighestPrice().toPlainString() : toStr(bidProduct.getStartPrice());
         info.remark = bidProduct.getRemark();
         info.startingCount = bidProduct.getStartBidCount();
+        info.bidCountStep = bidProduct.getBidCountStep();
         info.bidStep = bidProduct.getPriceStep();
         info.addPrice = bidProduct.getAddPrice();
         info.quantity = bidProduct.getTotalHeadCount();
@@ -270,7 +276,7 @@ public class CustomerController extends BaseController {
         result.contactPhone = address != null ? address.getContactPhone() : null;
         result.regionName = address != null ? address.getAddressCode() : null;
         result.detailAddress = address != null ? address.getDetailAddress() : null;
-        result.appointmentTime = formatDate(info.getLoadingTime());
+        result.expectedDeliveryTime = formatDate(info.getExpectedDeliveryTime());
         result.remark = info.getRemark();
         result.updatedAt = formatDate(info.getUpdateTime());
         return ok(result);
@@ -287,7 +293,7 @@ public class CustomerController extends BaseController {
         info.setUserId(getUserId());
         info.setBidProductId(toLong(request.auctionId));
         info.setAddressId(toLong(request.addressId));
-        info.setLoadingTime(DateUtils.parseDate(request.appointmentTime));
+        info.setExpectedDeliveryTime(DateUtils.parseDate(request.expectedDeliveryTime));
         info.setRemark(request.remark);
         if (info.getId() == null) {
             info.setCreateBy(String.valueOf(getUserId()));
@@ -304,7 +310,7 @@ public class CustomerController extends BaseController {
         result.contactPhone = address != null ? address.getContactPhone() : null;
         result.regionName = address != null ? address.getAddressCode() : null;
         result.detailAddress = address != null ? address.getDetailAddress() : null;
-        result.appointmentTime = request.appointmentTime;
+        result.expectedDeliveryTime = request.expectedDeliveryTime;
         result.remark = request.remark;
         result.updatedAt = DateUtils.getTime();
         return ok(result);
@@ -901,7 +907,7 @@ public class CustomerController extends BaseController {
         info.contactName = address != null ? address.getContactName() : null;
         info.contactPhone = address != null ? address.getContactPhone() : null;
         info.address = address != null ? buildFullAddress(address.getAddressCode(), address.getDetailAddress()) : null;
-        info.deliveryTime = formatDate(order.getExpectLoadTime());
+        info.expectedDeliveryTime = formatDate(order.getExpectedDeliveryTime());
         info.longitude = address != null ? address.getLongitude() : null;
         info.latitude = address != null ? address.getLatitude() : null;
         return info;
@@ -1006,9 +1012,11 @@ public class CustomerController extends BaseController {
         info.driverName = delivery.getDelivererName();
         info.driverPhone = delivery.getDelivererPhone();
         info.vehicleNo = delivery.getVehicleNo();
-        info.vehicleType = delivery.getVehicleType();
+        info.vehicleType = resolveVehicleTypeName(delivery.getVehicleTypeId());
+        info.vehicleSource = delivery.getVehicleSource();
         info.loadCount = delivery.getLoadCount();
         info.deliveryStatus = delivery.getDeliveryStatus();
+        info.attachmentUrls = splitToList(delivery.getAttachmentUrls());
         info.estimatedArrival = null;
         info.remark = delivery.getRemark();
         return info;
@@ -1043,6 +1051,17 @@ public class CustomerController extends BaseController {
             return enterpriseService.selectEnterpriseById(userExt.getEnterpriseId());
         }
         return null;
+    }
+
+    private String resolveVehicleTypeName(Long vehicleTypeId) {
+        if (vehicleTypeId == null) {
+            return null;
+        }
+        VehicleType vehicleType = vehicleTypeService.selectVehicleTypeById(vehicleTypeId);
+        if (vehicleType == null) {
+            return null;
+        }
+        return vehicleType.getVehicleTypeName();
     }
 
     private List<DeliveryInfo> resolveDeliveryInfos(String deliveryInfoIds) {

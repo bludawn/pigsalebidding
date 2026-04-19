@@ -329,7 +329,7 @@ export async function getAuctionMaintenance(params: { auctionId: string }): Prom
 export async function saveAuctionMaintenance(params: {
   auctionId: string;
   addressId: string;
-  appointmentTime: string;
+  expectedDeliveryTime: string;
   remark?: string;
 }): Promise<ApiResponse<AuctionMaintenanceInfo>> {
   return request<AuctionMaintenanceInfo>('/v1/weixincustomer/saveAuctionMaintenance', params);
@@ -635,9 +635,24 @@ export async function getOrderList(params: ListRequestParams & {
   return request<ListResponseData<OrderListItem>>('/v1/weixincustomer/getOrderList', params);
 }
 
+const mapOrderDetail = (detail: OrderDetailInfo): OrderDetailInfo => ({
+  ...detail,
+  deliveryInfos: (detail.deliveryInfos || []).map(item => ({
+    ...item,
+    attachmentUrls: (item.attachmentUrls || []).map(withFileHost),
+  })),
+});
+
 /** 获取订单详情 */
 export async function getOrderDetail(params: { orderId: string }): Promise<ApiResponse<OrderDetailInfo>> {
-  return request<OrderDetailInfo>('/v1/weixincustomer/getOrderDetail', params);
+  const result = await request<OrderDetailInfo>('/v1/weixincustomer/getOrderDetail', params);
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: mapOrderDetail(result.data),
+  };
 }
 
 /** 取消订单 */

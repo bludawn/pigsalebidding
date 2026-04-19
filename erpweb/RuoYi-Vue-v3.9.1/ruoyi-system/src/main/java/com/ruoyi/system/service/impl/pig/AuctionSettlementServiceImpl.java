@@ -187,7 +187,7 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
         }
         UserBidInfo info = infos.get(0);
         order.setAddressId(info.getAddressId());
-        order.setExpectLoadTime(info.getLoadingTime());
+        order.setExpectedDeliveryTime(info.getExpectedDeliveryTime());
         String remark = info.getRemark();
         if (StringUtils.isNotEmpty(remark))
         {

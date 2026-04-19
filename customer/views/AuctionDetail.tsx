@@ -87,6 +87,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
   const mediaList = detail?.mediaUrls?.length ? detail.mediaUrls : [params.imageUrl];
   const minBidCount = detail?.startingCount ?? params.startingCount;
   const bidStep = detail?.bidStep ?? 0.05;
+  const bidCountStep = detail?.bidCountStep ?? 1;
 
   const displayPriceValue = useMemo(() => {
     if (!detail?.price) return params.startingPrice;
@@ -507,8 +508,8 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
                   <div className="mt-1 text-slate-600">{maintenanceInfo.regionName} {maintenanceInfo.detailAddress}</div>
                 </div>
                 <div>
-                  <span className="text-slate-400">装猪时间：</span>
-                  <span className="text-slate-700 font-medium">{maintenanceInfo.appointmentTime}</span>
+                  <span className="text-slate-400">期望送达时间：</span>
+                  <span className="text-slate-700 font-medium">{maintenanceInfo.expectedDeliveryTime}</span>
                 </div>
                 <div>
                   <span className="text-slate-400">备注：</span>
@@ -707,7 +708,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
                 onChange={e => setBidCount(parseInt(e.target.value, 10) || 0)}
                 className="flex-1 min-w-0 bg-transparent text-center font-bold text-sm focus:outline-none"
               />
-              <button onClick={() => setBidCount(c => c + 1)} className="w-8 h-8 flex items-center justify-center text-slate-500 font-bold">+</button>
+              <button onClick={() => setBidCount(c => c + bidCountStep)} className="w-8 h-8 flex items-center justify-center text-slate-500 font-bold">+</button>
             </div>
           </div>
         </div>

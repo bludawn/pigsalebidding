@@ -41,9 +41,13 @@ public class DeliveryInfo extends BaseEntity
     @Excel(name = "车牌号")
     private String vehicleNo;
 
-    /** 车辆类型 */
-    @Excel(name = "车辆类型")
-    private String vehicleType;
+    /** 车辆类型id */
+    @Excel(name = "车辆类型id")
+    private Long vehicleTypeId;
+
+    /** 车辆来源 */
+    @Excel(name = "车辆来源")
+    private String vehicleSource;
 
     /** 装猪数量 */
     @Excel(name = "装猪数量")
@@ -52,6 +56,10 @@ public class DeliveryInfo extends BaseEntity
     /** 送货状态 */
     @Excel(name = "送货状态")
     private String deliveryStatus;
+
+    /** 附件 */
+    @Excel(name = "附件")
+    private String attachmentUrls;
 
     /** 备注 */
     @Excel(name = "备注")
@@ -127,14 +135,24 @@ public class DeliveryInfo extends BaseEntity
         return vehicleNo;
     }
 
-    public void setVehicleType(String vehicleType)
+    public void setVehicleTypeId(Long vehicleTypeId)
     {
-        this.vehicleType = vehicleType;
+        this.vehicleTypeId = vehicleTypeId;
     }
 
-    public String getVehicleType()
+    public Long getVehicleTypeId()
     {
-        return vehicleType;
+        return vehicleTypeId;
+    }
+
+    public void setVehicleSource(String vehicleSource)
+    {
+        this.vehicleSource = vehicleSource;
+    }
+
+    public String getVehicleSource()
+    {
+        return vehicleSource;
     }
 
     public void setLoadCount(Integer loadCount)
@@ -155,6 +173,16 @@ public class DeliveryInfo extends BaseEntity
     public String getDeliveryStatus()
     {
         return deliveryStatus;
+    }
+
+    public void setAttachmentUrls(String attachmentUrls)
+    {
+        this.attachmentUrls = attachmentUrls;
+    }
+
+    public String getAttachmentUrls()
+    {
+        return attachmentUrls;
     }
 
     public void setRemark(String remark)
@@ -178,9 +206,11 @@ public class DeliveryInfo extends BaseEntity
             .append("delivererName", getDelivererName())
             .append("delivererPhone", getDelivererPhone())
             .append("vehicleNo", getVehicleNo())
-            .append("vehicleType", getVehicleType())
+            .append("vehicleTypeId", getVehicleTypeId())
+            .append("vehicleSource", getVehicleSource())
             .append("loadCount", getLoadCount())
             .append("deliveryStatus", getDeliveryStatus())
+            .append("attachmentUrls", getAttachmentUrls())
             .append("remark", getRemark())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())

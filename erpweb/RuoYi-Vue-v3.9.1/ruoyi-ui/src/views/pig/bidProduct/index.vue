@@ -81,6 +81,7 @@
       </el-table-column>
       <el-table-column label="总头数" align="center" prop="totalHeadCount" v-if="columns.totalHeadCount.visible" />
       <el-table-column label="起拍头数" align="center" prop="startBidCount" v-if="columns.startBidCount.visible" />
+      <el-table-column label="竞价数量梯度" align="center" prop="bidCountStep" v-if="columns.bidCountStep.visible" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
@@ -140,6 +141,9 @@
         </el-form-item>
         <el-form-item label="起拍头数" prop="startBidCount">
           <el-input v-model="form.startBidCount" placeholder="请输入起拍头数" :disabled="viewModeOnly" />
+        </el-form-item>
+        <el-form-item label="竞价数量梯度" prop="bidCountStep">
+          <el-input v-model="form.bidCountStep" placeholder="请输入竞价数量梯度" :disabled="viewModeOnly" />
         </el-form-item>
         <el-form-item label="加价幅度" prop="priceStep">
           <el-input v-model="form.priceStep" placeholder="请输入加价幅度" :disabled="viewModeOnly" />
@@ -311,6 +315,7 @@ export default {
         remark: undefined,
         totalHeadCount: undefined,
         startBidCount: undefined,
+        bidCountStep: undefined,
         priceStep: undefined,
         addPrice: undefined,
         bidStatus: undefined,

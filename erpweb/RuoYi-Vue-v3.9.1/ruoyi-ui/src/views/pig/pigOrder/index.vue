@@ -80,9 +80,9 @@
           <span>{{ getAddressLabel(scope.row.addressId) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="期望装车时间" align="center" prop="expectLoadTime" v-if="columns.expectLoadTime.visible" width="160">
+      <el-table-column label="期望送达时间" align="center" prop="expectedDeliveryTime" v-if="columns.expectedDeliveryTime.visible" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.expectLoadTime) }}</span>
+          <span>{{ parseTime(scope.row.expectedDeliveryTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="生猪资源" align="center" prop="pigResourceId" v-if="columns.pigResourceId.visible" :show-overflow-tooltip="true">
@@ -161,7 +161,7 @@
             <div>总重量(kg)：{{ item.totalWeight }}</div>
             <div>支付渠道：{{ item.payChannel }}</div>
             <div>支付时间：{{ parseTime(item.payTime) }}</div>
-            <div>期望装车时间：{{ parseTime(item.expectLoadTime) }}</div>
+            <div>期望送达时间：{{ parseTime(item.expectedDeliveryTime) }}</div>
             <div>装货时间：{{ parseTime(item.loadTime) }}</div>
             <div>发货时间：{{ parseTime(item.shipTime) }}</div>
             <div>确认收货时间：{{ parseTime(item.receiveTime) }}</div>
@@ -214,8 +214,8 @@
             <el-option v-for="item in addressOptions" :key="item.id" :label="getAddressOptionLabel(item)" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="期望装车时间" prop="expectLoadTime">
-          <el-date-picker v-model="form.expectLoadTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择期望装车时间" :disabled="viewModeOnly"></el-date-picker>
+        <el-form-item label="期望送达时间" prop="expectedDeliveryTime">
+          <el-date-picker v-model="form.expectedDeliveryTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择期望送达时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="生猪资源" prop="pigResourceId">
           <el-select v-model="form.pigResourceId" placeholder="请选择生猪资源" filterable clearable :disabled="viewModeOnly" @change="handlePigResourceChange">
@@ -255,6 +255,28 @@
             <el-table-column label="送货人" prop="delivererName" min-width="100" />
             <el-table-column label="电话" prop="delivererPhone" min-width="120" />
             <el-table-column label="车牌号" prop="vehicleNo" min-width="120" />
+            <el-table-column label="车辆类型" min-width="120">
+              <template slot-scope="scope">
+                <span>{{ getVehicleTypeName(scope.row.vehicleTypeId) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="车辆来源" prop="vehicleSource" min-width="120" />
+            <el-table-column label="附件" min-width="160">
+              <template slot-scope="scope">
+                <div v-if="splitAttachmentUrls(scope.row.attachmentUrls).length">
+                  <el-link
+                    v-for="(url, idx) in splitAttachmentUrls(scope.row.attachmentUrls)"
+                    :key="`${scope.row.id || 'order'}-${idx}`"
+                    :href="normalizeFileUrl(url)"
+                    target="_blank"
+                    :underline="false"
+                    type="primary"
+                    style="margin-right: 8px;"
+                  >附件{{ idx + 1 }}</el-link>
+                </div>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
             <el-table-column label="装猪数量" prop="loadCount" min-width="90" />
             <el-table-column label="当前位置" min-width="160">
               <template slot-scope="scope">
@@ -309,8 +331,16 @@
         <el-form-item label="车牌号" prop="vehicleNo">
           <el-input v-model="deliveryForm.vehicleNo" placeholder="请输入车牌号" />
         </el-form-item>
-        <el-form-item label="车辆类型" prop="vehicleType">
-          <el-input v-model="deliveryForm.vehicleType" placeholder="请输入车辆类型" />
+        <el-form-item label="车辆类型" prop="vehicleTypeId">
+          <el-select v-model="deliveryForm.vehicleTypeId" placeholder="请选择车辆类型" filterable clearable>
+            <el-option v-for="item in vehicleTypeOptions" :key="item.id" :label="item.vehicleTypeName" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="车辆来源" prop="vehicleSource">
+          <el-input v-model="deliveryForm.vehicleSource" placeholder="请输入车辆来源" />
+        </el-form-item>
+        <el-form-item label="附件" prop="attachmentUrls">
+          <file-upload v-model="deliveryForm.attachmentUrls" :limit="6" :file-size="50" :allow-any-type="true" action="/common/uploadAny" />
         </el-form-item>
         <el-form-item label="装猪数量" prop="loadCount">
           <el-input v-model="deliveryForm.loadCount" placeholder="请输入装猪数量" />
@@ -356,6 +386,7 @@ import { listPigResource } from "@/api/pig/pigResource"
 import { listPigType } from "@/api/pig/pigType"
 import { listSite } from "@/api/pig/site"
 import { listDeliveryInfo, getDeliveryInfo, addDeliveryInfo, updateDeliveryInfo, getNextTransportCode } from "@/api/pig/deliveryInfo"
+import { listVehicleType } from "@/api/pig/vehicleType"
 import pcasData from "@/assets/pcas-code.json"
 
 export default {
@@ -390,7 +421,7 @@ export default {
         bidProductId: { label: '竞价商品', visible: true },
         userBidId: { label: '用户出价', visible: true },
         addressId: { label: '收货地址', visible: true },
-        expectLoadTime: { label: '期望装车时间', visible: true },
+        expectedDeliveryTime: { label: '期望送达时间', visible: true },
         pigResourceId: { label: '生猪资源', visible: true },
         orderAmount: { label: '订单金额', visible: true },
         totalWeight: { label: '总重量(kg)', visible: true },
@@ -449,6 +480,7 @@ export default {
     this.loadUserBidOptions()
     this.loadAddressOptions()
     this.loadPigResourceOptions()
+    this.loadVehicleTypeOptions()
   },
   watch: {
     'form.unitPrice'() {
@@ -485,7 +517,7 @@ export default {
         bidProductId: undefined,
         userBidId: undefined,
         addressId: undefined,
-        expectLoadTime: undefined,
+        expectedDeliveryTime: undefined,
         remark: undefined,
         pigResourceId: undefined,
         orderAmount: undefined,
@@ -590,6 +622,29 @@ export default {
           return acc
         }, {})
       })
+    },
+    loadVehicleTypeOptions() {
+      listVehicleType({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.vehicleTypeOptions = response.rows || []
+        this.vehicleTypeMap = this.vehicleTypeOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    getVehicleTypeName(id) {
+      if (!id) return '-'
+      const item = this.vehicleTypeMap[id]
+      return item ? item.vehicleTypeName : id
+    },
+    splitAttachmentUrls(value) {
+      if (!value) return []
+      return String(value).split(',').map(item => item.trim()).filter(Boolean)
+    },
+    normalizeFileUrl(url) {
+      if (!url) return ''
+      if (/^https?:\/\//i.test(url)) return url
+      return `${this.baseApi}${url.startsWith('/') ? '' : '/'}${url}`
     },
     loadPigTypeOptions() {
       listPigType({ pageNum: 1, pageSize: 1000 }).then(response => {
@@ -760,7 +815,9 @@ export default {
         delivererName: undefined,
         delivererPhone: undefined,
         vehicleNo: undefined,
-        vehicleType: undefined,
+        vehicleTypeId: undefined,
+        vehicleSource: undefined,
+        attachmentUrls: undefined,
         loadCount: undefined,
         deliveryStatus: undefined,
         remark: undefined

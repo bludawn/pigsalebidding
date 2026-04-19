@@ -10,7 +10,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="enterpriseId" column="f_enterpriseId" />
         <result property="bidProductId" column="f_bidProductId" />
         <result property="addressId" column="f_addressId" />
-        <result property="loadingTime" column="f_loadingTime" />
+        <result property="expectedDeliveryTime" column="f_expectedDeliveryTime" />
         <result property="remark" column="f_remark" />
         <result property="createBy" column="f_creator" />
         <result property="createTime" column="f_createTime" />
@@ -19,7 +19,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectUserBidInfoVo">
-        select f_id, f_userId, f_enterpriseId, f_bidProductId, f_addressId, f_loadingTime, f_remark, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_userId, f_enterpriseId, f_bidProductId, f_addressId, f_expectedDeliveryTime, f_remark, f_creator, f_createTime, f_updator, f_updateTime
         from t_userBidInfo
     </sql>
 
@@ -41,8 +41,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="addressId != null">
                 AND f_addressId = #{addressId}
             </if>
-            <if test="loadingTime != null">
-                AND f_loadingTime = #{loadingTime}
+            <if test="expectedDeliveryTime != null">
+                AND f_expectedDeliveryTime = #{expectedDeliveryTime}
             </if>
             <if test="remark != null and remark != ''">
                 AND f_remark like concat('%', #{remark}, '%')
@@ -62,7 +62,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="enterpriseId != null">f_enterpriseId,</if>
 <if test="bidProductId != null">f_bidProductId,</if>
 <if test="addressId != null">f_addressId,</if>
-<if test="loadingTime != null">f_loadingTime,</if>
+<if test="expectedDeliveryTime != null">f_expectedDeliveryTime,</if>
 <if test="remark != null and remark != ''">f_remark,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
 f_createTime
@@ -72,7 +72,7 @@ f_createTime
 <if test="enterpriseId != null">#{enterpriseId},</if>
 <if test="bidProductId != null">#{bidProductId},</if>
 <if test="addressId != null">#{addressId},</if>
-<if test="loadingTime != null">#{loadingTime},</if>
+<if test="expectedDeliveryTime != null">#{expectedDeliveryTime},</if>
 <if test="remark != null and remark != ''">#{remark},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
 sysdate()
@@ -86,7 +86,7 @@ sysdate()
             <if test="enterpriseId != null">f_enterpriseId = #{enterpriseId},</if>
             <if test="bidProductId != null">f_bidProductId = #{bidProductId},</if>
             <if test="addressId != null">f_addressId = #{addressId},</if>
-            <if test="loadingTime != null">f_loadingTime = #{loadingTime},</if>
+            <if test="expectedDeliveryTime != null">f_expectedDeliveryTime = #{expectedDeliveryTime},</if>
             <if test="remark != null and remark != ''">f_remark = #{remark},</if>
             <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
             f_updateTime = sysdate()
