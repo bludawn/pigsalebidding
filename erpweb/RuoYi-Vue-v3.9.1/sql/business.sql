@@ -161,6 +161,10 @@ CREATE TABLE t_order (
   f_orderAmount decimal(19,6) DEFAULT NULL COMMENT '订单金额',
   f_totalWeight decimal(19,6) DEFAULT NULL COMMENT '总重量(kg)',
   f_unitPrice decimal(19,6) DEFAULT NULL COMMENT '单价',
+  f_firstPaymentAmount decimal(19,6) DEFAULT NULL COMMENT '首付货款',
+  f_freightAmount decimal(19,6) DEFAULT NULL COMMENT '运费',
+  f_remainingPaymentAmount decimal(19,6) DEFAULT NULL COMMENT '剩余货款',
+  f_bankAccountId bigint(20) DEFAULT NULL COMMENT '收款银行账户id',
   f_bidQuantity int(4) DEFAULT NULL COMMENT '竞拍数量',
   f_payChannel varchar(50) DEFAULT NULL COMMENT '支付渠道',
   f_payTime datetime COMMENT '支付时间',
@@ -261,6 +265,20 @@ CREATE TABLE t_vehicleType (
   PRIMARY KEY (f_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='车辆类型表';
 
+DROP TABLE IF EXISTS t_bankAccount;
+CREATE TABLE t_bankAccount (
+  f_id bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  f_accountName varchar(100) DEFAULT '' COMMENT '名称',
+  f_holderName varchar(100) DEFAULT '' COMMENT '账户名',
+  f_bankCardNo varchar(100) DEFAULT '' COMMENT '银行卡号',
+  f_bankBranch varchar(200) DEFAULT NULL COMMENT '银行网点',
+  f_creator varchar(64) DEFAULT '' COMMENT '创建人',
+  f_createTime datetime COMMENT '创建时间',
+  f_updator varchar(64) DEFAULT '' COMMENT '更新人',
+  f_updateTime datetime COMMENT '更新时间',
+  PRIMARY KEY (f_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='银行账号表';
+
 DROP TABLE IF EXISTS t_businessMessage;
 CREATE TABLE t_businessMessage (
   f_id bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
@@ -309,6 +327,10 @@ WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type = 'pig_order_sourc
 INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, remark)
 SELECT '送货状态', 'pig_delivery_status', '0', 'admin', sysdate(), '送货状态'
 WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type = 'pig_delivery_status');
+
+INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, remark)
+SELECT '车辆来源', 'pig_vehicle_source', '0', 'admin', sysdate(), '车辆来源'
+WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type = 'pig_vehicle_source');
 
 INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, remark)
 SELECT '消息类型', 'pig_message_type', '0', 'admin', sysdate(), '消息类型'
@@ -718,9 +740,30 @@ INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_typ
 SELECT '导出', @businessMessageMenuId, 5, '', '', 'F', '0', '0', 'pig:businessMessage:export', '#', 'admin', sysdate(), ''
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @businessMessageMenuId AND perms = 'pig:businessMessage:export');
 
+-- 银行账号
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '银行账号', @pigMenuId, 15, 'bankAccount', 'pig/bankAccount/index', '', '', 1, 0, 'C', '0', '0', 'pig:bankAccount:list', 'money', 'admin', sysdate(), '银行账号菜单'
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '银行账号' AND parent_id = @pigMenuId);
+SET @bankAccountMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '银行账号' AND parent_id = @pigMenuId ORDER BY menu_id DESC LIMIT 1);
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '查询', @bankAccountMenuId, 1, '', '', 'F', '0', '0', 'pig:bankAccount:query', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @bankAccountMenuId AND perms = 'pig:bankAccount:query');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '新增', @bankAccountMenuId, 2, '', '', 'F', '0', '0', 'pig:bankAccount:add', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @bankAccountMenuId AND perms = 'pig:bankAccount:add');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '修改', @bankAccountMenuId, 3, '', '', 'F', '0', '0', 'pig:bankAccount:edit', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @bankAccountMenuId AND perms = 'pig:bankAccount:edit');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '删除', @bankAccountMenuId, 4, '', '', 'F', '0', '0', 'pig:bankAccount:remove', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @bankAccountMenuId AND perms = 'pig:bankAccount:remove');
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '导出', @bankAccountMenuId, 5, '', '', 'F', '0', '0', 'pig:bankAccount:export', '#', 'admin', sysdate(), ''
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @bankAccountMenuId AND perms = 'pig:bankAccount:export');
+
 -- 车辆类型
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '车辆类型', @pigMenuId, 15, 'vehicleType', 'pig/vehicleType/index', '', '', 1, 0, 'C', '0', '0', 'pig:vehicleType:list', 'table', 'admin', sysdate(), '车辆类型菜单'
+SELECT '车辆类型', @pigMenuId, 16, 'vehicleType', 'pig/vehicleType/index', '', '', 1, 0, 'C', '0', '0', 'pig:vehicleType:list', 'table', 'admin', sysdate(), '车辆类型菜单'
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '车辆类型' AND parent_id = @pigMenuId);
 SET @vehicleTypeMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '车辆类型' AND parent_id = @pigMenuId ORDER BY menu_id DESC LIMIT 1);
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)

@@ -345,6 +345,18 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
           </div>
         </div>
 
+        {detail.bankAccountInfo && (
+          <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+            <h2 className="text-sm font-bold mb-3">收款银行账户</h2>
+            <div className="text-xs text-slate-500 space-y-2">
+              <div className="flex justify-between"><span>账户名称</span><span className="text-slate-800 font-bold">{detail.bankAccountInfo.accountName || '-'}</span></div>
+              <div className="flex justify-between"><span>账户名</span><span className="text-slate-800 font-bold">{detail.bankAccountInfo.holderName || '-'}</span></div>
+              <div className="flex justify-between"><span>银行卡号</span><span className="text-slate-800 font-bold">{detail.bankAccountInfo.bankCardNo || '-'}</span></div>
+              <div className="flex justify-between"><span>银行网点</span><span className="text-slate-800 font-bold text-right">{detail.bankAccountInfo.bankBranch || '-'}</span></div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
           <h2 className="text-sm font-bold mb-3">收货信息</h2>
           <div className="text-xs text-slate-500 space-y-2">

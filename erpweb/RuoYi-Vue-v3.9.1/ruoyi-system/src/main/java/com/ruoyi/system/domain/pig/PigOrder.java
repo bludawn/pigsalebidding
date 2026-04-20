@@ -73,6 +73,22 @@ public class PigOrder extends BaseEntity
     @Excel(name = "单价")
     private BigDecimal unitPrice;
 
+    /** 首付货款 */
+    @Excel(name = "首付货款")
+    private BigDecimal firstPaymentAmount;
+
+    /** 运费 */
+    @Excel(name = "运费")
+    private BigDecimal freightAmount;
+
+    /** 剩余货款 */
+    @Excel(name = "剩余货款")
+    private BigDecimal remainingPaymentAmount;
+
+    /** 收款银行账户id */
+    @Excel(name = "收款银行账户id")
+    private Long bankAccountId;
+
     /** 竞拍数量 */
     @Excel(name = "竞拍数量")
     private Integer bidQuantity;
@@ -244,6 +260,46 @@ public class PigOrder extends BaseEntity
         return totalWeight;
     }
 
+    public void setFirstPaymentAmount(BigDecimal firstPaymentAmount)
+    {
+        this.firstPaymentAmount = firstPaymentAmount;
+    }
+
+    public BigDecimal getFirstPaymentAmount()
+    {
+        return firstPaymentAmount;
+    }
+
+    public void setFreightAmount(BigDecimal freightAmount)
+    {
+        this.freightAmount = freightAmount;
+    }
+
+    public BigDecimal getFreightAmount()
+    {
+        return freightAmount;
+    }
+
+    public void setRemainingPaymentAmount(BigDecimal remainingPaymentAmount)
+    {
+        this.remainingPaymentAmount = remainingPaymentAmount;
+    }
+
+    public BigDecimal getRemainingPaymentAmount()
+    {
+        return remainingPaymentAmount;
+    }
+
+    public void setBankAccountId(Long bankAccountId)
+    {
+        this.bankAccountId = bankAccountId;
+    }
+
+    public Long getBankAccountId()
+    {
+        return bankAccountId;
+    }
+
     public void setBidQuantity(Integer bidQuantity)
     {
         this.bidQuantity = bidQuantity;
@@ -332,6 +388,10 @@ public class PigOrder extends BaseEntity
             .append("orderAmount", getOrderAmount())
             .append("totalWeight", getTotalWeight())
             .append("unitPrice", getUnitPrice())
+            .append("firstPaymentAmount", getFirstPaymentAmount())
+            .append("freightAmount", getFreightAmount())
+            .append("remainingPaymentAmount", getRemainingPaymentAmount())
+            .append("bankAccountId", getBankAccountId())
             .append("bidQuantity", getBidQuantity())
             .append("payChannel", getPayChannel())
             .append("payTime", getPayTime())

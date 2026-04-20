@@ -91,6 +91,14 @@
         </template>
       </el-table-column>
       <el-table-column label="订单金额" align="center" prop="orderAmount" v-if="columns.orderAmount.visible" />
+      <el-table-column label="首付货款" align="center" prop="firstPaymentAmount" v-if="columns.firstPaymentAmount.visible" />
+      <el-table-column label="运费" align="center" prop="freightAmount" v-if="columns.freightAmount.visible" />
+      <el-table-column label="剩余货款" align="center" prop="remainingPaymentAmount" v-if="columns.remainingPaymentAmount.visible" />
+      <el-table-column label="收款账户" align="center" prop="bankAccountId" v-if="columns.bankAccountId.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ getBankAccountLabel(scope.row.bankAccountId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="总重量(kg)" align="center" prop="totalWeight" v-if="columns.totalWeight.visible" />
       <el-table-column label="竞拍数量(头)" align="center" prop="bidQuantity" v-if="columns.bidQuantity.visible">
         <template slot-scope="scope">
@@ -158,6 +166,10 @@
             <div>竞拍数量：{{ item.bidQuantity ? item.bidQuantity + '头' : '-' }}</div>
             <div>单价：{{ item.unitPrice }}</div>
             <div>订单金额：{{ item.orderAmount }}</div>
+            <div>首付货款：{{ item.firstPaymentAmount }}</div>
+            <div>运费：{{ item.freightAmount }}</div>
+            <div>剩余货款：{{ item.remainingPaymentAmount }}</div>
+            <div>收款账户：{{ getBankAccountLabel(item.bankAccountId) }}</div>
             <div>总重量(kg)：{{ item.totalWeight }}</div>
             <div>支付渠道：{{ item.payChannel }}</div>
             <div>支付时间：{{ parseTime(item.payTime) }}</div>
@@ -234,6 +246,20 @@
         <el-form-item label="订单金额" prop="orderAmount">
           <el-input v-model="form.orderAmount" placeholder="自动计算，可手工修改" :disabled="viewModeOnly" />
         </el-form-item>
+        <el-form-item label="首付货款" prop="firstPaymentAmount">
+          <el-input v-model="form.firstPaymentAmount" placeholder="请输入首付货款" :disabled="viewModeOnly" />
+        </el-form-item>
+        <el-form-item label="运费" prop="freightAmount">
+          <el-input v-model="form.freightAmount" placeholder="请输入运费" :disabled="viewModeOnly" />
+        </el-form-item>
+        <el-form-item label="剩余货款" prop="remainingPaymentAmount">
+          <el-input v-model="form.remainingPaymentAmount" placeholder="请输入剩余货款" :disabled="viewModeOnly" />
+        </el-form-item>
+        <el-form-item label="收款银行账户" prop="bankAccountId">
+          <el-select v-model="form.bankAccountId" placeholder="请选择收款银行账户" filterable clearable :disabled="viewModeOnly">
+            <el-option v-for="item in bankAccountOptions" :key="item.id" :label="getBankAccountOptionLabel(item)" :value="item.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="支付渠道" prop="payChannel">
           <el-input v-model="form.payChannel" placeholder="请输入支付渠道" :disabled="viewModeOnly" />
         </el-form-item>
@@ -260,7 +286,11 @@
                 <span>{{ getVehicleTypeName(scope.row.vehicleTypeId) }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="车辆来源" prop="vehicleSource" min-width="120" />
+            <el-table-column label="车辆来源" min-width="120">
+              <template slot-scope="scope">
+                <dict-tag :options="dict.type.pig_vehicle_source" :value="scope.row.vehicleSource" />
+              </template>
+            </el-table-column>
             <el-table-column label="附件" min-width="160">
               <template slot-scope="scope">
                 <div v-if="splitAttachmentUrls(scope.row.attachmentUrls).length">
@@ -337,7 +367,9 @@
           </el-select>
         </el-form-item>
         <el-form-item label="车辆来源" prop="vehicleSource">
-          <el-input v-model="deliveryForm.vehicleSource" placeholder="请输入车辆来源" />
+          <el-select v-model="deliveryForm.vehicleSource" placeholder="请选择车辆来源" clearable>
+            <el-option v-for="dictItem in dict.type.pig_vehicle_source" :key="dictItem.value" :label="dictItem.label" :value="dictItem.value" />
+          </el-select>
         </el-form-item>
         <el-form-item label="附件" prop="attachmentUrls">
           <file-upload v-model="deliveryForm.attachmentUrls" :limit="6" :file-size="50" :allow-any-type="true" action="/common/uploadAny" />
@@ -387,11 +419,12 @@ import { listPigType } from "@/api/pig/pigType"
 import { listSite } from "@/api/pig/site"
 import { listDeliveryInfo, getDeliveryInfo, addDeliveryInfo, updateDeliveryInfo, getNextTransportCode } from "@/api/pig/deliveryInfo"
 import { listVehicleType } from "@/api/pig/vehicleType"
+import { listBankAccount } from "@/api/pig/bankAccount"
 import pcasData from "@/assets/pcas-code.json"
 
 export default {
   name: "PigOrder",
-  dicts: ['pig_order_status', 'pig_order_source', 'pig_delivery_status'],
+  dicts: ['pig_order_status', 'pig_order_source', 'pig_delivery_status', 'pig_vehicle_source'],
   data() {
     return {
       loading: true,
@@ -424,6 +457,10 @@ export default {
         expectedDeliveryTime: { label: '期望送达时间', visible: true },
         pigResourceId: { label: '生猪资源', visible: true },
         orderAmount: { label: '订单金额', visible: true },
+        firstPaymentAmount: { label: '首付货款', visible: true },
+        freightAmount: { label: '运费', visible: true },
+        remainingPaymentAmount: { label: '剩余货款', visible: true },
+        bankAccountId: { label: '收款账户', visible: true },
         totalWeight: { label: '总重量(kg)', visible: true },
         unitPrice: { label: '单价', visible: true },
         bidQuantity: { label: '竞拍数量', visible: true },
@@ -448,10 +485,14 @@ export default {
       addressMap: {},
       pigResourceOptions: [],
       pigResourceMap: {},
+      vehicleTypeOptions: [],
+      vehicleTypeMap: {},
       pigTypeOptions: [],
       pigTypeMap: {},
       siteOptions: [],
       siteMap: {},
+      bankAccountOptions: [],
+      bankAccountMap: {},
       pcasCodeMap: {},
       viewModeOnly: false,
       deliveryInfoList: [],
@@ -481,6 +522,7 @@ export default {
     this.loadAddressOptions()
     this.loadPigResourceOptions()
     this.loadVehicleTypeOptions()
+    this.loadBankAccountOptions()
   },
   watch: {
     'form.unitPrice'() {
@@ -521,6 +563,10 @@ export default {
         remark: undefined,
         pigResourceId: undefined,
         orderAmount: undefined,
+        firstPaymentAmount: undefined,
+        freightAmount: undefined,
+        remainingPaymentAmount: undefined,
+        bankAccountId: undefined,
         totalWeight: undefined,
         bidQuantity: undefined,
         unitPrice: undefined,
@@ -631,6 +677,26 @@ export default {
           return acc
         }, {})
       })
+    },
+    loadBankAccountOptions() {
+      listBankAccount({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.bankAccountOptions = response.rows || []
+        this.bankAccountMap = this.bankAccountOptions.reduce((acc, item) => {
+          acc[item.id] = item
+          return acc
+        }, {})
+      })
+    },
+    getBankAccountOptionLabel(item) {
+      if (!item) return ''
+      const card = item.bankCardNo || ''
+      const tailNo = card.length > 4 ? card.slice(-4) : card
+      return `${item.accountName || '收款账户'} / ${item.holderName || '-'} / 尾号${tailNo || '----'}`
+    },
+    getBankAccountLabel(id) {
+      if (!id) return '-'
+      const item = this.bankAccountMap[id]
+      return item ? this.getBankAccountOptionLabel(item) : id
     },
     getVehicleTypeName(id) {
       if (!id) return '-'

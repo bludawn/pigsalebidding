@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.BankAccountMapper">
+
+    <resultMap type="BankAccount" id="BankAccountResult">
+        <id property="id" column="f_id" />
+        <result property="accountName" column="f_accountName" />
+        <result property="holderName" column="f_holderName" />
+        <result property="bankCardNo" column="f_bankCardNo" />
+        <result property="bankBranch" column="f_bankBranch" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectBankAccountVo">
+        select f_id, f_accountName, f_holderName, f_bankCardNo, f_bankBranch, f_creator, f_createTime, f_updator, f_updateTime
+        from t_bankAccount
+    </sql>
+
+    <select id="selectBankAccountList" parameterType="BankAccount" resultMap="BankAccountResult">
+        <include refid="selectBankAccountVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="accountName != null and accountName != ''">
+                AND f_accountName like concat('%', #{accountName}, '%')
+            </if>
+            <if test="holderName != null and holderName != ''">
+                AND f_holderName like concat('%', #{holderName}, '%')
+            </if>
+            <if test="bankCardNo != null and bankCardNo != ''">
+                AND f_bankCardNo like concat('%', #{bankCardNo}, '%')
+            </if>
+            <if test="bankBranch != null and bankBranch != ''">
+                AND f_bankBranch like concat('%', #{bankBranch}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selectBankAccountById" parameterType="Long" resultMap="BankAccountResult">
+        <include refid="selectBankAccountVo"/>
+        where f_id = #{id}
+    </select>
+
+    <insert id="insertBankAccount" parameterType="BankAccount" useGeneratedKeys="true" keyProperty="id">
+        insert into t_bankAccount(
+            <if test="id != null and id != 0">f_id,</if>
+<if test="accountName != null and accountName != ''">f_accountName,</if>
+<if test="holderName != null and holderName != ''">f_holderName,</if>
+<if test="bankCardNo != null and bankCardNo != ''">f_bankCardNo,</if>
+<if test="bankBranch != null and bankBranch != ''">f_bankBranch,</if>
+<if test="createBy != null and createBy != ''">f_creator,</if>
+f_createTime
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+<if test="accountName != null and accountName != ''">#{accountName},</if>
+<if test="holderName != null and holderName != ''">#{holderName},</if>
+<if test="bankCardNo != null and bankCardNo != ''">#{bankCardNo},</if>
+<if test="bankBranch != null and bankBranch != ''">#{bankBranch},</if>
+<if test="createBy != null and createBy != ''">#{createBy},</if>
+sysdate()
+        )
+    </insert>
+
+    <update id="updateBankAccount" parameterType="BankAccount">
+        update t_bankAccount
+        <set>
+            <if test="accountName != null and accountName != ''">f_accountName = #{accountName},</if>
+            <if test="holderName != null and holderName != ''">f_holderName = #{holderName},</if>
+            <if test="bankCardNo != null and bankCardNo != ''">f_bankCardNo = #{bankCardNo},</if>
+            <if test="bankBranch != null and bankBranch != ''">f_bankBranch = #{bankBranch},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <delete id="deleteBankAccountById" parameterType="Long">
+        delete from t_bankAccount where f_id = #{id}
+    </delete>
+
+    <delete id="deleteBankAccountByIds" parameterType="Long">
+        delete from t_bankAccount where f_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

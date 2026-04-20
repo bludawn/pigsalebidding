@@ -331,8 +331,18 @@ public class CustomerModels
     {
         public BigDecimal depositAmount;
         public BigDecimal goodsAmount;
+        public BigDecimal firstPaymentAmount;
         public BigDecimal freightAmount;
+        public BigDecimal remainingPaymentAmount;
         public BigDecimal totalAmount;
+    }
+
+    public static class OrderBankAccountInfo
+    {
+        public String accountName;
+        public String holderName;
+        public String bankCardNo;
+        public String bankBranch;
     }
 
     public static class OrderDeliveryInfo
@@ -382,6 +392,7 @@ public class CustomerModels
         public Integer quantity;
         public BigDecimal price;
         public OrderPriceInfo priceInfo;
+        public OrderBankAccountInfo bankAccountInfo;
         public OrderDeliveryInfo deliveryInfo;
         public List<OrderShipmentInfo> deliveryInfos;
         public List<OrderTimelineNode> timeline;

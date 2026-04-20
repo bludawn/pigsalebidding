@@ -57,7 +57,11 @@
           <span>{{ getVehicleTypeName(scope.row.vehicleTypeId) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="车辆来源" align="center" prop="vehicleSource" v-if="columns.vehicleSource.visible" />
+      <el-table-column label="车辆来源" align="center" prop="vehicleSource" v-if="columns.vehicleSource.visible">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.pig_vehicle_source" :value="scope.row.vehicleSource" />
+        </template>
+      </el-table-column>
       <el-table-column label="附件" align="center" prop="attachmentUrls" v-if="columns.attachmentUrls.visible" min-width="180">
         <template slot-scope="scope">
           <div v-if="splitAttachmentUrls(scope.row.attachmentUrls).length" class="attachment-list">
@@ -113,7 +117,7 @@
             <div>送货人电话：{{ item.delivererPhone }}</div>
             <div>车牌号：{{ item.vehicleNo }}</div>
             <div>车辆类型：{{ getVehicleTypeName(item.vehicleTypeId) }}</div>
-            <div>车辆来源：{{ item.vehicleSource || '-' }}</div>
+            <div>车辆来源：<dict-tag :options="dict.type.pig_vehicle_source" :value="item.vehicleSource" /></div>
             <div>装猪数量：{{ item.loadCount }}</div>
             <div>当前位置：{{ item.currentLongitude || '-' }}, {{ item.currentLatitude || '-' }}</div>
             <div>附件：
@@ -176,7 +180,9 @@
           </el-select>
         </el-form-item>
         <el-form-item label="车辆来源" prop="vehicleSource">
-          <el-input v-model="form.vehicleSource" placeholder="请输入车辆来源" />
+          <el-select v-model="form.vehicleSource" placeholder="请选择车辆来源" clearable>
+            <el-option v-for="dictItem in dict.type.pig_vehicle_source" :key="dictItem.value" :label="dictItem.label" :value="dictItem.value" />
+          </el-select>
         </el-form-item>
         <el-form-item label="附件" prop="attachmentUrls">
           <file-upload v-model="form.attachmentUrls" :limit="6" :file-size="50" :allow-any-type="true" action="/common/uploadAny" />
@@ -221,7 +227,7 @@ import { listVehicleType } from "@/api/pig/vehicleType"
 
 export default {
   name: "DeliveryInfo",
-  dicts: ['pig_delivery_status'],
+  dicts: ['pig_delivery_status', 'pig_vehicle_source'],
   data() {
     return {
       loading: true,

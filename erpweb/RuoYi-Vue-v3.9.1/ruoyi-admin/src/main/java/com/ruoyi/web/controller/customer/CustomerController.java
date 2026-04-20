@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.ruoyi.system.service.pig.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +33,7 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.framework.config.ServerConfig;
 import com.ruoyi.system.domain.pig.Address;
+import com.ruoyi.system.domain.pig.BankAccount;
 import com.ruoyi.system.domain.pig.BidProduct;
 import com.ruoyi.system.domain.pig.DeliveryInfo;
 import com.ruoyi.system.domain.pig.Enterprise;
@@ -45,19 +47,6 @@ import com.ruoyi.system.domain.pig.UserBidInfo;
 import com.ruoyi.system.domain.pig.UserExt;
 import com.ruoyi.system.domain.pig.VehicleType;
 import com.ruoyi.system.service.ISysUserService;
-import com.ruoyi.system.service.pig.IAddressService;
-import com.ruoyi.system.service.pig.IBidProductService;
-import com.ruoyi.system.service.pig.IDeliveryInfoService;
-import com.ruoyi.system.service.pig.IEnterpriseService;
-import com.ruoyi.system.service.pig.IPigOrderService;
-import com.ruoyi.system.service.pig.IPigResourceService;
-import com.ruoyi.system.service.pig.IPigTagService;
-import com.ruoyi.system.service.pig.IPigTypeService;
-import com.ruoyi.system.service.pig.ISiteService;
-import com.ruoyi.system.service.pig.IUserBidInfoService;
-import com.ruoyi.system.service.pig.IUserBidService;
-import com.ruoyi.system.service.pig.IUserExtService;
-import com.ruoyi.system.service.pig.IVehicleTypeService;
 import com.ruoyi.web.controller.customer.CustomerModels.*;
 
 /**
@@ -107,6 +96,9 @@ public class CustomerController extends BaseController {
 
     @Autowired
     private IVehicleTypeService vehicleTypeService;
+
+    @Autowired
+    private IBankAccountService bankAccountService;
 
     @Autowired
     private ServerConfig serverConfig;
@@ -897,9 +889,27 @@ public class CustomerController extends BaseController {
         OrderPriceInfo priceInfo = new OrderPriceInfo();
         priceInfo.depositAmount = BigDecimal.ZERO;
         priceInfo.goodsAmount = defaultZero(order.getOrderAmount());
-        priceInfo.freightAmount = BigDecimal.ZERO;
-        priceInfo.totalAmount = defaultZero(order.getOrderAmount());
+        priceInfo.firstPaymentAmount = defaultZero(order.getFirstPaymentAmount());
+        priceInfo.freightAmount = defaultZero(order.getFreightAmount());
+        priceInfo.remainingPaymentAmount = defaultZero(order.getRemainingPaymentAmount());
+        priceInfo.totalAmount = defaultZero(order.getOrderAmount()).add(defaultZero(order.getFreightAmount()));
         return priceInfo;
+    }
+
+    private OrderBankAccountInfo buildBankAccountInfo(PigOrder order) {
+        if (order.getBankAccountId() == null) {
+            return null;
+        }
+        BankAccount bankAccount = bankAccountService.selectBankAccountById(order.getBankAccountId());
+        if (bankAccount == null) {
+            return null;
+        }
+        OrderBankAccountInfo info = new OrderBankAccountInfo();
+        info.accountName = bankAccount.getAccountName();
+        info.holderName = bankAccount.getHolderName();
+        info.bankCardNo = bankAccount.getBankCardNo();
+        info.bankBranch = bankAccount.getBankBranch();
+        return info;
     }
 
     private OrderDeliveryInfo buildDeliveryInfo(Address address, PigOrder order) {

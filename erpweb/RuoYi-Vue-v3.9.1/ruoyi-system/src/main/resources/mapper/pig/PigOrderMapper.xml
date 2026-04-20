@@ -19,6 +19,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="orderAmount" column="f_orderAmount" />
         <result property="totalWeight" column="f_totalWeight" />
         <result property="unitPrice" column="f_unitPrice" />
+        <result property="firstPaymentAmount" column="f_firstPaymentAmount" />
+        <result property="freightAmount" column="f_freightAmount" />
+        <result property="remainingPaymentAmount" column="f_remainingPaymentAmount" />
+        <result property="bankAccountId" column="f_bankAccountId" />
         <result property="bidQuantity" column="f_bidQuantity" />
         <result property="payChannel" column="f_payChannel" />
         <result property="payTime" column="f_payTime" />
@@ -33,7 +37,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectPigOrderVo">
-        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_enterpriseId, f_bidProductId, f_userBidId, f_addressId, f_expectedDeliveryTime, f_remark, f_pigResourceId, f_orderAmount, f_totalWeight, f_unitPrice, f_bidQuantity, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_enterpriseId, f_bidProductId, f_userBidId, f_addressId, f_expectedDeliveryTime, f_remark, f_pigResourceId, f_orderAmount, f_totalWeight, f_unitPrice, f_firstPaymentAmount, f_freightAmount, f_remainingPaymentAmount, f_bankAccountId, f_bidQuantity, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_creator, f_createTime, f_updator, f_updateTime
         from t_order
     </sql>
 
@@ -133,6 +137,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="orderAmount != null">f_orderAmount,</if>
 <if test="totalWeight != null">f_totalWeight,</if>
 <if test="unitPrice != null">f_unitPrice,</if>
+<if test="firstPaymentAmount != null">f_firstPaymentAmount,</if>
+<if test="freightAmount != null">f_freightAmount,</if>
+<if test="remainingPaymentAmount != null">f_remainingPaymentAmount,</if>
+<if test="bankAccountId != null">f_bankAccountId,</if>
 <if test="bidQuantity != null">f_bidQuantity,</if>
 <if test="payChannel != null and payChannel != ''">f_payChannel,</if>
 <if test="payTime != null">f_payTime,</if>
@@ -185,6 +193,10 @@ sysdate()
             <if test="orderAmount != null">f_orderAmount = #{orderAmount},</if>
             <if test="totalWeight != null">f_totalWeight = #{totalWeight},</if>
             <if test="unitPrice != null">f_unitPrice = #{unitPrice},</if>
+            <if test="firstPaymentAmount != null">f_firstPaymentAmount = #{firstPaymentAmount},</if>
+            <if test="freightAmount != null">f_freightAmount = #{freightAmount},</if>
+            <if test="remainingPaymentAmount != null">f_remainingPaymentAmount = #{remainingPaymentAmount},</if>
+            <if test="bankAccountId != null">f_bankAccountId = #{bankAccountId},</if>
             <if test="bidQuantity != null">f_bidQuantity = #{bidQuantity},</if>
             <if test="payChannel != null and payChannel != ''">f_payChannel = #{payChannel},</if>
             <if test="payTime != null">f_payTime = #{payTime},</if>

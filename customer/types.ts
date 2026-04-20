@@ -120,6 +120,7 @@ export interface OrderDetailInfo {
   quantity: number;
   price: number;
   priceInfo: OrderPriceInfo;
+  bankAccountInfo?: OrderBankAccountInfo;
   deliveryInfo: OrderDeliveryInfo;
   deliveryInfos: OrderShipmentInfo[];
   timeline: OrderTimelineNode[];
