@@ -637,10 +637,18 @@ export async function getOrderList(params: ListRequestParams & {
 
 const mapOrderDetail = (detail: OrderDetailInfo): OrderDetailInfo => ({
   ...detail,
-  deliveryInfos: (detail.deliveryInfos || []).map(item => ({
-    ...item,
-    attachmentUrls: (item.attachmentUrls || []).map(withFileHost),
-  })),
+  deliveryInfos: (detail.deliveryInfos || []).map(item => {
+    const attachmentUrls = (item.attachmentUrls || []).map(withFileHost);
+    const attachmentFiles = (item.attachmentFiles || []).map(file => ({
+      ...file,
+      url: withFileHost(file.url),
+    }));
+    return {
+      ...item,
+      attachmentUrls,
+      attachmentFiles,
+    };
+  }),
 });
 
 /** 获取订单详情 */

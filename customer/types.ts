@@ -55,6 +55,7 @@ export interface OrderCounts {
 /** 订单列表项 */
 export interface OrderListItem {
   orderId: string;
+  orderNo?: string;
   status: OrderStatus;
   farmName: string;
   pigTypeName: string;
@@ -69,8 +70,19 @@ export interface OrderListItem {
 export interface OrderPriceInfo {
   depositAmount: number;
   goodsAmount: number;
+  prepaymentAmount?: number;
+  finalPaymentAmount?: number;
+  firstPaymentAmount?: number;
   freightAmount?: number;
+  remainingPaymentAmount?: number;
   totalAmount: number;
+}
+
+export interface OrderBankAccountInfo {
+  accountName?: string;
+  holderName?: string;
+  bankCardNo?: string;
+  bankBranch?: string;
 }
 
 /** 收货/提货信息 */
@@ -81,6 +93,12 @@ export interface OrderDeliveryInfo {
   expectedDeliveryTime?: string;
   longitude?: string;
   latitude?: string;
+}
+
+export interface OrderAttachmentInfo {
+  url: string;
+  name?: string;
+  image?: boolean;
 }
 
 /** 物流信息 */
@@ -96,6 +114,7 @@ export interface OrderShipmentInfo {
   vehicleType?: string;
   vehicleSource?: string;
   attachmentUrls?: string[];
+  attachmentFiles?: OrderAttachmentInfo[];
   estimatedArrival?: string;
   remark?: string;
 }
@@ -110,6 +129,7 @@ export interface OrderTimelineNode {
 /** 订单详情 */
 export interface OrderDetailInfo {
   orderId: string;
+  orderNo?: string;
   status: OrderStatus;
   farmName: string;
   farmAddress?: string;

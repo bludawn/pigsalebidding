@@ -132,9 +132,9 @@ const OrderListView: React.FC<OrderListViewProps> = ({ params, onBack, onNavigat
                     <span>数量：<span className="font-bold text-slate-800">{item.quantity}头</span></span>
                     <span>单价：<span className="font-bold text-slate-800">¥{item.price.toFixed(2)}</span>/kg</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-slate-500">订单号：{item.orderId}</span>
-                    <span className="text-sm font-black text-industry-red">¥{item.totalAmount.toLocaleString('zh-CN')}</span>
+                  <div className="flex justify-between items-start gap-2">
+                    <span className="text-xs text-slate-500 break-all min-w-0">订单编码：{item.orderNo || item.orderId}</span>
+                    <span className="text-sm font-black text-industry-red whitespace-nowrap">¥{item.totalAmount.toLocaleString('zh-CN')}</span>
                   </div>
                 </div>
               </button>

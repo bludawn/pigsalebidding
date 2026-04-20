@@ -848,6 +848,7 @@ public class CustomerController extends BaseController {
         Site site = bidProduct != null && bidProduct.getSiteId() != null ? siteService.selectSiteById(bidProduct.getSiteId()) : null;
         OrderListItem item = new OrderListItem();
         item.orderId = String.valueOf(order.getId());
+        item.orderNo = normalizeOrderNo(order.getOrderNo(), item.orderId);
         item.status = mapOrderStatus(order.getOrderStatus());
         item.farmName = site != null ? site.getSiteName() : null;
         item.pigTypeName = pigType != null ? pigType.getPigName() : null;
@@ -868,6 +869,7 @@ public class CustomerController extends BaseController {
         List<DeliveryInfo> deliveries = resolveDeliveryInfos(order.getDeliveryInfoIds());
         OrderDetailInfo detail = new OrderDetailInfo();
         detail.orderId = String.valueOf(order.getId());
+        detail.orderNo = normalizeOrderNo(order.getOrderNo(), detail.orderId);
         detail.status = mapOrderStatus(order.getOrderStatus());
         detail.farmName = site != null ? site.getSiteName() : null;
         detail.farmAddress = buildFarmAddress(site);
@@ -878,6 +880,7 @@ public class CustomerController extends BaseController {
         detail.quantity = bidProduct != null ? bidProduct.getTotalHeadCount() : null;
         detail.price = bidProduct != null ? bidProduct.getCurrentHighestPrice() : null;
         detail.priceInfo = buildPriceInfo(order);
+        detail.bankAccountInfo = buildBankAccountInfo(order);
         detail.deliveryInfo = buildDeliveryInfo(address, order);
         detail.deliveryInfos = buildShipmentInfos(deliveries);
         detail.timeline = buildTimeline(order);
@@ -889,6 +892,8 @@ public class CustomerController extends BaseController {
         OrderPriceInfo priceInfo = new OrderPriceInfo();
         priceInfo.depositAmount = BigDecimal.ZERO;
         priceInfo.goodsAmount = defaultZero(order.getOrderAmount());
+        priceInfo.prepaymentAmount = defaultZero(order.getFirstPaymentAmount());
+        priceInfo.finalPaymentAmount = defaultZero(order.getRemainingPaymentAmount());
         priceInfo.firstPaymentAmount = defaultZero(order.getFirstPaymentAmount());
         priceInfo.freightAmount = defaultZero(order.getFreightAmount());
         priceInfo.remainingPaymentAmount = defaultZero(order.getRemainingPaymentAmount());
@@ -1027,9 +1032,51 @@ public class CustomerController extends BaseController {
         info.loadCount = delivery.getLoadCount();
         info.deliveryStatus = delivery.getDeliveryStatus();
         info.attachmentUrls = splitToList(delivery.getAttachmentUrls());
+        info.attachmentFiles = buildAttachmentInfos(info.attachmentUrls);
         info.estimatedArrival = null;
         info.remark = delivery.getRemark();
         return info;
+    }
+
+    private List<OrderAttachmentInfo> buildAttachmentInfos(List<String> urls) {
+        if (urls == null || urls.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<OrderAttachmentInfo> list = new ArrayList<OrderAttachmentInfo>();
+        for (String url : urls) {
+            if (StringUtils.isEmpty(url)) {
+                continue;
+            }
+            OrderAttachmentInfo item = new OrderAttachmentInfo();
+            item.url = url;
+            item.name = resolveFileName(url);
+            item.image = isImageUrl(url);
+            list.add(item);
+        }
+        return list;
+    }
+
+    private String resolveFileName(String url) {
+        if (StringUtils.isEmpty(url)) {
+            return null;
+        }
+        String normalized = url;
+        int queryIndex = normalized.indexOf('?');
+        if (queryIndex >= 0) {
+            normalized = normalized.substring(0, queryIndex);
+        }
+        int slashIndex = normalized.lastIndexOf('/');
+        if (slashIndex >= 0 && slashIndex < normalized.length() - 1) {
+            return normalized.substring(slashIndex + 1);
+        }
+        return normalized;
+    }
+
+    private boolean isImageUrl(String url) {
+        if (StringUtils.isEmpty(url)) {
+            return false;
+        }
+        return url.matches("(?i).+\\.(jpg|jpeg|png|gif|bmp|webp|heic)(\\?.*)?$");
     }
 
     private List<OrderTimelineNode> buildTimeline(PigOrder order) {
@@ -1265,6 +1312,11 @@ public class CustomerController extends BaseController {
 
     private int countOrderStatus(List<PigOrder> orders, String status) {
         return (int) orders.stream().filter(order -> status.equalsIgnoreCase(order.getOrderStatus())).count();
+    }
+
+    private String normalizeOrderNo(String orderNo, String fallbackId) {
+        String value = StringUtils.isNotEmpty(orderNo) ? orderNo.trim() : fallbackId;
+        return StringUtils.isNotEmpty(value) ? value : null;
     }
 
     private String mapOrderStatus(String dbStatus) {

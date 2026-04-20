@@ -51,6 +51,8 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
 
   const statusMeta = useMemo(() => (detail ? statusMetaMap[detail.status] : null), [detail]);
   const deliveryInfos = useMemo(() => (detail?.deliveryInfos || []).filter(Boolean), [detail]);
+  const prepaymentAmount = detail?.priceInfo.prepaymentAmount ?? detail?.priceInfo.firstPaymentAmount;
+  const finalPaymentAmount = detail?.priceInfo.finalPaymentAmount ?? detail?.priceInfo.remainingPaymentAmount;
 
   const ensureAmap = useCallback(() => {
     if ((window as any).AMap) {
@@ -313,11 +315,11 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
 
       <div className="px-4 py-4">
         <div className="bg-white rounded-custom p-4 shadow-sm border border-slate-100">
-          <div className="flex justify-between items-center mb-3">
+          <div className="flex justify-between items-start gap-2 mb-3">
             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${statusMeta.badgeClass}`}>
               {statusMeta.label}
             </span>
-            <span className="text-[10px] text-slate-400">订单号：{detail.orderId}</span>
+            <span className="text-[10px] text-slate-400 break-all text-right">订单编码：{detail.orderNo || detail.orderId}</span>
           </div>
           <div className="text-sm font-bold text-slate-800">{statusMeta.desc}</div>
         </div>
@@ -338,6 +340,12 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
           <div className="text-xs text-slate-500 space-y-2">
             <div className="flex justify-between"><span>保证金</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.depositAmount.toLocaleString('zh-CN')}</span></div>
             <div className="flex justify-between"><span>货款</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.goodsAmount.toLocaleString('zh-CN')}</span></div>
+            {prepaymentAmount !== undefined && (
+              <div className="flex justify-between"><span>预付款</span><span className="text-slate-800 font-bold">¥{prepaymentAmount.toLocaleString('zh-CN')}</span></div>
+            )}
+            {finalPaymentAmount !== undefined && (
+              <div className="flex justify-between"><span>尾款</span><span className="text-slate-800 font-bold">¥{finalPaymentAmount.toLocaleString('zh-CN')}</span></div>
+            )}
             {detail.priceInfo.freightAmount !== undefined && (
               <div className="flex justify-between"><span>运费</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.freightAmount.toLocaleString('zh-CN')}</span></div>
             )}
@@ -403,14 +411,34 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
                     {info.remark && (
                       <div className="flex justify-between"><span>备注</span><span className="text-slate-800 font-bold">{info.remark}</span></div>
                     )}
-                    {info.attachmentUrls && info.attachmentUrls.length > 0 && (
+                    {((info.attachmentFiles && info.attachmentFiles.length > 0) || (info.attachmentUrls && info.attachmentUrls.length > 0)) && (
                       <div>
                         <div className="text-slate-500 mb-1">附件</div>
                         <div className="grid grid-cols-3 gap-2">
-                          {info.attachmentUrls.map((url, attachIndex) => (
-                            <a key={`${url}-${attachIndex}`} href={url} target="_blank" rel="noreferrer" className="block">
-                              <img src={url} alt="附件" className="w-full h-20 object-cover rounded border border-slate-100" />
-                            </a>
+                          {(info.attachmentFiles && info.attachmentFiles.length > 0
+                            ? info.attachmentFiles
+                            : (info.attachmentUrls || []).map(url => ({
+                                url,
+                                name: url.split('/').pop() || '附件',
+                                image: /\.(jpg|jpeg|png|gif|bmp|webp|heic)(\?.*)?$/i.test(url),
+                              }))
+                          ).map((file, attachIndex) => (
+                            file.image ? (
+                              <a key={`${file.url}-${attachIndex}`} href={file.url} target="_blank" rel="noreferrer" className="block">
+                                <img src={file.url} alt={file.name || '附件'} className="w-full h-20 object-cover rounded border border-slate-100" />
+                              </a>
+                            ) : (
+                              <a
+                                key={`${file.url}-${attachIndex}`}
+                                href={file.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block p-2 rounded border border-slate-200 bg-slate-50"
+                              >
+                                <div className="text-[10px] text-slate-500">文件附件</div>
+                                <div className="text-[10px] text-slate-700 mt-1 break-all">{file.name || '点击下载附件'}</div>
+                              </a>
+                            )
                           ))}
                         </div>
                       </div>

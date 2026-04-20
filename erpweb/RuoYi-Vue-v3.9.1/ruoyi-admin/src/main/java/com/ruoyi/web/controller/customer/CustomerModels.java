@@ -317,6 +317,7 @@ public class CustomerModels
     public static class OrderListItem
     {
         public String orderId;
+        public String orderNo;
         public String status;
         public String farmName;
         public String pigTypeName;
@@ -331,6 +332,8 @@ public class CustomerModels
     {
         public BigDecimal depositAmount;
         public BigDecimal goodsAmount;
+        public BigDecimal prepaymentAmount;
+        public BigDecimal finalPaymentAmount;
         public BigDecimal firstPaymentAmount;
         public BigDecimal freightAmount;
         public BigDecimal remainingPaymentAmount;
@@ -355,6 +358,13 @@ public class CustomerModels
         public String latitude;
     }
 
+    public static class OrderAttachmentInfo
+    {
+        public String url;
+        public String name;
+        public Boolean image;
+    }
+
     public static class OrderShipmentInfo
     {
         public String transportCode;
@@ -368,6 +378,7 @@ public class CustomerModels
         public Integer loadCount;
         public String deliveryStatus;
         public List<String> attachmentUrls;
+        public List<OrderAttachmentInfo> attachmentFiles;
         public String estimatedArrival;
         public String remark;
     }
@@ -382,6 +393,7 @@ public class CustomerModels
     public static class OrderDetailInfo
     {
         public String orderId;
+        public String orderNo;
         public String status;
         public String farmName;
         public String farmAddress;
