@@ -972,6 +972,12 @@ export default {
     }
   },
   created() {
+    if (!Object.prototype.hasOwnProperty.call(this.$data, 'paymentDeliveryInfoList')) {
+      this.$set(this, 'paymentDeliveryInfoList', [])
+    }
+    if (!Object.prototype.hasOwnProperty.call(this.$data, 'confirmDeliveryInfoList')) {
+      this.$set(this, 'confirmDeliveryInfoList', [])
+    }
     this.initPcasOptions()
     this.getList()
     this.loadEnterpriseOptions()
@@ -1381,14 +1387,16 @@ export default {
       this.resetConfirmForm()
       getPigOrder(id).then(async response => {
         const data = response.data || {}
+        const deliveryInfoIds = data.deliveryInfoIds || row.deliveryInfoIds
         this.confirmForm = {
           ...this.confirmForm,
-          ...data
+          ...data,
+          deliveryInfoIds
         }
         if (this.confirmForm.unitPrice == null) {
           this.confirmForm.unitPrice = this.calcUnitPrice(this.confirmForm.orderAmount, this.confirmForm.totalWeight, this.confirmForm.bidQuantity)
         }
-        await this.loadConfirmDeliveryInfosByIds(this.confirmForm.deliveryInfoIds)
+        await this.loadConfirmDeliveryInfosByIds(deliveryInfoIds)
         this.confirmOpen = true
       })
     },
@@ -1475,11 +1483,13 @@ export default {
       this.resetPaymentConfirmForm()
       getPigOrder(id).then(async response => {
         const data = response.data || {}
+        const deliveryInfoIds = data.deliveryInfoIds || row.deliveryInfoIds
         this.paymentConfirmForm = {
           ...this.paymentConfirmForm,
-          ...data
+          ...data,
+          deliveryInfoIds
         }
-        await this.loadPaymentDeliveryInfosByIds(this.paymentConfirmForm.deliveryInfoIds)
+        await this.loadPaymentDeliveryInfosByIds(deliveryInfoIds)
         this.paymentConfirmTitle = type === 'FINAL' ? '确认尾款' : '确认首付款'
         this.paymentConfirmOpen = true
       })

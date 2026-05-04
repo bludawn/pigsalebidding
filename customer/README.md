@@ -23,7 +23,7 @@
 ## 目录结构
 
 ```
-weixincustomer/
+customer/
 ├── dist/                    # 构建输出目录
 ├── views/                   # 页面视图组件
 │   ├── HomeView.tsx         # 首页 - 竞价列表

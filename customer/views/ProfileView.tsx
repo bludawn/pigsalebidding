@@ -203,12 +203,13 @@ const ProfileView: React.FC<ProfileViewProps> = ({ onNavigate }) => {
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-[15px] font-black text-slate-800">我的订单</h3>
         </div>
-        <div className="grid grid-cols-3 gap-4">
-          <OrderItem label="待付款" count={orderCounts?.paymentCount} onClick={() => onNavigate('order-list', { status: 'ORDER_PAYMENT' })} />
-          <OrderItem label="待发货" count={orderCounts?.shipmentCount} onClick={() => onNavigate('order-list', { status: 'ORDER_SHIPMENT' })} />
-          <OrderItem label="待收货" count={orderCounts?.receiptCount} onClick={() => onNavigate('order-list', { status: 'ORDER_RECEIPT' })} />
-          <OrderItem label="已完成" count={orderCounts?.completedCount} onClick={() => onNavigate('order-list', { status: 'ORDER_COMPLETED' })} />
-          <OrderItem label="已取消" count={orderCounts?.cancelledCount} onClick={() => onNavigate('order-list', { status: 'ORDER_CANCELLED' })} />
+        <div className="grid grid-cols-4 gap-4">
+          <OrderItem label="待付款" count={orderCounts?.paymentCount} onClick={() => onNavigate('order-list', { status: 'WAIT_PAY' })} />
+          <OrderItem label="待发货" count={orderCounts?.shipmentCount} onClick={() => onNavigate('order-list', { status: 'WAIT_SHIP' })} />
+          <OrderItem label="待收货" count={orderCounts?.receiptCount} onClick={() => onNavigate('order-list', { status: 'WAIT_RECEIVE' })} />
+          <OrderItem label="待支付尾款" count={orderCounts?.finalPaymentCount} onClick={() => onNavigate('order-list', { status: 'WAIT_FINAL_PAY' })} />
+          <OrderItem label="已完成" count={orderCounts?.completedCount} onClick={() => onNavigate('order-list', { status: 'COMPLETED' })} />
+          <OrderItem label="已取消" count={orderCounts?.cancelledCount} onClick={() => onNavigate('order-list', { status: 'CANCELED' })} />
           <OrderItem label="全部订单" count={orderCounts?.allCount} onClick={() => onNavigate('order-list', { status: 'ALL' })} />
           <OrderItem label="我的竞拍" count={orderCounts?.myBidCount} onClick={() => onNavigate('my-bids')} />
         </div>

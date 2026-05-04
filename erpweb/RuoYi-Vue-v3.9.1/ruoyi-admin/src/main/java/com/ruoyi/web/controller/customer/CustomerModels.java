@@ -297,6 +297,7 @@ public class CustomerModels
     public static class OrderCounts
     {
         public Integer paymentCount;
+        public Integer finalPaymentCount;
         public Integer shipmentCount;
         public Integer receiptCount;
         public Integer completedCount;

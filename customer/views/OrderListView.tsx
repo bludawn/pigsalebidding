@@ -11,11 +11,13 @@ interface OrderListViewProps {
 const PAGE_SIZE = 20;
 
 const statusMetaMap: Record<OrderListStatus, { label: string; badgeClass: string; desc: string }> = {
-  ORDER_PAYMENT: { label: '待付款', badgeClass: 'bg-industry-red/10 text-industry-red', desc: '请尽快完成支付' },
-  ORDER_SHIPMENT: { label: '待发货', badgeClass: 'bg-amber-100 text-amber-700', desc: '场点正在安排发货' },
-  ORDER_RECEIPT: { label: '待收货', badgeClass: 'bg-blue-100 text-blue-700', desc: '运输途中，请注意查收' },
-  ORDER_COMPLETED: { label: '已完成', badgeClass: 'bg-emerald-100 text-emerald-700', desc: '订单已完成' },
-  ORDER_CANCELLED: { label: '已取消', badgeClass: 'bg-slate-200 text-slate-600', desc: '订单已取消' },
+  WAIT_CONFIRM: { label: '待确认', badgeClass: 'bg-orange-100 text-orange-700', desc: '请等待平台确认订单' },
+  WAIT_PAY: { label: '待付款', badgeClass: 'bg-industry-red/10 text-industry-red', desc: '请尽快完成支付' },
+  WAIT_FINAL_PAY: { label: '待支付尾款', badgeClass: 'bg-rose-100 text-rose-700', desc: '请尽快完成尾款支付' },
+  WAIT_SHIP: { label: '待发货', badgeClass: 'bg-amber-100 text-amber-700', desc: '场点正在安排发货' },
+  WAIT_RECEIVE: { label: '待收货', badgeClass: 'bg-blue-100 text-blue-700', desc: '运输途中，请注意查收' },
+  COMPLETED: { label: '已完成', badgeClass: 'bg-emerald-100 text-emerald-700', desc: '订单已完成' },
+  CANCELED: { label: '已取消', badgeClass: 'bg-slate-200 text-slate-600', desc: '订单已取消' },
   ALL: { label: '全部订单', badgeClass: 'bg-slate-100 text-slate-600', desc: '查看全部订单' },
 };
 

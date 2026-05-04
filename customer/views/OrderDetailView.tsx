@@ -8,11 +8,13 @@ interface OrderDetailViewProps {
 }
 
 const statusMetaMap: Record<OrderStatus, { label: string; desc: string; badgeClass: string }> = {
-  ORDER_PAYMENT: { label: '待付款', desc: '请尽快完成支付', badgeClass: 'bg-industry-red/10 text-industry-red' },
-  ORDER_SHIPMENT: { label: '待发货', desc: '场点正在安排发货', badgeClass: 'bg-amber-100 text-amber-700' },
-  ORDER_RECEIPT: { label: '待收货', desc: '运输途中，请注意查收', badgeClass: 'bg-blue-100 text-blue-700' },
-  ORDER_COMPLETED: { label: '已完成', desc: '订单已完成', badgeClass: 'bg-emerald-100 text-emerald-700' },
-  ORDER_CANCELLED: { label: '已取消', desc: '订单已取消，可重新下单', badgeClass: 'bg-slate-200 text-slate-600' },
+  WAIT_CONFIRM: { label: '待确认', desc: '请等待平台确认订单', badgeClass: 'bg-orange-100 text-orange-700' },
+  WAIT_PAY: { label: '待付款', desc: '请尽快完成支付', badgeClass: 'bg-industry-red/10 text-industry-red' },
+  WAIT_FINAL_PAY: { label: '待支付尾款', desc: '请尽快完成尾款支付', badgeClass: 'bg-rose-100 text-rose-700' },
+  WAIT_SHIP: { label: '待发货', desc: '场点正在安排发货', badgeClass: 'bg-amber-100 text-amber-700' },
+  WAIT_RECEIVE: { label: '待收货', desc: '运输途中，请注意查收', badgeClass: 'bg-blue-100 text-blue-700' },
+  COMPLETED: { label: '已完成', desc: '订单已完成', badgeClass: 'bg-emerald-100 text-emerald-700' },
+  CANCELED: { label: '已取消', desc: '订单已取消，可重新下单', badgeClass: 'bg-slate-200 text-slate-600' },
 };
 
 const deliveryStatusLabelMap: Record<string, string> = {
@@ -487,7 +489,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 max-w-md mx-auto">
         <div className="flex gap-3">
-          {detail.status === 'ORDER_PAYMENT' && (
+          {detail.status === 'WAIT_PAY' && (
             <>
               <button
                 onClick={handleCancel}
@@ -505,7 +507,16 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
               </button>
             </>
           )}
-          {detail.status === 'ORDER_SHIPMENT' && (
+          {detail.status === 'WAIT_FINAL_PAY' && (
+            <button
+              onClick={handlePay}
+              disabled={actionLoading}
+              className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
+            >
+              去支付尾款
+            </button>
+          )}
+          {detail.status === 'WAIT_SHIP' && (
             <button
               onClick={() => alert('联系场点')}
               className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold"
@@ -513,7 +524,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
               联系场点
             </button>
           )}
-          {detail.status === 'ORDER_RECEIPT' && (
+          {detail.status === 'WAIT_RECEIVE' && (
             <button
               onClick={handleConfirm}
               disabled={actionLoading}
@@ -522,7 +533,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
               确认收货
             </button>
           )}
-          {detail.status === 'ORDER_COMPLETED' && (
+          {detail.status === 'COMPLETED' && (
             <button
               onClick={() => alert('再次采购')}
               className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold"
@@ -530,7 +541,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
               再次采购
             </button>
           )}
-          {detail.status === 'ORDER_CANCELLED' && (
+          {detail.status === 'CANCELED' && (
             <button
               onClick={() => alert('重新下单')}
               className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-custom font-bold"

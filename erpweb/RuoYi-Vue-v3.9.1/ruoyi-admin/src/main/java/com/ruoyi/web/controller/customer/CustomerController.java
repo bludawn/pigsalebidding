@@ -509,7 +509,8 @@ public class CustomerController extends BaseController {
     public CustomerApiResult<OrderCounts> getOrderCounts() {
         List<PigOrder> orders = selectOrdersByUser();
         OrderCounts counts = new OrderCounts();
-        counts.paymentCount = (int) orders.stream().filter(order -> "WAIT_PAY".equalsIgnoreCase(order.getOrderStatus()) || "WAIT_FINAL_PAY".equalsIgnoreCase(order.getOrderStatus())).count();
+        counts.paymentCount = countOrderStatus(orders, "WAIT_PAY");
+        counts.finalPaymentCount = countOrderStatus(orders, "WAIT_FINAL_PAY");
         counts.shipmentCount = countOrderStatus(orders, "WAIT_SHIP");
         counts.receiptCount = countOrderStatus(orders, "WAIT_RECEIVE");
         counts.completedCount = countOrderStatus(orders, "COMPLETED");
@@ -1324,38 +1325,50 @@ public class CustomerController extends BaseController {
     }
 
     private String mapOrderStatus(String dbStatus) {
-        if ("WAIT_CONFIRM".equalsIgnoreCase(dbStatus) || "WAIT_PAY".equalsIgnoreCase(dbStatus) || "WAIT_FINAL_PAY".equalsIgnoreCase(dbStatus)) {
-            return "ORDER_PAYMENT";
+        if ("WAIT_CONFIRM".equalsIgnoreCase(dbStatus)) {
+            return "WAIT_CONFIRM";
+        }
+        if ("WAIT_PAY".equalsIgnoreCase(dbStatus)) {
+            return "WAIT_PAY";
+        }
+        if ("WAIT_FINAL_PAY".equalsIgnoreCase(dbStatus)) {
+            return "WAIT_FINAL_PAY";
         }
         if ("WAIT_SHIP".equalsIgnoreCase(dbStatus)) {
-            return "ORDER_SHIPMENT";
+            return "WAIT_SHIP";
         }
         if ("WAIT_RECEIVE".equalsIgnoreCase(dbStatus)) {
-            return "ORDER_RECEIPT";
+            return "WAIT_RECEIVE";
         }
         if ("COMPLETED".equalsIgnoreCase(dbStatus)) {
-            return "ORDER_COMPLETED";
+            return "COMPLETED";
         }
         if ("CANCELED".equalsIgnoreCase(dbStatus)) {
-            return "ORDER_CANCELLED";
+            return "CANCELED";
         }
-        return "ORDER_PAYMENT";
+        return "WAIT_PAY";
     }
 
     private String mapOrderStatusToDb(String status) {
-        if ("ORDER_PAYMENT".equalsIgnoreCase(status)) {
+        if ("WAIT_CONFIRM".equalsIgnoreCase(status)) {
+            return "WAIT_CONFIRM";
+        }
+        if ("WAIT_PAY".equalsIgnoreCase(status)) {
             return "WAIT_PAY";
         }
-        if ("ORDER_SHIPMENT".equalsIgnoreCase(status)) {
+        if ("WAIT_FINAL_PAY".equalsIgnoreCase(status)) {
+            return "WAIT_FINAL_PAY";
+        }
+        if ("WAIT_SHIP".equalsIgnoreCase(status)) {
             return "WAIT_SHIP";
         }
-        if ("ORDER_RECEIPT".equalsIgnoreCase(status)) {
+        if ("WAIT_RECEIVE".equalsIgnoreCase(status)) {
             return "WAIT_RECEIVE";
         }
-        if ("ORDER_COMPLETED".equalsIgnoreCase(status)) {
+        if ("COMPLETED".equalsIgnoreCase(status)) {
             return "COMPLETED";
         }
-        if ("ORDER_CANCELLED".equalsIgnoreCase(status)) {
+        if ("CANCELLED".equalsIgnoreCase(status) || "CANCELED".equalsIgnoreCase(status)) {
             return "CANCELED";
         }
         return status;
