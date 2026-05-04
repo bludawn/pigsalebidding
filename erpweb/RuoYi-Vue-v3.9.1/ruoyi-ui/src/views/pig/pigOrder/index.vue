@@ -177,6 +177,14 @@
             @click="handleConfirmPayment(scope.row, 'FINAL')"
             v-hasPermi="['pig:pigOrder:edit']"
           >确认尾款</el-button>
+          <el-button
+            v-if="scope.row.orderStatus === 'WAIT_SHIP'"
+            size="mini"
+            type="text"
+            icon="el-icon-truck"
+            @click="handleShipOrder(scope.row)"
+            v-hasPermi="['pig:pigOrder:edit']"
+          >订单发货</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:pigOrder:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:pigOrder:remove']">删除</el-button>
         </template>
@@ -240,6 +248,14 @@
               @click="handleConfirmPayment(item, 'FINAL')"
               v-hasPermi="['pig:pigOrder:edit']"
             >确认尾款</el-button>
+            <el-button
+              v-if="item.orderStatus === 'WAIT_SHIP'"
+              size="mini"
+              type="text"
+              icon="el-icon-truck"
+              @click="handleShipOrder(item)"
+              v-hasPermi="['pig:pigOrder:edit']"
+            >订单发货</el-button>
             <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(item)" v-hasPermi="['pig:pigOrder:edit']">修改</el-button>
             <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(item)" v-hasPermi="['pig:pigOrder:remove']">删除</el-button>
           </div>
@@ -273,35 +289,76 @@
           <el-input :value="getPigResourceLabel(confirmForm.pigResourceId)" disabled />
         </el-form-item>
         <el-form-item label="收货地址" prop="addressId">
-          <el-select v-model="confirmForm.addressId" placeholder="请选择收货地址" filterable clearable style="width: 100%;">
-            <el-option v-for="item in addressOptions" :key="item.id" :label="getAddressOptionLabel(item)" :value="item.id" />
-          </el-select>
+          <el-input :value="getAddressLabel(confirmForm.addressId)" disabled />
         </el-form-item>
         <el-form-item label="期望送达时间" prop="expectedDeliveryTime">
-          <el-date-picker v-model="confirmForm.expectedDeliveryTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择期望送达时间" style="width: 100%;" />
+          <el-input :value="parseTime(confirmForm.expectedDeliveryTime) || '-'" disabled />
         </el-form-item>
         <el-form-item label="竞拍数量(头)" prop="bidQuantity">
-          <el-input v-model="confirmForm.bidQuantity" placeholder="请输入竞拍数量" @input="updateConfirmOrderAmount" />
+          <el-input :value="confirmForm.bidQuantity" disabled />
         </el-form-item>
         <el-form-item label="单价" prop="unitPrice">
-          <el-input v-model="confirmForm.unitPrice" placeholder="请输入单价" @input="updateConfirmOrderAmount" />
+          <el-input :value="confirmForm.unitPrice" disabled />
         </el-form-item>
         <el-form-item label="总重量(kg)" prop="totalWeight">
-          <el-input v-model="confirmForm.totalWeight" placeholder="请输入总重量" @input="updateConfirmOrderAmount" />
+          <el-input :value="confirmForm.totalWeight" disabled />
         </el-form-item>
         <el-form-item label="订单金额" prop="orderAmount">
-          <el-input v-model="confirmForm.orderAmount" placeholder="自动计算，可手工修改" />
+          <el-input :value="confirmForm.orderAmount" disabled />
         </el-form-item>
         <el-form-item label="首付货款" prop="firstPaymentAmount">
-          <el-input v-model="confirmForm.firstPaymentAmount" placeholder="请输入首付货款" />
+          <el-input :value="confirmForm.firstPaymentAmount" disabled />
         </el-form-item>
         <el-form-item label="收款银行账户" prop="bankAccountId">
-          <el-select v-model="confirmForm.bankAccountId" placeholder="请选择收款银行账户" filterable clearable style="width: 100%;">
-            <el-option v-for="item in bankAccountOptions" :key="item.id" :label="getBankAccountOptionLabel(item)" :value="item.id" />
-          </el-select>
+          <el-input :value="getBankAccountLabel(confirmForm.bankAccountId)" disabled />
+        </el-form-item>
+        <el-form-item label="送货信息">
+          <el-table :data="confirmDeliveryInfoList" size="mini" border style="width: 100%;">
+            <el-table-column label="运输编码" prop="transportCode" min-width="140" />
+            <el-table-column label="送货人" prop="delivererName" min-width="100" />
+            <el-table-column label="电话" prop="delivererPhone" min-width="120" />
+            <el-table-column label="车牌号" prop="vehicleNo" min-width="120" />
+            <el-table-column label="车辆类型" min-width="120">
+              <template slot-scope="scope">
+                <span>{{ getVehicleTypeName(scope.row.vehicleTypeId) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="车辆来源" min-width="120">
+              <template slot-scope="scope">
+                <dict-tag :options="dict.type.pig_vehicle_source" :value="scope.row.vehicleSource" />
+              </template>
+            </el-table-column>
+            <el-table-column label="附件" min-width="160">
+              <template slot-scope="scope">
+                <div v-if="splitAttachmentUrls(scope.row.attachmentUrls).length">
+                  <el-link
+                    v-for="(url, idx) in splitAttachmentUrls(scope.row.attachmentUrls)"
+                    :key="`${scope.row.id || 'confirm'}-${idx}`"
+                    :href="normalizeFileUrl(url)"
+                    target="_blank"
+                    :underline="false"
+                    type="primary"
+                    style="margin-right: 8px;"
+                  >附件{{ idx + 1 }}</el-link>
+                </div>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="装猪数量" prop="loadCount" min-width="90" />
+            <el-table-column label="当前位置" min-width="160">
+              <template slot-scope="scope">
+                <span>{{ scope.row.currentLongitude || '-' }}, {{ scope.row.currentLatitude || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" prop="deliveryStatus" min-width="90">
+              <template slot-scope="scope">
+                <dict-tag :options="dict.type.pig_delivery_status" :value="scope.row.deliveryStatus" />
+              </template>
+            </el-table-column>
+          </el-table>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="confirmForm.remark" type="textarea" placeholder="请输入备注" />
+          <el-input :value="confirmForm.remark || '-'" type="textarea" disabled />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -378,19 +435,198 @@
         <el-form-item label="确认收货时间">
           <el-input :value="parseTime(paymentConfirmForm.receiveTime) || '-'" disabled />
         </el-form-item>
-        <el-form-item label="送货信息id数组">
-          <el-input :value="paymentConfirmForm.deliveryInfoIds || '-'" disabled />
+        <el-form-item label="送货信息">
+          <el-table :data="paymentDeliveryInfoList" size="mini" border style="width: 100%;">
+            <el-table-column label="运输编码" prop="transportCode" min-width="140" />
+            <el-table-column label="送货人" prop="delivererName" min-width="100" />
+            <el-table-column label="电话" prop="delivererPhone" min-width="120" />
+            <el-table-column label="车牌号" prop="vehicleNo" min-width="120" />
+            <el-table-column label="车辆类型" min-width="120">
+              <template slot-scope="scope">
+                <span>{{ getVehicleTypeName(scope.row.vehicleTypeId) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="车辆来源" min-width="120">
+              <template slot-scope="scope">
+                <dict-tag :options="dict.type.pig_vehicle_source" :value="scope.row.vehicleSource" />
+              </template>
+            </el-table-column>
+            <el-table-column label="附件" min-width="160">
+              <template slot-scope="scope">
+                <div v-if="splitAttachmentUrls(scope.row.attachmentUrls).length">
+                  <el-link
+                    v-for="(url, idx) in splitAttachmentUrls(scope.row.attachmentUrls)"
+                    :key="`${scope.row.id || 'payment'}-${idx}`"
+                    :href="normalizeFileUrl(url)"
+                    target="_blank"
+                    :underline="false"
+                    type="primary"
+                    style="margin-right: 8px;"
+                  >附件{{ idx + 1 }}</el-link>
+                </div>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="装猪数量" prop="loadCount" min-width="90" />
+            <el-table-column label="当前位置" min-width="160">
+              <template slot-scope="scope">
+                <span>{{ scope.row.currentLongitude || '-' }}, {{ scope.row.currentLatitude || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" prop="deliveryStatus" min-width="90">
+              <template slot-scope="scope">
+                <dict-tag :options="dict.type.pig_delivery_status" :value="scope.row.deliveryStatus" />
+              </template>
+            </el-table-column>
+          </el-table>
         </el-form-item>
         <el-form-item label="支付渠道">
-          <el-input v-model="paymentConfirmForm.payChannel" placeholder="请输入支付渠道" />
+          <el-input :value="paymentConfirmForm.payChannel || '-'" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="paymentConfirmForm.remark" type="textarea" placeholder="请输入备注" />
+          <el-input :value="paymentConfirmForm.remark || '-'" type="textarea" disabled />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitPaymentConfirm">确 认</el-button>
         <el-button @click="cancelPaymentConfirm">取 消</el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog title="确认发货" :visible.sync="shipConfirmOpen" width="760px" append-to-body>
+      <el-form :model="shipConfirmForm" label-width="120px">
+        <el-form-item label="订单编号">
+          <el-input :value="shipConfirmForm.orderNo || shipConfirmForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="订单状态">
+          <el-input :value="getOrderStatusLabel(shipConfirmForm.orderStatus)" disabled />
+        </el-form-item>
+        <el-form-item label="支付状态">
+          <el-input :value="getOrderPayStatusLabel(shipConfirmForm.payStatus)" disabled />
+        </el-form-item>
+        <el-form-item label="订单来源">
+          <el-input :value="getOrderSourceLabel(shipConfirmForm.orderSource)" disabled />
+        </el-form-item>
+        <el-form-item label="归属企业">
+          <el-input :value="getEnterpriseName(shipConfirmForm.enterpriseId)" disabled />
+        </el-form-item>
+        <el-form-item label="竞价商品">
+          <el-input :value="getBidProductLabel(shipConfirmForm.bidProductId)" disabled />
+        </el-form-item>
+        <el-form-item label="用户出价">
+          <el-input :value="getUserBidLabel(shipConfirmForm.userBidId)" disabled />
+        </el-form-item>
+        <el-form-item label="收货地址">
+          <el-input :value="getAddressLabel(shipConfirmForm.addressId)" disabled />
+        </el-form-item>
+        <el-form-item label="期望送达时间">
+          <el-input :value="parseTime(shipConfirmForm.expectedDeliveryTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="生猪资源">
+          <el-input :value="getPigResourceLabel(shipConfirmForm.pigResourceId)" disabled />
+        </el-form-item>
+        <el-form-item label="竞拍数量(头)">
+          <el-input :value="shipConfirmForm.bidQuantity" disabled />
+        </el-form-item>
+        <el-form-item label="单价">
+          <el-input :value="shipConfirmForm.unitPrice" disabled />
+        </el-form-item>
+        <el-form-item label="总重量(kg)">
+          <el-input :value="shipConfirmForm.totalWeight" disabled />
+        </el-form-item>
+        <el-form-item label="订单金额">
+          <el-input :value="shipConfirmForm.orderAmount" disabled />
+        </el-form-item>
+        <el-form-item label="首付货款">
+          <el-input :value="shipConfirmForm.firstPaymentAmount" disabled />
+        </el-form-item>
+        <el-form-item label="运费">
+          <el-input v-model="shipConfirmForm.freightAmount" placeholder="请输入运费" />
+        </el-form-item>
+        <el-form-item label="剩余货款">
+          <el-input v-model="shipConfirmForm.remainingPaymentAmount" placeholder="请输入剩余货款" />
+        </el-form-item>
+        <el-form-item label="收款银行账户">
+          <el-select v-model="shipConfirmForm.bankAccountId" placeholder="请选择收款银行账户" filterable clearable style="width: 100%;">
+            <el-option v-for="item in bankAccountOptions" :key="item.id" :label="getBankAccountOptionLabel(item)" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="支付渠道">
+          <el-input :value="shipConfirmForm.payChannel || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="支付时间">
+          <el-input :value="parseTime(shipConfirmForm.payTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="装货时间">
+          <el-date-picker v-model="shipConfirmForm.loadTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择装货时间" style="width: 100%;"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="发货时间">
+          <el-date-picker v-model="shipConfirmForm.shipTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择发货时间" style="width: 100%;"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="确认收货时间">
+          <el-input :value="parseTime(shipConfirmForm.receiveTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="送货信息">
+          <div style="margin-bottom: 8px;">
+            <el-button size="mini" type="primary" plain icon="el-icon-plus" @click="openShipDeliveryInfoDialog()">新增送货信息</el-button>
+          </div>
+          <el-table :data="shipDeliveryInfoList" size="mini" border style="width: 100%;">
+            <el-table-column label="运输编码" prop="transportCode" min-width="140" />
+            <el-table-column label="送货人" prop="delivererName" min-width="100" />
+            <el-table-column label="电话" prop="delivererPhone" min-width="120" />
+            <el-table-column label="车牌号" prop="vehicleNo" min-width="120" />
+            <el-table-column label="车辆类型" min-width="120">
+              <template slot-scope="scope">
+                <span>{{ getVehicleTypeName(scope.row.vehicleTypeId) }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="车辆来源" min-width="120">
+              <template slot-scope="scope">
+                <dict-tag :options="dict.type.pig_vehicle_source" :value="scope.row.vehicleSource" />
+              </template>
+            </el-table-column>
+            <el-table-column label="附件" min-width="160">
+              <template slot-scope="scope">
+                <div v-if="splitAttachmentUrls(scope.row.attachmentUrls).length">
+                  <el-link
+                    v-for="(url, idx) in splitAttachmentUrls(scope.row.attachmentUrls)"
+                    :key="`${scope.row.id || 'ship'}-${idx}`"
+                    :href="normalizeFileUrl(url)"
+                    target="_blank"
+                    :underline="false"
+                    type="primary"
+                    style="margin-right: 8px;"
+                  >附件{{ idx + 1 }}</el-link>
+                </div>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="装猪数量" prop="loadCount" min-width="90" />
+            <el-table-column label="当前位置" min-width="160">
+              <template slot-scope="scope">
+                <span>{{ scope.row.currentLongitude || '-' }}, {{ scope.row.currentLatitude || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" prop="deliveryStatus" min-width="90">
+              <template slot-scope="scope">
+                <dict-tag :options="dict.type.pig_delivery_status" :value="scope.row.deliveryStatus" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center" min-width="120">
+              <template slot-scope="scope">
+                <el-button type="text" size="mini" @click="openShipDeliveryInfoDialog(scope.row)">编辑</el-button>
+                <el-button type="text" size="mini" @click="removeShipDeliveryInfo(scope.$index)">移除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="shipConfirmForm.remark" type="textarea" placeholder="请输入备注" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitShipConfirm">确 认</el-button>
+        <el-button @click="cancelShipConfirm">取 消</el-button>
       </div>
     </el-dialog>
 
@@ -711,6 +947,7 @@ export default {
       deliveryDialogTitle: '新增送货信息',
       deliveryForm: {},
       editingDeliveryIndex: null,
+      deliveryDialogScene: 'order',
       orderMapDialogVisible: false,
       orderMapContainerId: 'order-map-picker',
       orderMapInstance: null,
@@ -726,7 +963,12 @@ export default {
       confirmForm: {},
       paymentConfirmOpen: false,
       paymentConfirmTitle: '确认付款',
-      paymentConfirmForm: {}
+      paymentConfirmForm: {},
+      paymentDeliveryInfoList: [],
+      shipConfirmOpen: false,
+      shipConfirmForm: {},
+      confirmDeliveryInfoList: [],
+      shipDeliveryInfoList: []
     }
   },
   created() {
@@ -1125,8 +1367,10 @@ export default {
         orderAmount: undefined,
         firstPaymentAmount: undefined,
         bankAccountId: undefined,
+        deliveryInfoIds: undefined,
         remark: undefined
       }
+      this.confirmDeliveryInfoList = []
     },
     handleConfirmOrder(row) {
       const id = row.id
@@ -1135,7 +1379,7 @@ export default {
         return
       }
       this.resetConfirmForm()
-      getPigOrder(id).then(response => {
+      getPigOrder(id).then(async response => {
         const data = response.data || {}
         this.confirmForm = {
           ...this.confirmForm,
@@ -1144,6 +1388,7 @@ export default {
         if (this.confirmForm.unitPrice == null) {
           this.confirmForm.unitPrice = this.calcUnitPrice(this.confirmForm.orderAmount, this.confirmForm.totalWeight, this.confirmForm.bidQuantity)
         }
+        await this.loadConfirmDeliveryInfosByIds(this.confirmForm.deliveryInfoIds)
         this.confirmOpen = true
       })
     },
@@ -1180,6 +1425,7 @@ export default {
         orderAmount: this.confirmForm.orderAmount,
         firstPaymentAmount: this.confirmForm.firstPaymentAmount,
         bankAccountId: this.confirmForm.bankAccountId,
+        deliveryInfoIds: this.confirmForm.deliveryInfoIds,
         remark: this.confirmForm.remark,
         orderStatus: 'WAIT_PAY'
       }
@@ -1218,6 +1464,7 @@ export default {
         receiveTime: undefined,
         remark: undefined
       }
+      this.paymentDeliveryInfoList = []
     },
     handleConfirmPayment(row, type) {
       const id = row.id
@@ -1226,12 +1473,13 @@ export default {
         return
       }
       this.resetPaymentConfirmForm()
-      getPigOrder(id).then(response => {
+      getPigOrder(id).then(async response => {
         const data = response.data || {}
         this.paymentConfirmForm = {
           ...this.paymentConfirmForm,
           ...data
         }
+        await this.loadPaymentDeliveryInfosByIds(this.paymentConfirmForm.deliveryInfoIds)
         this.paymentConfirmTitle = type === 'FINAL' ? '确认尾款' : '确认首付款'
         this.paymentConfirmOpen = true
       })
@@ -1262,6 +1510,77 @@ export default {
         this.getList()
       })
     },
+    resetShipConfirmForm() {
+      this.shipConfirmForm = {
+        id: undefined,
+        orderNo: undefined,
+        orderStatus: undefined,
+        payStatus: undefined,
+        orderSource: undefined,
+        enterpriseId: undefined,
+        bidProductId: undefined,
+        userBidId: undefined,
+        addressId: undefined,
+        expectedDeliveryTime: undefined,
+        pigResourceId: undefined,
+        bidQuantity: undefined,
+        unitPrice: undefined,
+        totalWeight: undefined,
+        orderAmount: undefined,
+        firstPaymentAmount: undefined,
+        freightAmount: undefined,
+        remainingPaymentAmount: undefined,
+        bankAccountId: undefined,
+        payChannel: undefined,
+        payTime: undefined,
+        loadTime: undefined,
+        shipTime: undefined,
+        deliveryInfoIds: undefined,
+        receiveTime: undefined,
+        remark: undefined
+      }
+      this.shipDeliveryInfoList = []
+    },
+    handleShipOrder(row) {
+      const id = row.id
+      if (!id) {
+        this.$modal.msgWarning('订单ID不存在')
+        return
+      }
+      this.resetShipConfirmForm()
+      getPigOrder(id).then(async response => {
+        const data = response.data || {}
+        this.shipConfirmForm = {
+          ...this.shipConfirmForm,
+          ...data
+        }
+        await this.loadShipDeliveryInfosByIds(this.shipConfirmForm.deliveryInfoIds)
+        this.shipConfirmOpen = true
+      })
+    },
+    cancelShipConfirm() {
+      this.shipConfirmOpen = false
+      this.resetShipConfirmForm()
+    },
+    submitShipConfirm() {
+      this.syncShipDeliveryInfoIds()
+      const payload = {
+        id: this.shipConfirmForm.id,
+        freightAmount: this.shipConfirmForm.freightAmount,
+        remainingPaymentAmount: this.shipConfirmForm.remainingPaymentAmount,
+        bankAccountId: this.shipConfirmForm.bankAccountId,
+        loadTime: this.shipConfirmForm.loadTime,
+        shipTime: this.shipConfirmForm.shipTime,
+        deliveryInfoIds: this.shipConfirmForm.deliveryInfoIds,
+        remark: this.shipConfirmForm.remark,
+        orderStatus: 'WAIT_RECEIVE'
+      }
+      updatePigOrder(payload).then(() => {
+        this.$modal.msgSuccess('发货确认成功，订单状态已更新为待收货')
+        this.shipConfirmOpen = false
+        this.getList()
+      })
+    },
     resetDeliveryForm() {
       this.deliveryForm = {
         id: undefined,
@@ -1281,6 +1600,7 @@ export default {
       this.editingDeliveryIndex = null
     },
     openDeliveryInfoDialog(row) {
+      this.deliveryDialogScene = 'order'
       this.resetDeliveryForm()
       if (row) {
         this.deliveryDialogTitle = '修改送货信息'
@@ -1294,39 +1614,160 @@ export default {
       }
       this.deliveryDialogVisible = true
     },
+    openShipDeliveryInfoDialog(row) {
+      this.deliveryDialogScene = 'ship'
+      this.resetDeliveryForm()
+      if (row) {
+        this.deliveryDialogTitle = '修改送货信息'
+        this.deliveryForm = { ...row }
+        this.editingDeliveryIndex = this.shipDeliveryInfoList.findIndex(item => item.id === row.id)
+      } else {
+        this.deliveryDialogTitle = '新增送货信息'
+        getNextTransportCode().then(response => {
+          this.$set(this.deliveryForm, 'transportCode', response.data)
+        })
+      }
+      this.deliveryDialogVisible = true
+    },
+    openConfirmDeliveryInfoDialog(row) {
+      this.deliveryDialogScene = 'confirm'
+      this.resetDeliveryForm()
+      if (row) {
+        this.deliveryDialogTitle = '修改送货信息'
+        this.deliveryForm = { ...row }
+        this.editingDeliveryIndex = this.confirmDeliveryInfoList.findIndex(item => item.id === row.id)
+      } else {
+        this.deliveryDialogTitle = '新增送货信息'
+        getNextTransportCode().then(response => {
+          this.$set(this.deliveryForm, 'transportCode', response.data)
+        })
+      }
+      this.deliveryDialogVisible = true
+    },
+    openPaymentDeliveryInfoDialog(row) {
+      this.deliveryDialogScene = 'payment'
+      this.resetDeliveryForm()
+      if (row) {
+        this.deliveryDialogTitle = '修改送货信息'
+        this.deliveryForm = { ...row }
+        this.editingDeliveryIndex = this.paymentDeliveryInfoList.findIndex(item => item.id === row.id)
+      } else {
+        this.deliveryDialogTitle = '新增送货信息'
+        getNextTransportCode().then(response => {
+          this.$set(this.deliveryForm, 'transportCode', response.data)
+        })
+      }
+      this.deliveryDialogVisible = true
+    },
+    getDeliveryTargetList() {
+      if (this.deliveryDialogScene === 'ship') {
+        return this.shipDeliveryInfoList
+      }
+      if (this.deliveryDialogScene === 'confirm') {
+        return this.confirmDeliveryInfoList
+      }
+      if (this.deliveryDialogScene === 'payment') {
+        return this.paymentDeliveryInfoList
+      }
+      return this.deliveryInfoList
+    },
+    syncDeliveryInfoIdsByScene() {
+      if (this.deliveryDialogScene === 'ship') {
+        this.syncShipDeliveryInfoIds()
+        return
+      }
+      if (this.deliveryDialogScene === 'confirm') {
+        this.syncConfirmDeliveryInfoIds()
+        return
+      }
+      if (this.deliveryDialogScene === 'payment') {
+        this.syncPaymentDeliveryInfoIds()
+        return
+      }
+      this.syncDeliveryInfoIds()
+    },
     async saveDeliveryInfo() {
       const payload = { ...this.deliveryForm }
+      const targetList = this.getDeliveryTargetList()
       if (payload.id) {
         await updateDeliveryInfo(payload)
         if (this.editingDeliveryIndex !== null && this.editingDeliveryIndex !== -1) {
-          this.$set(this.deliveryInfoList, this.editingDeliveryIndex, payload)
+          this.$set(targetList, this.editingDeliveryIndex, payload)
         }
       } else {
         await addDeliveryInfo(payload)
         const res = await listDeliveryInfo({ transportCode: payload.transportCode, pageNum: 1, pageSize: 1 })
         if (res.rows && res.rows.length) {
-          this.deliveryInfoList.push(res.rows[0])
+          targetList.push(res.rows[0])
         }
       }
-      this.syncDeliveryInfoIds()
+      this.syncDeliveryInfoIdsByScene()
       this.deliveryDialogVisible = false
     },
     removeDeliveryInfo(index) {
       this.deliveryInfoList.splice(index, 1)
       this.syncDeliveryInfoIds()
     },
+    removeShipDeliveryInfo(index) {
+      this.shipDeliveryInfoList.splice(index, 1)
+      this.syncShipDeliveryInfoIds()
+    },
+    removeConfirmDeliveryInfo(index) {
+      this.confirmDeliveryInfoList.splice(index, 1)
+      this.syncConfirmDeliveryInfoIds()
+    },
+    removePaymentDeliveryInfo(index) {
+      this.paymentDeliveryInfoList.splice(index, 1)
+      this.syncPaymentDeliveryInfoIds()
+    },
     syncDeliveryInfoIds() {
       const ids = this.deliveryInfoList.map(item => item.id).filter(Boolean)
       this.form.deliveryInfoIds = ids.length ? ids.join(',') : undefined
     },
-    async loadDeliveryInfosByIds(ids) {
-      this.deliveryInfoList = []
+    syncShipDeliveryInfoIds() {
+      const ids = this.shipDeliveryInfoList.map(item => item.id).filter(Boolean)
+      this.shipConfirmForm.deliveryInfoIds = ids.length ? ids.join(',') : undefined
+    },
+    syncConfirmDeliveryInfoIds() {
+      const ids = this.confirmDeliveryInfoList.map(item => item.id).filter(Boolean)
+      this.confirmForm.deliveryInfoIds = ids.length ? ids.join(',') : undefined
+    },
+    syncPaymentDeliveryInfoIds() {
+      const ids = this.paymentDeliveryInfoList.map(item => item.id).filter(Boolean)
+      this.paymentConfirmForm.deliveryInfoIds = ids.length ? ids.join(',') : undefined
+    },
+    parseDeliveryIdList(ids) {
       if (!ids) {
-        return
+        return []
       }
-      const idList = ids.split(',').map(item => item.trim()).filter(item => item)
-      const results = await Promise.all(idList.map(id => getDeliveryInfo(id)))
-      this.deliveryInfoList = results.map(result => result.data)
+      return String(ids)
+        .replace(/[\[\]"'`]/g, ' ')
+        .split(/[，,;；\s]+/)
+        .map(item => item.trim())
+        .filter(item => /^\d+$/.test(item))
+    },
+    async fetchDeliveryInfosByIds(ids) {
+      const idList = this.parseDeliveryIdList(ids)
+      if (!idList.length) {
+        return []
+      }
+      const results = await Promise.allSettled(idList.map(id => getDeliveryInfo(id)))
+      return results
+        .filter(item => item.status === 'fulfilled' && item.value && item.value.data)
+        .map(item => item.value.data)
+    },
+    async loadDeliveryInfosByIds(ids) {
+      this.deliveryInfoList = await this.fetchDeliveryInfosByIds(ids)
+    },
+    async loadShipDeliveryInfosByIds(ids) {
+      this.shipDeliveryInfoList = await this.fetchDeliveryInfosByIds(ids)
+      this.syncShipDeliveryInfoIds()
+    },
+    async loadConfirmDeliveryInfosByIds(ids) {
+      this.confirmDeliveryInfoList = await this.fetchDeliveryInfosByIds(ids)
+    },
+    async loadPaymentDeliveryInfosByIds(ids) {
+      this.paymentDeliveryInfoList = await this.fetchDeliveryInfosByIds(ids)
     },
     openOrderMapPicker() {
       this.orderMapSelectedLng = this.deliveryForm.currentLongitude ? Number(this.deliveryForm.currentLongitude) : undefined

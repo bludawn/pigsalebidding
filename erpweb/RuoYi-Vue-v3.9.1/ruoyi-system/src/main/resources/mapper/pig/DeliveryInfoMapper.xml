@@ -78,9 +78,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="vehicleNo != null and vehicleNo != ''">f_vehicleNo,</if>
 <if test="vehicleTypeId != null">f_vehicleTypeId,</if>
 <if test="vehicleSource != null and vehicleSource != ''">f_vehicleSource,</if>
+<if test="attachmentUrls != null and attachmentUrls != ''">f_attachmentUrls,</if>
 <if test="loadCount != null">f_loadCount,</if>
 <if test="deliveryStatus != null and deliveryStatus != ''">f_deliveryStatus,</if>
-<if test="attachmentUrls != null and attachmentUrls != ''">f_attachmentUrls,</if>
 <if test="remark != null and remark != ''">f_remark,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
 f_createTime
