@@ -509,9 +509,9 @@ public class CustomerController extends BaseController {
     public CustomerApiResult<OrderCounts> getOrderCounts() {
         List<PigOrder> orders = selectOrdersByUser();
         OrderCounts counts = new OrderCounts();
-        counts.paymentCount = countOrderStatus(orders, "WAITING");
-        counts.shipmentCount = countOrderStatus(orders, "PAID");
-        counts.receiptCount = countOrderStatus(orders, "SHIPPED");
+        counts.paymentCount = (int) orders.stream().filter(order -> "WAIT_PAY".equalsIgnoreCase(order.getOrderStatus()) || "WAIT_FINAL_PAY".equalsIgnoreCase(order.getOrderStatus())).count();
+        counts.shipmentCount = countOrderStatus(orders, "WAIT_SHIP");
+        counts.receiptCount = countOrderStatus(orders, "WAIT_RECEIVE");
         counts.completedCount = countOrderStatus(orders, "COMPLETED");
         counts.cancelledCount = countOrderStatus(orders, "CANCELED");
         counts.allCount = orders.size();
@@ -677,9 +677,9 @@ public class CustomerController extends BaseController {
     public CustomerApiResult<OrderStats> getOrderStats() {
         List<PigOrder> orders = selectOrdersByUser();
         OrderStats stats = new OrderStats();
-        stats.unpaid = countOrderStatus(orders, "WAITING");
-        stats.unshipped = countOrderStatus(orders, "PAID");
-        stats.unreceived = countOrderStatus(orders, "SHIPPED");
+        stats.unpaid = (int) orders.stream().filter(order -> "WAIT_PAY".equalsIgnoreCase(order.getOrderStatus()) || "WAIT_FINAL_PAY".equalsIgnoreCase(order.getOrderStatus())).count();
+        stats.unshipped = countOrderStatus(orders, "WAIT_SHIP");
+        stats.unreceived = countOrderStatus(orders, "WAIT_RECEIVE");
         stats.unevaluated = 0;
         stats.afterSale = 0;
         return ok(stats);
@@ -738,7 +738,11 @@ public class CustomerController extends BaseController {
             result.success = false;
             return ok(result);
         }
-        order.setOrderStatus("PAID");
+        if ("WAIT_FINAL_PAY".equalsIgnoreCase(order.getOrderStatus())) {
+            order.setOrderStatus("COMPLETED");
+        } else {
+            order.setOrderStatus("WAIT_SHIP");
+        }
         order.setPayTime(new Date());
         order.setUpdateBy(String.valueOf(getUserId()));
         pigOrderService.updatePigOrder(order);
@@ -755,7 +759,7 @@ public class CustomerController extends BaseController {
             result.success = false;
             return ok(result);
         }
-        order.setOrderStatus("COMPLETED");
+        order.setOrderStatus("WAIT_FINAL_PAY");
         order.setReceiveTime(new Date());
         order.setUpdateBy(String.valueOf(getUserId()));
         pigOrderService.updatePigOrder(order);
@@ -1320,13 +1324,13 @@ public class CustomerController extends BaseController {
     }
 
     private String mapOrderStatus(String dbStatus) {
-        if ("WAITING".equalsIgnoreCase(dbStatus)) {
+        if ("WAIT_CONFIRM".equalsIgnoreCase(dbStatus) || "WAIT_PAY".equalsIgnoreCase(dbStatus) || "WAIT_FINAL_PAY".equalsIgnoreCase(dbStatus)) {
             return "ORDER_PAYMENT";
         }
-        if ("PAID".equalsIgnoreCase(dbStatus)) {
+        if ("WAIT_SHIP".equalsIgnoreCase(dbStatus)) {
             return "ORDER_SHIPMENT";
         }
-        if ("SHIPPED".equalsIgnoreCase(dbStatus)) {
+        if ("WAIT_RECEIVE".equalsIgnoreCase(dbStatus)) {
             return "ORDER_RECEIPT";
         }
         if ("COMPLETED".equalsIgnoreCase(dbStatus)) {
@@ -1340,13 +1344,13 @@ public class CustomerController extends BaseController {
 
     private String mapOrderStatusToDb(String status) {
         if ("ORDER_PAYMENT".equalsIgnoreCase(status)) {
-            return "WAITING";
+            return "WAIT_PAY";
         }
         if ("ORDER_SHIPMENT".equalsIgnoreCase(status)) {
-            return "PAID";
+            return "WAIT_SHIP";
         }
         if ("ORDER_RECEIPT".equalsIgnoreCase(status)) {
-            return "SHIPPED";
+            return "WAIT_RECEIVE";
         }
         if ("ORDER_COMPLETED".equalsIgnoreCase(status)) {
             return "COMPLETED";

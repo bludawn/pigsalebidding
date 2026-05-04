@@ -14,6 +14,11 @@
           <el-option v-for="dict in dict.type.pig_order_source" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
+      <el-form-item label="支付状态" prop="payStatus">
+        <el-select v-model="queryParams.payStatus" placeholder="请选择支付状态" clearable style="width: 240px">
+          <el-option v-for="dict in dict.type.pig_order_pay_status" :key="dict.value" :label="dict.label" :value="dict.value" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -105,6 +110,11 @@
           <span>{{ scope.row.bidQuantity ? scope.row.bidQuantity + '头' : '-' }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="支付状态" align="center" prop="payStatus" v-if="columns.payStatus.visible">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.pig_order_pay_status" :value="scope.row.payStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="支付渠道" align="center" prop="payChannel" v-if="columns.payChannel.visible" />
       <el-table-column label="支付时间" align="center" prop="payTime" v-if="columns.payTime.visible" width="160">
         <template slot-scope="scope">
@@ -143,6 +153,30 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
+          <el-button
+            v-if="scope.row.orderStatus === 'WAIT_CONFIRM'"
+            size="mini"
+            type="text"
+            icon="el-icon-check"
+            @click="handleConfirmOrder(scope.row)"
+            v-hasPermi="['pig:pigOrder:edit']"
+          >订单确认</el-button>
+          <el-button
+            v-if="scope.row.payStatus === 'WAIT_CONFIRM_FIRST'"
+            size="mini"
+            type="text"
+            icon="el-icon-money"
+            @click="handleConfirmPayment(scope.row, 'FIRST')"
+            v-hasPermi="['pig:pigOrder:edit']"
+          >确认首付款</el-button>
+          <el-button
+            v-if="scope.row.payStatus === 'WAIT_CONFIRM_FINAL'"
+            size="mini"
+            type="text"
+            icon="el-icon-money"
+            @click="handleConfirmPayment(scope.row, 'FINAL')"
+            v-hasPermi="['pig:pigOrder:edit']"
+          >确认尾款</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:pigOrder:edit']">修改</el-button>
           <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['pig:pigOrder:remove']">删除</el-button>
         </template>
@@ -171,6 +205,7 @@
             <div>剩余货款：{{ item.remainingPaymentAmount }}</div>
             <div>收款账户：{{ getBankAccountLabel(item.bankAccountId) }}</div>
             <div>总重量(kg)：{{ item.totalWeight }}</div>
+            <div>支付状态：<dict-tag :options="dict.type.pig_order_pay_status" :value="item.payStatus" /></div>
             <div>支付渠道：{{ item.payChannel }}</div>
             <div>支付时间：{{ parseTime(item.payTime) }}</div>
             <div>期望送达时间：{{ parseTime(item.expectedDeliveryTime) }}</div>
@@ -181,6 +216,30 @@
             <div>备注：{{ item.remark }}</div>
           </div>
           <div style="margin-top: 8px; text-align: right;">
+            <el-button
+              v-if="item.orderStatus === 'WAIT_CONFIRM'"
+              size="mini"
+              type="text"
+              icon="el-icon-check"
+              @click="handleConfirmOrder(item)"
+              v-hasPermi="['pig:pigOrder:edit']"
+            >订单确认</el-button>
+            <el-button
+              v-if="item.payStatus === 'WAIT_CONFIRM_FIRST'"
+              size="mini"
+              type="text"
+              icon="el-icon-money"
+              @click="handleConfirmPayment(item, 'FIRST')"
+              v-hasPermi="['pig:pigOrder:edit']"
+            >确认首付款</el-button>
+            <el-button
+              v-if="item.payStatus === 'WAIT_CONFIRM_FINAL'"
+              size="mini"
+              type="text"
+              icon="el-icon-money"
+              @click="handleConfirmPayment(item, 'FINAL')"
+              v-hasPermi="['pig:pigOrder:edit']"
+            >确认尾款</el-button>
             <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(item)" v-hasPermi="['pig:pigOrder:edit']">修改</el-button>
             <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(item)" v-hasPermi="['pig:pigOrder:remove']">删除</el-button>
           </div>
@@ -189,6 +248,151 @@
     </el-row>
 
     <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
+
+    <el-dialog title="订单确认" :visible.sync="confirmOpen" width="760px" append-to-body>
+      <el-form :model="confirmForm" label-width="120px">
+        <el-form-item label="订单编码">
+          <el-input :value="confirmForm.orderNo || confirmForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="订单状态">
+          <el-input :value="getOrderStatusLabel(confirmForm.orderStatus)" disabled />
+        </el-form-item>
+        <el-form-item label="订单来源">
+          <el-input :value="getOrderSourceLabel(confirmForm.orderSource)" disabled />
+        </el-form-item>
+        <el-form-item label="归属企业">
+          <el-input :value="getEnterpriseName(confirmForm.enterpriseId)" disabled />
+        </el-form-item>
+        <el-form-item label="竞价商品">
+          <el-input :value="getBidProductLabel(confirmForm.bidProductId)" disabled />
+        </el-form-item>
+        <el-form-item label="用户出价">
+          <el-input :value="getUserBidLabel(confirmForm.userBidId)" disabled />
+        </el-form-item>
+        <el-form-item label="生猪资源">
+          <el-input :value="getPigResourceLabel(confirmForm.pigResourceId)" disabled />
+        </el-form-item>
+        <el-form-item label="收货地址" prop="addressId">
+          <el-select v-model="confirmForm.addressId" placeholder="请选择收货地址" filterable clearable style="width: 100%;">
+            <el-option v-for="item in addressOptions" :key="item.id" :label="getAddressOptionLabel(item)" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="期望送达时间" prop="expectedDeliveryTime">
+          <el-date-picker v-model="confirmForm.expectedDeliveryTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择期望送达时间" style="width: 100%;" />
+        </el-form-item>
+        <el-form-item label="竞拍数量(头)" prop="bidQuantity">
+          <el-input v-model="confirmForm.bidQuantity" placeholder="请输入竞拍数量" @input="updateConfirmOrderAmount" />
+        </el-form-item>
+        <el-form-item label="单价" prop="unitPrice">
+          <el-input v-model="confirmForm.unitPrice" placeholder="请输入单价" @input="updateConfirmOrderAmount" />
+        </el-form-item>
+        <el-form-item label="总重量(kg)" prop="totalWeight">
+          <el-input v-model="confirmForm.totalWeight" placeholder="请输入总重量" @input="updateConfirmOrderAmount" />
+        </el-form-item>
+        <el-form-item label="订单金额" prop="orderAmount">
+          <el-input v-model="confirmForm.orderAmount" placeholder="自动计算，可手工修改" />
+        </el-form-item>
+        <el-form-item label="首付货款" prop="firstPaymentAmount">
+          <el-input v-model="confirmForm.firstPaymentAmount" placeholder="请输入首付货款" />
+        </el-form-item>
+        <el-form-item label="收款银行账户" prop="bankAccountId">
+          <el-select v-model="confirmForm.bankAccountId" placeholder="请选择收款银行账户" filterable clearable style="width: 100%;">
+            <el-option v-for="item in bankAccountOptions" :key="item.id" :label="getBankAccountOptionLabel(item)" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="confirmForm.remark" type="textarea" placeholder="请输入备注" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitConfirmOrder">确 认</el-button>
+        <el-button @click="cancelConfirm">取 消</el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog :title="paymentConfirmTitle" :visible.sync="paymentConfirmOpen" width="760px" append-to-body>
+      <el-form :model="paymentConfirmForm" label-width="120px">
+        <el-form-item label="订单编号">
+          <el-input :value="paymentConfirmForm.orderNo || paymentConfirmForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="订单状态">
+          <el-input :value="getOrderStatusLabel(paymentConfirmForm.orderStatus)" disabled />
+        </el-form-item>
+        <el-form-item label="支付状态">
+          <el-input :value="getOrderPayStatusLabel(paymentConfirmForm.payStatus)" disabled />
+        </el-form-item>
+        <el-form-item label="订单来源">
+          <el-input :value="getOrderSourceLabel(paymentConfirmForm.orderSource)" disabled />
+        </el-form-item>
+        <el-form-item label="归属企业">
+          <el-input :value="getEnterpriseName(paymentConfirmForm.enterpriseId)" disabled />
+        </el-form-item>
+        <el-form-item label="竞价商品">
+          <el-input :value="getBidProductLabel(paymentConfirmForm.bidProductId)" disabled />
+        </el-form-item>
+        <el-form-item label="用户出价">
+          <el-input :value="getUserBidLabel(paymentConfirmForm.userBidId)" disabled />
+        </el-form-item>
+        <el-form-item label="收货地址">
+          <el-input :value="getAddressLabel(paymentConfirmForm.addressId)" disabled />
+        </el-form-item>
+        <el-form-item label="期望送达时间">
+          <el-input :value="parseTime(paymentConfirmForm.expectedDeliveryTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="生猪资源">
+          <el-input :value="getPigResourceLabel(paymentConfirmForm.pigResourceId)" disabled />
+        </el-form-item>
+        <el-form-item label="竞拍数量(头)">
+          <el-input :value="paymentConfirmForm.bidQuantity" disabled />
+        </el-form-item>
+        <el-form-item label="单价">
+          <el-input :value="paymentConfirmForm.unitPrice" disabled />
+        </el-form-item>
+        <el-form-item label="总重量(kg)">
+          <el-input :value="paymentConfirmForm.totalWeight" disabled />
+        </el-form-item>
+        <el-form-item label="订单金额">
+          <el-input :value="paymentConfirmForm.orderAmount" disabled />
+        </el-form-item>
+        <el-form-item label="首付货款">
+          <el-input :value="paymentConfirmForm.firstPaymentAmount" disabled />
+        </el-form-item>
+        <el-form-item label="运费">
+          <el-input :value="paymentConfirmForm.freightAmount" disabled />
+        </el-form-item>
+        <el-form-item label="剩余货款">
+          <el-input :value="paymentConfirmForm.remainingPaymentAmount" disabled />
+        </el-form-item>
+        <el-form-item label="收款银行账户">
+          <el-input :value="getBankAccountLabel(paymentConfirmForm.bankAccountId)" disabled />
+        </el-form-item>
+        <el-form-item label="支付时间">
+          <el-input :value="parseTime(paymentConfirmForm.payTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="装货时间">
+          <el-input :value="parseTime(paymentConfirmForm.loadTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="发货时间">
+          <el-input :value="parseTime(paymentConfirmForm.shipTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="确认收货时间">
+          <el-input :value="parseTime(paymentConfirmForm.receiveTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="送货信息id数组">
+          <el-input :value="paymentConfirmForm.deliveryInfoIds || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="支付渠道">
+          <el-input v-model="paymentConfirmForm.payChannel" placeholder="请输入支付渠道" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="paymentConfirmForm.remark" type="textarea" placeholder="请输入备注" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="submitPaymentConfirm">确 认</el-button>
+        <el-button @click="cancelPaymentConfirm">取 消</el-button>
+      </div>
+    </el-dialog>
 
     <!-- 添加或修改订单对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="700px" append-to-body>
@@ -199,6 +403,11 @@
         <el-form-item label="订单状态" prop="orderStatus">
           <el-select v-model="form.orderStatus" placeholder="请选择订单状态" :disabled="viewModeOnly">
             <el-option v-for="dict in dict.type.pig_order_status" :key="dict.value" :label="dict.label" :value="dict.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="支付状态" prop="payStatus">
+          <el-select v-model="form.payStatus" placeholder="请选择支付状态" :disabled="viewModeOnly">
+            <el-option v-for="dict in dict.type.pig_order_pay_status" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="订单来源" prop="orderSource">
@@ -424,7 +633,7 @@ import pcasData from "@/assets/pcas-code.json"
 
 export default {
   name: "PigOrder",
-  dicts: ['pig_order_status', 'pig_order_source', 'pig_delivery_status', 'pig_vehicle_source'],
+  dicts: ['pig_order_status', 'pig_order_source', 'pig_order_pay_status', 'pig_delivery_status', 'pig_vehicle_source'],
   data() {
     return {
       loading: true,
@@ -443,6 +652,7 @@ export default {
         orderNo: undefined,
         orderStatus: undefined,
         orderSource: undefined,
+        payStatus: undefined,
         enterpriseId: undefined
       },
       columns: {
@@ -464,6 +674,7 @@ export default {
         totalWeight: { label: '总重量(kg)', visible: true },
         unitPrice: { label: '单价', visible: true },
         bidQuantity: { label: '竞拍数量', visible: true },
+        payStatus: { label: '支付状态', visible: true },
         payChannel: { label: '支付渠道', visible: true },
         payTime: { label: '支付时间', visible: true },
         loadTime: { label: '装货时间', visible: true },
@@ -510,7 +721,12 @@ export default {
       orderMapKeyword: '',
       orderMapPlaceSearch: null,
       orderMapGeocoder: null,
-      form: {}
+      form: {},
+      confirmOpen: false,
+      confirmForm: {},
+      paymentConfirmOpen: false,
+      paymentConfirmTitle: '确认付款',
+      paymentConfirmForm: {}
     }
   },
   created() {
@@ -555,6 +771,7 @@ export default {
         orderNo: undefined,
         orderStatus: undefined,
         orderSource: undefined,
+        payStatus: 'UNPAID',
         enterpriseId: undefined,
         bidProductId: undefined,
         userBidId: undefined,
@@ -598,6 +815,8 @@ export default {
       this.viewModeOnly = false
       this.open = true
       this.title = "添加订单"
+      this.$set(this.form, 'orderStatus', 'WAIT_CONFIRM')
+      this.$set(this.form, 'payStatus', 'UNPAID')
       getNextOrderNo().then(response => {
         this.$set(this.form, 'orderNo', response.data)
       })
@@ -871,6 +1090,177 @@ export default {
       }
       const match = this.enterpriseOptions.find(item => item.id === id)
       return match ? match.enterpriseName : id
+    },
+    getDictLabel(options, value) {
+      if (!value || !options || !options.length) {
+        return '-'
+      }
+      const match = options.find(item => item.value === value)
+      return match ? match.label : value
+    },
+    getOrderStatusLabel(value) {
+      return this.getDictLabel(this.dict.type.pig_order_status || [], value)
+    },
+    getOrderSourceLabel(value) {
+      return this.getDictLabel(this.dict.type.pig_order_source || [], value)
+    },
+    getOrderPayStatusLabel(value) {
+      return this.getDictLabel(this.dict.type.pig_order_pay_status || [], value)
+    },
+    resetConfirmForm() {
+      this.confirmForm = {
+        id: undefined,
+        orderNo: undefined,
+        orderStatus: undefined,
+        orderSource: undefined,
+        enterpriseId: undefined,
+        bidProductId: undefined,
+        userBidId: undefined,
+        pigResourceId: undefined,
+        addressId: undefined,
+        expectedDeliveryTime: undefined,
+        bidQuantity: undefined,
+        unitPrice: undefined,
+        totalWeight: undefined,
+        orderAmount: undefined,
+        firstPaymentAmount: undefined,
+        bankAccountId: undefined,
+        remark: undefined
+      }
+    },
+    handleConfirmOrder(row) {
+      const id = row.id
+      if (!id) {
+        this.$modal.msgWarning('订单ID不存在')
+        return
+      }
+      this.resetConfirmForm()
+      getPigOrder(id).then(response => {
+        const data = response.data || {}
+        this.confirmForm = {
+          ...this.confirmForm,
+          ...data
+        }
+        if (this.confirmForm.unitPrice == null) {
+          this.confirmForm.unitPrice = this.calcUnitPrice(this.confirmForm.orderAmount, this.confirmForm.totalWeight, this.confirmForm.bidQuantity)
+        }
+        this.confirmOpen = true
+      })
+    },
+    updateConfirmOrderAmount() {
+      const unitPrice = Number(this.confirmForm.unitPrice)
+      if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+        return
+      }
+      const totalWeight = Number(this.confirmForm.totalWeight)
+      if (Number.isFinite(totalWeight) && totalWeight > 0) {
+        const amount = Number((unitPrice * totalWeight).toFixed(2))
+        this.$set(this.confirmForm, 'orderAmount', amount)
+        return
+      }
+      const quantity = Number(this.confirmForm.bidQuantity)
+      if (!Number.isFinite(quantity) || quantity <= 0) {
+        return
+      }
+      const amount = Number((unitPrice * quantity).toFixed(2))
+      this.$set(this.confirmForm, 'orderAmount', amount)
+    },
+    cancelConfirm() {
+      this.confirmOpen = false
+      this.resetConfirmForm()
+    },
+    submitConfirmOrder() {
+      const payload = {
+        id: this.confirmForm.id,
+        addressId: this.confirmForm.addressId,
+        expectedDeliveryTime: this.confirmForm.expectedDeliveryTime,
+        bidQuantity: this.confirmForm.bidQuantity,
+        unitPrice: this.confirmForm.unitPrice,
+        totalWeight: this.confirmForm.totalWeight,
+        orderAmount: this.confirmForm.orderAmount,
+        firstPaymentAmount: this.confirmForm.firstPaymentAmount,
+        bankAccountId: this.confirmForm.bankAccountId,
+        remark: this.confirmForm.remark,
+        orderStatus: 'WAIT_PAY'
+      }
+      updatePigOrder(payload).then(() => {
+        this.$modal.msgSuccess('订单确认成功，状态已变更为待付款')
+        this.confirmOpen = false
+        this.getList()
+      })
+    },
+    resetPaymentConfirmForm() {
+      this.paymentConfirmForm = {
+        id: undefined,
+        orderNo: undefined,
+        orderStatus: undefined,
+        payStatus: undefined,
+        orderSource: undefined,
+        enterpriseId: undefined,
+        bidProductId: undefined,
+        userBidId: undefined,
+        addressId: undefined,
+        expectedDeliveryTime: undefined,
+        pigResourceId: undefined,
+        bidQuantity: undefined,
+        unitPrice: undefined,
+        totalWeight: undefined,
+        orderAmount: undefined,
+        firstPaymentAmount: undefined,
+        freightAmount: undefined,
+        remainingPaymentAmount: undefined,
+        bankAccountId: undefined,
+        payChannel: undefined,
+        payTime: undefined,
+        loadTime: undefined,
+        shipTime: undefined,
+        deliveryInfoIds: undefined,
+        receiveTime: undefined,
+        remark: undefined
+      }
+    },
+    handleConfirmPayment(row, type) {
+      const id = row.id
+      if (!id) {
+        this.$modal.msgWarning('订单ID不存在')
+        return
+      }
+      this.resetPaymentConfirmForm()
+      getPigOrder(id).then(response => {
+        const data = response.data || {}
+        this.paymentConfirmForm = {
+          ...this.paymentConfirmForm,
+          ...data
+        }
+        this.paymentConfirmTitle = type === 'FINAL' ? '确认尾款' : '确认首付款'
+        this.paymentConfirmOpen = true
+      })
+    },
+    cancelPaymentConfirm() {
+      this.paymentConfirmOpen = false
+      this.resetPaymentConfirmForm()
+    },
+    submitPaymentConfirm() {
+      let nextPayStatus = ''
+      if (this.paymentConfirmForm.payStatus === 'WAIT_CONFIRM_FINAL') {
+        nextPayStatus = 'CONFIRMED_FINAL'
+      } else if (this.paymentConfirmForm.payStatus === 'WAIT_CONFIRM_FIRST') {
+        nextPayStatus = 'CONFIRMED_FIRST'
+      } else {
+        this.$modal.msgWarning('当前支付状态不支持确认')
+        return
+      }
+      const payload = {
+        id: this.paymentConfirmForm.id,
+        payStatus: nextPayStatus,
+        payChannel: this.paymentConfirmForm.payChannel,
+        remark: this.paymentConfirmForm.remark
+      }
+      updatePigOrder(payload).then(() => {
+        this.$modal.msgSuccess('支付确认成功')
+        this.paymentConfirmOpen = false
+        this.getList()
+      })
     },
     resetDeliveryForm() {
       this.deliveryForm = {

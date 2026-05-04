@@ -166,6 +166,7 @@ CREATE TABLE t_order (
   f_remainingPaymentAmount decimal(19,6) DEFAULT NULL COMMENT '剩余货款',
   f_bankAccountId bigint(20) DEFAULT NULL COMMENT '收款银行账户id',
   f_bidQuantity int(4) DEFAULT NULL COMMENT '竞拍数量',
+  f_payStatus varchar(32) DEFAULT 'UNPAID' COMMENT '支付状态',
   f_payChannel varchar(50) DEFAULT NULL COMMENT '支付渠道',
   f_payTime datetime COMMENT '支付时间',
   f_loadTime datetime COMMENT '装货时间',
@@ -325,6 +326,10 @@ SELECT '订单来源', 'pig_order_source', '0', 'admin', sysdate(), '订单来�
 WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type = 'pig_order_source');
 
 INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, remark)
+SELECT '订单支付状态', 'pig_order_pay_status', '0', 'admin', sysdate(), '订单支付状态'
+WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type = 'pig_order_pay_status');
+
+INSERT INTO sys_dict_type (dict_name, dict_type, status, create_by, create_time, remark)
 SELECT '送货状态', 'pig_delivery_status', '0', 'admin', sysdate(), '送货状态'
 WHERE NOT EXISTS (SELECT 1 FROM sys_dict_type WHERE dict_type = 'pig_delivery_status');
 
@@ -376,21 +381,22 @@ INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_cla
 SELECT 4, '已取消', 'BID_CANCEL', 'pig_user_bid_status', '', 'warning', 'N', '0', 'admin', sysdate(), '出价状态-已取消'
 WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_user_bid_status' AND dict_value = 'BID_CANCEL');
 
+DELETE FROM sys_dict_data WHERE dict_type = 'pig_order_status';
+
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
-SELECT 1, '待付款', 'WAITING', 'pig_order_status', '', 'info', 'Y', '0', 'admin', sysdate(), '订单状态-待付款'
-WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_order_status' AND dict_value = 'WAITING');
+VALUES (1, '待确认', 'WAIT_CONFIRM', 'pig_order_status', '', 'info', 'Y', '0', 'admin', sysdate(), '订单状态-待确认');
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
-SELECT 2, '已付款', 'PAID', 'pig_order_status', '', 'primary', 'N', '0', 'admin', sysdate(), '订单状态-已付款'
-WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_order_status' AND dict_value = 'PAID');
+VALUES (2, '待付款', 'WAIT_PAY', 'pig_order_status', '', 'warning', 'N', '0', 'admin', sysdate(), '订单状态-待付款');
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
-SELECT 3, '已发货', 'SHIPPED', 'pig_order_status', '', 'warning', 'N', '0', 'admin', sysdate(), '订单状态-已发货'
-WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_order_status' AND dict_value = 'SHIPPED');
+VALUES (3, '待发货', 'WAIT_SHIP', 'pig_order_status', '', 'primary', 'N', '0', 'admin', sysdate(), '订单状态-待发货');
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
-SELECT 4, '已完成', 'COMPLETED', 'pig_order_status', '', 'success', 'N', '0', 'admin', sysdate(), '订单状态-已完成'
-WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_order_status' AND dict_value = 'COMPLETED');
+VALUES (4, '待收货', 'WAIT_RECEIVE', 'pig_order_status', '', 'warning', 'N', '0', 'admin', sysdate(), '订单状态-待收货');
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
-SELECT 5, '已取消', 'CANCELED', 'pig_order_status', '', 'danger', 'N', '0', 'admin', sysdate(), '订单状态-已取消'
-WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_order_status' AND dict_value = 'CANCELED');
+VALUES (5, '待支付尾款', 'WAIT_FINAL_PAY', 'pig_order_status', '', 'danger', 'N', '0', 'admin', sysdate(), '订单状态-待支付尾款');
+INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+VALUES (6, '已完成', 'COMPLETED', 'pig_order_status', '', 'success', 'N', '0', 'admin', sysdate(), '订单状态-已完成');
+INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+VALUES (7, '已取消', 'CANCELED', 'pig_order_status', '', 'info', 'N', '0', 'admin', sysdate(), '订单状态-已取消');
 
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
 SELECT 1, '人工', 'MANNUL', 'pig_order_source', '', 'primary', 'Y', '0', 'admin', sysdate(), '订单来源-人工'
@@ -398,6 +404,18 @@ WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_order_sourc
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
 SELECT 2, '竞价', 'BID', 'pig_order_source', '', 'success', 'N', '0', 'admin', sysdate(), '订单来源-竞价'
 WHERE NOT EXISTS (SELECT 1 FROM sys_dict_data WHERE dict_type = 'pig_order_source' AND dict_value = 'BID');
+
+DELETE FROM sys_dict_data WHERE dict_type = 'pig_order_pay_status';
+INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+VALUES (1, '未付款', 'UNPAID', 'pig_order_pay_status', '', 'info', 'Y', '0', 'admin', sysdate(), '订单支付状态-未付款');
+INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+VALUES (2, '待确认首付款', 'WAIT_CONFIRM_FIRST', 'pig_order_pay_status', '', 'warning', 'N', '0', 'admin', sysdate(), '订单支付状态-待确认首付款');
+INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+VALUES (3, '已确认首付款', 'CONFIRMED_FIRST', 'pig_order_pay_status', '', 'primary', 'N', '0', 'admin', sysdate(), '订单支付状态-已确认首付款');
+INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+VALUES (4, '待确认尾款', 'WAIT_CONFIRM_FINAL', 'pig_order_pay_status', '', 'warning', 'N', '0', 'admin', sysdate(), '订单支付状态-待确认尾款');
+INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
+VALUES (5, '已确认尾款', 'CONFIRMED_FINAL', 'pig_order_pay_status', '', 'success', 'N', '0', 'admin', sysdate(), '订单支付状态-已确认尾款');
 
 INSERT INTO sys_dict_data (dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, remark)
 SELECT 1, '待发货', 'WAITING', 'pig_delivery_status', '', 'info', 'Y', '0', 'admin', sysdate(), '送货状态-待发货'

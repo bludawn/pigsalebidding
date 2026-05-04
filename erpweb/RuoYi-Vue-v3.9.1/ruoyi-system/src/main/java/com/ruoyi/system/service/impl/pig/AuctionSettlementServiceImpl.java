@@ -154,7 +154,7 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
         }
 
         PigOrder order = new PigOrder();
-        order.setOrderStatus("WAITING");
+        order.setOrderStatus("WAIT_CONFIRM");
         order.setOrderSource("BID");
         order.setEnterpriseId(bid.getEnterpriseId());
         order.setBidProductId(product.getId());

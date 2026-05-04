@@ -1,6 +1,7 @@
 package com.ruoyi.system.service.impl.pig;
 
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.system.domain.pig.PigOrder;
@@ -34,6 +35,9 @@ public class PigOrderServiceImpl implements IPigOrderService
     public int insertPigOrder(PigOrder pigOrder)
     {
         pigOrder.setOrderNo(generateOrderNo());
+        if (StringUtils.isBlank(pigOrder.getPayStatus())) {
+            pigOrder.setPayStatus("UNPAID");
+        }
         return pigOrderMapper.insertPigOrder(pigOrder);
     }
 

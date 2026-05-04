@@ -89,7 +89,7 @@
 9. 订单表
   - id，int8，自增唯一id
   - 订单编号，字符串
-  - 订单状态，字符串枚举值，'WAITING' | 'PAID' | 'SHIPPED' | 'COMPLETED' | 'CANCELED'
+  - 订单状态，字符串枚举值，'WAIT_CONFIRM' | 'WAIT_PAY' | 'WAIT_SHIP' | 'WAIT_RECEIVE' | 'WAIT_FINAL_PAY' ｜ 'COMPLETED' | 'CANCELED'
   - 订单来源，字符串枚举值，'MANNUL' | 'BID'
   - 竞价商品id，int8，外键
   - 用户出价id，int8，外键
@@ -103,6 +103,7 @@
   - 运费，decimal(19.6)
   - 剩余货款，decimal(19.6)
   - 收款银行账户id，int8，外键
+  - 支付状态，字符串枚举值，'UNPAID' | 'WAIT_CONFIRM_FIRST' | 'CONFIRMED_FIRST' | 'WAIT_CONFIRM_FINAL' | 'CONFIRMED_FINAL'（默认值：'UNPAID'）
   - 支付渠道，字符串
   - 支付时间，datetime
   - 装货时间，datetime
