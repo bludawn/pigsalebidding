@@ -62,8 +62,13 @@ export interface OrderListItem {
   pigTypeName: string;
   weightRange: string;
   quantity: number;
+  totalWeight: number;
   price: number;
   totalAmount: number;
+  prepaymentAmount: number;
+  remainingPaymentAmount: number;
+  freightAmount: number;
+  finalPaymentAmount: number;
   createdAt: string;
 }
 
@@ -139,6 +144,7 @@ export interface OrderDetailInfo {
   pigTypeName: string;
   weightRange: string;
   quantity: number;
+  totalWeight: number;
   price: number;
   priceInfo: OrderPriceInfo;
   bankAccountInfo?: OrderBankAccountInfo;

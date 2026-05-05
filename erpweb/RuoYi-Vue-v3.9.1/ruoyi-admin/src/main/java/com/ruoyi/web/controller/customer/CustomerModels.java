@@ -324,8 +324,13 @@ public class CustomerModels
         public String pigTypeName;
         public String weightRange;
         public Integer quantity;
+        public BigDecimal totalWeight;
         public BigDecimal price;
         public BigDecimal totalAmount;
+        public BigDecimal prepaymentAmount;
+        public BigDecimal remainingPaymentAmount;
+        public BigDecimal freightAmount;
+        public BigDecimal finalPaymentAmount;
         public String createdAt;
     }
 
@@ -403,6 +408,7 @@ public class CustomerModels
         public String pigTypeName;
         public String weightRange;
         public Integer quantity;
+        public BigDecimal totalWeight;
         public BigDecimal price;
         public OrderPriceInfo priceInfo;
         public OrderBankAccountInfo bankAccountInfo;

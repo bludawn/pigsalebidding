@@ -515,7 +515,9 @@ public class CustomerController extends BaseController {
         counts.receiptCount = countOrderStatus(orders, "WAIT_RECEIVE");
         counts.completedCount = countOrderStatus(orders, "COMPLETED");
         counts.cancelledCount = countOrderStatus(orders, "CANCELED");
-        counts.allCount = orders.size();
+        counts.allCount = (int) orders.stream()
+            .filter(order -> !"WAIT_CONFIRM".equalsIgnoreCase(order.getOrderStatus()))
+            .count();
         UserBid query = new UserBid();
         query.setUserId(getUserId());
         counts.myBidCount = userBidService.selectUserBidList(query).size();
@@ -691,12 +693,35 @@ public class CustomerController extends BaseController {
     public CustomerApiResult<ListResponseData<OrderListItem>> getOrderList(@RequestBody(required = false) OrderListRequest request) {
         int current = getPageCurrent(request);
         int size = getPageSize(request);
+        String status = request != null ? request.status : null;
+
+        if (StringUtils.isEmpty(status) || "ALL".equalsIgnoreCase(status)) {
+            PigOrder allQuery = new PigOrder();
+            allQuery.setCreateBy(String.valueOf(getUserId()));
+            List<PigOrder> allOrders = pigOrderService.selectPigOrderList(allQuery);
+            List<PigOrder> filteredOrders = allOrders.stream()
+                .filter(order -> !"WAIT_CONFIRM".equalsIgnoreCase(order.getOrderStatus()))
+                .collect(Collectors.toList());
+
+            int total = filteredOrders.size();
+            int fromIndex = Math.min(Math.max((current - 1) * size, 0), total);
+            int toIndex = Math.min(fromIndex + size, total);
+            List<PigOrder> pagedOrders = filteredOrders.subList(fromIndex, toIndex);
+            List<OrderListItem> records = pagedOrders.stream().map(this::buildOrderListItem).collect(Collectors.toList());
+
+            ListResponseData<OrderListItem> page = new ListResponseData<OrderListItem>();
+            page.current = (long) current;
+            page.size = (long) size;
+            page.total = (long) total;
+            page.pages = total == 0 ? 0L : (long) Math.ceil((double) total / size);
+            page.records = records;
+            return ok(page);
+        }
+
         PageHelper.startPage(current, size);
         PigOrder query = new PigOrder();
         query.setCreateBy(String.valueOf(getUserId()));
-        if (request != null && StringUtils.isNotEmpty(request.status) && !"ALL".equalsIgnoreCase(request.status)) {
-            query.setOrderStatus(mapOrderStatusToDb(request.status));
-        }
+        query.setOrderStatus(mapOrderStatusToDb(status));
         List<PigOrder> list = pigOrderService.selectPigOrderList(query);
         PageInfo<PigOrder> pageInfo = new PageInfo<PigOrder>(list);
         List<OrderListItem> records = list.stream().map(this::buildOrderListItem).collect(Collectors.toList());
@@ -859,8 +884,13 @@ public class CustomerController extends BaseController {
         item.pigTypeName = pigType != null ? pigType.getPigName() : null;
         item.weightRange = pigType != null ? pigType.getWeightRange() : null;
         item.quantity = bidProduct != null ? bidProduct.getTotalHeadCount() : null;
+        item.totalWeight = defaultZero(order.getTotalWeight());
         item.price = bidProduct != null ? bidProduct.getCurrentHighestPrice() : null;
-        item.totalAmount = order.getOrderAmount();
+        item.totalAmount = defaultZero(order.getOrderAmount());
+        item.prepaymentAmount = defaultZero(order.getFirstPaymentAmount());
+        item.remainingPaymentAmount = defaultZero(order.getRemainingPaymentAmount());
+        item.freightAmount = defaultZero(order.getFreightAmount());
+        item.finalPaymentAmount = defaultZero(order.getRemainingPaymentAmount()).add(defaultZero(order.getFreightAmount()));
         item.createdAt = formatDate(order.getCreateTime());
         return item;
     }
@@ -883,6 +913,7 @@ public class CustomerController extends BaseController {
         detail.pigTypeName = pigType != null ? pigType.getPigName() : null;
         detail.weightRange = pigType != null ? pigType.getWeightRange() : null;
         detail.quantity = bidProduct != null ? bidProduct.getTotalHeadCount() : null;
+        detail.totalWeight = defaultZero(order.getTotalWeight());
         detail.price = bidProduct != null ? bidProduct.getCurrentHighestPrice() : null;
         detail.priceInfo = buildPriceInfo(order);
         detail.bankAccountInfo = buildBankAccountInfo(order);

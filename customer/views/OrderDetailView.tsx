@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { OrderDetailInfo, OrderStatus } from '../types';
-import { cancelOrder, confirmReceipt, getOrderDetail, payOrder } from '../AppApi';
+import { confirmReceipt, getOrderDetail, payOrder } from '../AppApi';
 
 interface OrderDetailViewProps {
   params: { orderId: string };
@@ -27,6 +27,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
   const [detail, setDetail] = useState<OrderDetailInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showPayConfirm, setShowPayConfirm] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const amapRef = useRef<any>(null);
@@ -53,8 +54,11 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
 
   const statusMeta = useMemo(() => (detail ? statusMetaMap[detail.status] : null), [detail]);
   const deliveryInfos = useMemo(() => (detail?.deliveryInfos || []).filter(Boolean), [detail]);
-  const prepaymentAmount = detail?.priceInfo.prepaymentAmount ?? detail?.priceInfo.firstPaymentAmount;
-  const finalPaymentAmount = detail?.priceInfo.finalPaymentAmount ?? detail?.priceInfo.remainingPaymentAmount;
+  const prepaymentAmount = detail?.priceInfo.prepaymentAmount ?? detail?.priceInfo.firstPaymentAmount ?? 0;
+  const remainingPaymentAmount = detail?.priceInfo.remainingPaymentAmount ?? detail?.priceInfo.finalPaymentAmount ?? 0;
+  const freightAmount = detail?.priceInfo.freightAmount ?? 0;
+  const finalPaymentAmount = remainingPaymentAmount + freightAmount;
+  const isWaitPay = detail?.status === 'WAIT_PAY';
 
   const ensureAmap = useCallback(() => {
     if ((window as any).AMap) {
@@ -244,19 +248,6 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
     renderAmap();
   }, [renderAmap]);
 
-  const handleCancel = async () => {
-    if (!detail) return;
-    setActionLoading(true);
-    try {
-      const res = await cancelOrder({ orderId: detail.orderId });
-      if (res.errcode === 0) {
-        alert('订单已取消');
-        await loadDetail();
-      }
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const handlePay = async () => {
     if (!detail) return;
@@ -264,11 +255,12 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
     try {
       const res = await payOrder({ orderId: detail.orderId });
       if (res.errcode === 0) {
-        alert('支付完成');
+        alert(detail.status === 'WAIT_PAY' ? '首付款已支付' : '尾款已支付');
         await loadDetail();
       }
     } finally {
       setActionLoading(false);
+      setShowPayConfirm(false);
     }
   };
 
@@ -333,27 +325,38 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
             <div className="flex justify-between"><span>品种</span><span className="text-slate-800 font-bold">{detail.pigTypeName}</span></div>
             <div className="flex justify-between"><span>体重段</span><span className="text-slate-800 font-bold">{detail.weightRange}</span></div>
             <div className="flex justify-between"><span>数量</span><span className="text-slate-800 font-bold">{detail.quantity}头</span></div>
+            <div className="flex justify-between"><span>总重量</span><span className="text-slate-800 font-bold">{(detail.totalWeight || 0).toLocaleString('zh-CN')}kg</span></div>
             <div className="flex justify-between"><span>单价</span><span className="text-slate-800 font-bold">¥{detail.price.toFixed(2)}/kg</span></div>
+            <div className="flex justify-between"><span>货款</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.goodsAmount.toLocaleString('zh-CN')}</span></div>
           </div>
         </div>
 
-        <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
-          <h2 className="text-sm font-bold mb-3">价格明细</h2>
-          <div className="text-xs text-slate-500 space-y-2">
-            <div className="flex justify-between"><span>保证金</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.depositAmount.toLocaleString('zh-CN')}</span></div>
-            <div className="flex justify-between"><span>货款</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.goodsAmount.toLocaleString('zh-CN')}</span></div>
-            {prepaymentAmount !== undefined && (
-              <div className="flex justify-between"><span>预付款</span><span className="text-slate-800 font-bold">¥{prepaymentAmount.toLocaleString('zh-CN')}</span></div>
-            )}
-            {finalPaymentAmount !== undefined && (
-              <div className="flex justify-between"><span>尾款</span><span className="text-slate-800 font-bold">¥{finalPaymentAmount.toLocaleString('zh-CN')}</span></div>
-            )}
-            {detail.priceInfo.freightAmount !== undefined && (
-              <div className="flex justify-between"><span>运费</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.freightAmount.toLocaleString('zh-CN')}</span></div>
-            )}
-            <div className="flex justify-between"><span>合计</span><span className="text-industry-red font-black">¥{detail.priceInfo.totalAmount.toLocaleString('zh-CN')}</span></div>
+        {isWaitPay ? (
+          <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+            <h2 className="text-sm font-bold mb-3">预付款</h2>
+            <div className="text-xs text-slate-500 space-y-2">
+              <div className="flex justify-between items-center"><span>预付款</span><span className="text-industry-red font-black text-base">¥{prepaymentAmount.toLocaleString('zh-CN')}</span></div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+              <h2 className="text-sm font-bold mb-3">预付款</h2>
+              <div className="text-xs text-slate-500 space-y-2">
+                <div className="flex justify-between"><span>已支付预付款</span><span className="text-slate-800 font-bold">¥{prepaymentAmount.toLocaleString('zh-CN')}</span></div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
+              <h2 className="text-sm font-bold mb-3">尾款</h2>
+              <div className="text-xs text-slate-500 space-y-2">
+                <div className="flex justify-between"><span>剩余货款</span><span className="text-slate-800 font-bold">¥{remainingPaymentAmount.toLocaleString('zh-CN')}</span></div>
+                <div className="flex justify-between"><span>运费</span><span className="text-slate-800 font-bold">¥{freightAmount.toLocaleString('zh-CN')}</span></div>
+                <div className="flex justify-between items-center"><span>尾款合计</span><span className="text-industry-red font-black text-base">¥{finalPaymentAmount.toLocaleString('zh-CN')}</span></div>
+              </div>
+            </div>
+          </>
+        )}
 
         {detail.bankAccountInfo && (
           <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
@@ -490,22 +493,13 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 max-w-md mx-auto">
         <div className="flex gap-3">
           {detail.status === 'WAIT_PAY' && (
-            <>
-              <button
-                onClick={handleCancel}
-                disabled={actionLoading}
-                className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-custom font-bold disabled:opacity-60"
-              >
-                取消订单
-              </button>
-              <button
-                onClick={handlePay}
-                disabled={actionLoading}
-                className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
-              >
-                去支付
-              </button>
-            </>
+            <button
+              onClick={() => setShowPayConfirm(true)}
+              disabled={actionLoading}
+              className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
+            >
+              确认支付
+            </button>
           )}
           {detail.status === 'WAIT_FINAL_PAY' && (
             <button
@@ -551,6 +545,36 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
           )}
         </div>
       </div>
+
+      {showPayConfirm && detail.status === 'WAIT_PAY' && (
+        <div className="fixed inset-0 z-20 bg-black/40 flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-custom p-4 shadow-xl">
+            <h3 className="text-sm font-bold">确认支付首付款</h3>
+            <div className="mt-3 text-xs text-slate-500 space-y-2">
+              <div className="flex justify-between items-center"><span>预付款</span><span className="text-industry-red font-black text-base">¥{prepaymentAmount.toLocaleString('zh-CN')}</span></div>
+              <div className="flex justify-between"><span>货款</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.goodsAmount.toLocaleString('zh-CN')}</span></div>
+              <div className="flex justify-between"><span>猪头数</span><span className="text-slate-800 font-bold">{detail.quantity}头</span></div>
+              <div className="flex justify-between"><span>总重量</span><span className="text-slate-800 font-bold">{(detail.totalWeight || 0).toLocaleString('zh-CN')}kg</span></div>
+            </div>
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={() => setShowPayConfirm(false)}
+                disabled={actionLoading}
+                className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-custom font-bold disabled:opacity-60"
+              >
+                取消
+              </button>
+              <button
+                onClick={handlePay}
+                disabled={actionLoading}
+                className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
+              >
+                确认支付
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

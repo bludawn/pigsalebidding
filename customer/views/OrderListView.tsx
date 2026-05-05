@@ -110,6 +110,8 @@ const OrderListView: React.FC<OrderListViewProps> = ({ params, onBack, onNavigat
         <div className="px-4 py-4 pb-20 flex flex-col gap-4">
           {orderList.map(item => {
             const meta = statusMetaMap[item.status];
+            const isWaitPay = item.status === 'WAIT_PAY';
+            const tailAmount = (item.remainingPaymentAmount || 0) + (item.freightAmount || 0);
             return (
               <button
                 key={item.orderId}
@@ -132,11 +134,19 @@ const OrderListView: React.FC<OrderListViewProps> = ({ params, onBack, onNavigat
                   </div>
                   <div className="flex justify-between items-center text-xs text-slate-600">
                     <span>数量：<span className="font-bold text-slate-800">{item.quantity}头</span></span>
-                    <span>单价：<span className="font-bold text-slate-800">¥{item.price.toFixed(2)}</span>/kg</span>
+                    <span>总重量：<span className="font-bold text-slate-800">{(item.totalWeight || 0).toLocaleString('zh-CN')}kg</span></span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-slate-600">
+                    <span>货款：<span className="font-bold text-slate-800">¥{(item.totalAmount || 0).toLocaleString('zh-CN')}</span></span>
+                    {isWaitPay ? (
+                      <span>首付款：<span className="font-black text-industry-red">¥{(item.prepaymentAmount || 0).toLocaleString('zh-CN')}</span></span>
+                    ) : (
+                      <span>尾款：<span className="font-black text-industry-red">¥{tailAmount.toLocaleString('zh-CN')}</span></span>
+                    )}
                   </div>
                   <div className="flex justify-between items-start gap-2">
                     <span className="text-xs text-slate-500 break-all min-w-0">订单编码：{item.orderNo || item.orderId}</span>
-                    <span className="text-sm font-black text-industry-red whitespace-nowrap">¥{item.totalAmount.toLocaleString('zh-CN')}</span>
+                    <span className="text-xs text-slate-500 whitespace-nowrap">单价：¥{item.price.toFixed(2)}/kg</span>
                   </div>
                 </div>
               </button>
