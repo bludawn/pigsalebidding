@@ -452,6 +452,24 @@ SELECT '生猪业务', 0, 5, 'pig', NULL, '', '', 1, 0, 'M', '0', '0', '', 'shop
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '生猪业务' AND parent_id = 0);
 SET @pigMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '生猪业务' AND parent_id = 0 ORDER BY menu_id DESC LIMIT 1);
 
+-- 兼容已有分组：先将业务菜单归位到生猪业务目录，避免重复插入
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:pigType:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:pigResource:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:bidProduct:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:site:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:pigTag:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:userBidInfo:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:userBid:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:enterpriseGroup:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:pigOrder:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:deliveryInfo:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:enterprise:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:address:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:userExt:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:businessMessage:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:bankAccount:list';
+UPDATE sys_menu SET parent_id = @pigMenuId WHERE perms = 'pig:vehicleType:list';
+
 -- 生猪类型
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '生猪类型', @pigMenuId, 1, 'pigType', 'pig/pigType/index', '', '', 1, 0, 'C', '0', '0', 'pig:pigType:list', 'table', 'admin', sysdate(), '生猪类型菜单'
@@ -799,3 +817,80 @@ WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @vehicleTypeMenuId AN
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '导出', @vehicleTypeMenuId, 5, '', '', 'F', '0', '0', 'pig:vehicleType:export', '#', 'admin', sysdate(), ''
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE parent_id = @vehicleTypeMenuId AND perms = 'pig:vehicleType:export');
+
+-- ----------------------------
+-- 菜单分组重构（移出“生猪业务”，改为顶级目录）
+-- ----------------------------
+SET @pigMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '生猪业务' AND parent_id = 0 ORDER BY menu_id DESC LIMIT 1);
+
+-- 已存在分组（原在生猪业务下）上移为顶级目录
+UPDATE sys_menu SET parent_id = 0 WHERE menu_type = 'M' AND menu_name = '采购管理';
+UPDATE sys_menu SET parent_id = 0 WHERE menu_type = 'M' AND menu_name = '竞价管理';
+UPDATE sys_menu SET parent_id = 0 WHERE menu_type = 'M' AND menu_name = '订单管理';
+UPDATE sys_menu SET parent_id = 0 WHERE menu_type = 'M' AND menu_name = '财务管理';
+UPDATE sys_menu SET parent_id = 0 WHERE menu_type = 'M' AND menu_name = '物流管理';
+UPDATE sys_menu SET parent_id = 0 WHERE menu_type = 'M' AND menu_name = '客户关系管理';
+UPDATE sys_menu SET parent_id = 0 WHERE menu_type = 'M' AND menu_name = '业务配置';
+
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '采购管理', 0, 5, 'purchase', NULL, '', '', 1, 0, 'M', '0', '0', '', 'shopping', 'admin', sysdate(), '采购管理目录'
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '采购管理' AND parent_id = 0);
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '竞价管理', 0, 6, 'bidding', NULL, '', '', 1, 0, 'M', '0', '0', '', 'form', 'admin', sysdate(), '竞价管理目录'
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '竞价管理' AND parent_id = 0);
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '订单管理', 0, 7, 'orderManage', NULL, '', '', 1, 0, 'M', '0', '0', '', 'form', 'admin', sysdate(), '订单管理目录'
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '订单管理' AND parent_id = 0);
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '财务管理', 0, 8, 'finance', NULL, '', '', 1, 0, 'M', '0', '0', '', 'money', 'admin', sysdate(), '财务管理目录'
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '财务管理' AND parent_id = 0);
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '物流管理', 0, 9, 'logistics', NULL, '', '', 1, 0, 'M', '0', '0', '', 'guide', 'admin', sysdate(), '物流管理目录'
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '物流管理' AND parent_id = 0);
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '客户关系管理', 0, 10, 'crm', NULL, '', '', 1, 0, 'M', '0', '0', '', 'peoples', 'admin', sysdate(), '客户关系管理目录'
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '客户关系管理' AND parent_id = 0);
+INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+SELECT '业务配置', 0, 11, 'bizConfig', NULL, '', '', 1, 0, 'M', '0', '0', '', 'dict', 'admin', sysdate(), '业务配置目录'
+WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '业务配置' AND parent_id = 0);
+
+SET @purchaseMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '采购管理' AND parent_id = 0 ORDER BY menu_id DESC LIMIT 1);
+SET @biddingMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '竞价管理' AND parent_id = 0 ORDER BY menu_id DESC LIMIT 1);
+SET @orderManageMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '订单管理' AND parent_id = 0 ORDER BY menu_id DESC LIMIT 1);
+SET @financeMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '财务管理' AND parent_id = 0 ORDER BY menu_id DESC LIMIT 1);
+SET @logisticsMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '物流管理' AND parent_id = 0 ORDER BY menu_id DESC LIMIT 1);
+SET @crmMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '客户关系管理' AND parent_id = 0 ORDER BY menu_id DESC LIMIT 1);
+SET @bizConfigMenuId = (SELECT menu_id FROM sys_menu WHERE menu_name = '业务配置' AND parent_id = 0 ORDER BY menu_id DESC LIMIT 1);
+
+UPDATE sys_menu SET parent_id = @purchaseMenuId, order_num = 1 WHERE perms = 'pig:pigResource:list';
+UPDATE sys_menu SET parent_id = @purchaseMenuId, order_num = 2 WHERE perms = 'pig:site:list';
+
+UPDATE sys_menu SET parent_id = @biddingMenuId, order_num = 1 WHERE perms = 'pig:bidProduct:list';
+UPDATE sys_menu SET parent_id = @biddingMenuId, order_num = 2 WHERE perms = 'pig:userBid:list';
+UPDATE sys_menu SET parent_id = @biddingMenuId, order_num = 3 WHERE perms = 'pig:userBidInfo:list';
+
+UPDATE sys_menu SET parent_id = @orderManageMenuId, order_num = 1 WHERE perms = 'pig:pigOrder:list';
+UPDATE sys_menu SET parent_id = @orderManageMenuId, order_num = 2 WHERE perms = 'pig:deliveryInfo:list';
+
+UPDATE sys_menu SET parent_id = @financeMenuId, order_num = 1, menu_name = '银行账号', remark = '银行账号菜单' WHERE perms = 'pig:bankAccount:list';
+
+UPDATE sys_menu SET parent_id = @logisticsMenuId, order_num = 1 WHERE perms = 'pig:vehicleType:list';
+UPDATE sys_menu SET parent_id = @logisticsMenuId, order_num = 2 WHERE perms = 'pig:address:list';
+
+UPDATE sys_menu SET parent_id = @crmMenuId, order_num = 1 WHERE perms = 'pig:enterprise:list';
+UPDATE sys_menu SET parent_id = @crmMenuId, order_num = 2 WHERE perms = 'pig:enterpriseGroup:list';
+UPDATE sys_menu SET parent_id = @crmMenuId, order_num = 3 WHERE perms = 'pig:userExt:list';
+
+UPDATE sys_menu SET parent_id = @bizConfigMenuId, order_num = 1 WHERE perms = 'pig:pigType:list';
+UPDATE sys_menu SET parent_id = @bizConfigMenuId, order_num = 2 WHERE perms = 'pig:pigTag:list';
+UPDATE sys_menu SET parent_id = @bizConfigMenuId, order_num = 3 WHERE perms = 'pig:businessMessage:list';
+
+-- 生猪业务目录已不再使用：若无子菜单则删除
+DELETE FROM sys_menu
+WHERE menu_name = '生猪业务'
+  AND parent_id = 0
+  AND NOT EXISTS (
+    SELECT 1
+    FROM (SELECT parent_id FROM sys_menu) children
+    WHERE children.parent_id = sys_menu.menu_id
+  );
