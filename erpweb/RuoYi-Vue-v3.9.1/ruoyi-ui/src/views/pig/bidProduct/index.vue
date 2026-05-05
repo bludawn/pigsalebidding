@@ -225,7 +225,8 @@ export default {
         bidStatus: { label: '竞价状态', visible: true },
         approvalStatus: { label: '审批状态', visible: true },
         totalHeadCount: { label: '总头数', visible: true },
-        startBidCount: { label: '起拍头数', visible: true }
+        startBidCount: { label: '起拍头数', visible: true },
+        bidCountStep: { label: '竞价数量梯度', visible: true }
       },
       resourceOptions: [],
       resourceMap: {},

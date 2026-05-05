@@ -424,7 +424,15 @@
           <el-input :value="getBankAccountLabel(paymentConfirmForm.bankAccountId)" disabled />
         </el-form-item>
         <el-form-item label="支付时间">
-          <el-input :value="parseTime(paymentConfirmForm.payTime) || '-'" disabled />
+          <el-date-picker
+            v-model="paymentConfirmForm.payTime"
+            type="datetime"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            format="yyyy-MM-dd HH:mm:ss"
+            placeholder="请选择支付时间"
+            clearable
+            style="width: 100%;"
+          />
         </el-form-item>
         <el-form-item label="装货时间">
           <el-input :value="parseTime(paymentConfirmForm.loadTime) || '-'" disabled />
@@ -481,10 +489,10 @@
           </el-table>
         </el-form-item>
         <el-form-item label="支付渠道">
-          <el-input :value="paymentConfirmForm.payChannel || '-'" disabled />
+          <el-input v-model="paymentConfirmForm.payChannel" placeholder="请输入支付渠道" clearable />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input :value="paymentConfirmForm.remark || '-'" type="textarea" disabled />
+          <el-input v-model="paymentConfirmForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -1511,6 +1519,7 @@ export default {
       const payload = {
         id: this.paymentConfirmForm.id,
         payStatus: nextPayStatus,
+        payTime: this.paymentConfirmForm.payTime,
         payChannel: this.paymentConfirmForm.payChannel,
         remark: this.paymentConfirmForm.remark
       }
