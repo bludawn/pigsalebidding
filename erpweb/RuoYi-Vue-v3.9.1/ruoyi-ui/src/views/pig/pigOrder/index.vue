@@ -1016,6 +1016,7 @@ export default {
       this.$set(this, 'confirmDeliveryInfoList', [])
     }
     this.initPcasOptions()
+    this.applyRouteQuery()
     this.getList()
     this.loadEnterpriseOptions()
     this.loadBidProductOptions()
@@ -1049,6 +1050,21 @@ export default {
     }
   },
   methods: {
+    applyRouteQuery() {
+      const routeQuery = this.$route && this.$route.query ? this.$route.query : {}
+      const orderStatus = routeQuery.orderStatus
+      const orderSource = routeQuery.orderSource
+      const payStatus = routeQuery.payStatus
+      if (orderStatus) {
+        this.queryParams.orderStatus = orderStatus
+      }
+      if (orderSource) {
+        this.queryParams.orderSource = orderSource
+      }
+      if (payStatus) {
+        this.queryParams.payStatus = payStatus
+      }
+    },
     async getList() {
       this.loading = true
       try {

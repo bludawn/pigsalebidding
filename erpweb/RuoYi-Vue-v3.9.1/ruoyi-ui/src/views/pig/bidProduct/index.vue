@@ -248,9 +248,19 @@ export default {
   },
   created() {
     this.loadOptions()
+    this.applyRouteQuery()
     this.getList()
   },
   methods: {
+    applyRouteQuery() {
+      const routeQuery = this.$route && this.$route.query ? this.$route.query : {}
+      if (routeQuery.bidStatus) {
+        this.queryParams.bidStatus = routeQuery.bidStatus
+      }
+      if (routeQuery.approvalStatus) {
+        this.queryParams.approvalStatus = routeQuery.approvalStatus
+      }
+    },
     getList() {
       this.loading = true
       listBidProduct(this.queryParams).then(response => {
