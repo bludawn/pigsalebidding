@@ -32,7 +32,7 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="pigTypeList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="pigTypeList" border @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="序号" align="center" type="index" width="80" v-if="columns.id.visible" :index="indexMethod" />
       <el-table-column label="生猪名称" align="center" prop="pigName" v-if="columns.pigName.visible" :show-overflow-tooltip="true">
@@ -74,19 +74,27 @@
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
-      <el-table-column label="创建人" align="center" prop="createBy" v-if="columns.createBy.visible" />
+      <el-table-column label="创建人" align="center" v-if="columns.createBy.visible">
+        <template slot-scope="scope">
+          <span>{{ getUserName(scope.row.createBy) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="更新人" align="center" prop="updateBy" v-if="columns.updateBy.visible" />
+      <el-table-column label="更新人" align="center" v-if="columns.updateBy.visible">
+        <template slot-scope="scope">
+          <span>{{ getUserName(scope.row.updateBy) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="更新时间" align="center" prop="updateTime" v-if="columns.updateTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.updateTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:pigType:edit']">修改</el-button>
@@ -169,6 +177,7 @@ import { listPigTag } from "@/api/pig/pigTag"
 import ImageUpload from "@/components/ImageUpload"
 import { getToken } from "@/utils/auth"
 import { buildFileUrlList } from "@/utils/ruoyi"
+import { listUser } from "@/api/system/user"
 
 export default {
   name: "PigType",
@@ -211,6 +220,8 @@ export default {
       },
       pigTagOptions: [],
       pigTagMap: {},
+      userOptions: [],
+      userMap: {},
       viewModeOnly: false,
       form: {},
       upload: {
@@ -254,6 +265,24 @@ export default {
           return acc
         }, {})
       })
+    },
+    loadUserOptions() {
+      listUser({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.userOptions = response.rows || []
+        this.userMap = this.userOptions.reduce((acc, item) => {
+          acc[item.userId] = item
+          return acc
+        }, {})
+      })
+    },
+    getUserLabel(item) {
+      if (!item) return ''
+      return item.nickName || item.userName || item.userId
+    },
+    getUserName(id) {
+      if (!id) return '-'
+      const item = this.userMap[id]
+      return item ? this.getUserLabel(item) : id
     },
     normalizePigTagIds(value) {
       if (!value) return []
@@ -421,10 +450,4 @@ export default {
 
 <style scoped>
 .pig-media-video::-webkit-media-controls-timeline,
-.pig-media-video::-webkit-media-controls-volume-slider,
-.pig-media-video::-webkit-media-controls-volume-control-container,
-.pig-media-video::-webkit-media-controls-mute-button,
-.pig-media-video::-webkit-media-controls-fullscreen-button {
-  display: none !important;
-}
-</style>
+.pig

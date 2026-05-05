@@ -142,6 +142,7 @@ f_createTime
 <if test="remark != null and remark != ''">#{remark},</if>
 <if test="totalHeadCount != null">#{totalHeadCount},</if>
 <if test="startBidCount != null">#{startBidCount},</if>
+<if test="bidCountStep != null">#{bidCountStep},</if>
 <if test="priceStep != null">#{priceStep},</if>
 <if test="addPrice != null">#{addPrice},</if>
 <if test="bidStatus != null and bidStatus != ''">#{bidStatus},</if>

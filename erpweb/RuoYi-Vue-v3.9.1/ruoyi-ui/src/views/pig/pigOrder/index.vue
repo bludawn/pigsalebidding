@@ -47,7 +47,7 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="pigOrderList" v-if="viewMode === 'table'" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="pigOrderList" border v-if="viewMode === 'table'" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
       <el-table-column label="订单编号" align="center" prop="orderNo" v-if="columns.orderNo.visible" :show-overflow-tooltip="true">
@@ -142,19 +142,27 @@
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
-      <el-table-column label="创建人" align="center" prop="createBy" v-if="columns.createBy.visible" />
+      <el-table-column label="创建人" align="center" v-if="columns.createBy.visible">
+        <template slot-scope="scope">
+          <span>{{ getUserName(scope.row.createBy) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="更新人" align="center" prop="updateBy" v-if="columns.updateBy.visible" />
+      <el-table-column label="更新人" align="center" v-if="columns.updateBy.visible">
+        <template slot-scope="scope">
+          <span>{{ getUserName(scope.row.updateBy) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="更新时间" align="center" prop="updateTime" v-if="columns.updateTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.updateTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button
@@ -877,6 +885,7 @@ import { listSite } from "@/api/pig/site"
 import { listDeliveryInfo, getDeliveryInfo, addDeliveryInfo, updateDeliveryInfo, getNextTransportCode } from "@/api/pig/deliveryInfo"
 import { listVehicleType } from "@/api/pig/vehicleType"
 import { listBankAccount } from "@/api/pig/bankAccount"
+import { listUser } from "@/api/system/user"
 import pcasData from "@/assets/pcas-code.json"
 
 export default {
@@ -952,6 +961,8 @@ export default {
       siteMap: {},
       bankAccountOptions: [],
       bankAccountMap: {},
+      userOptions: [],
+      userMap: {},
       deliveryInfoMap: {},
       pcasCodeMap: {},
       viewModeOnly: false,
@@ -1002,6 +1013,7 @@ export default {
     this.loadSiteOptions()
     this.loadVehicleTypeOptions()
     this.loadBankAccountOptions()
+    this.loadUserOptions()
   },
   watch: {
     'form.unitPrice'() {
@@ -1171,6 +1183,24 @@ export default {
           return acc
         }, {})
       })
+    },
+    loadUserOptions() {
+      listUser({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.userOptions = response.rows || []
+        this.userMap = this.userOptions.reduce((acc, item) => {
+          acc[item.userId] = item
+          return acc
+        }, {})
+      })
+    },
+    getUserLabel(item) {
+      if (!item) return ''
+      return item.nickName || item.userName || item.userId
+    },
+    getUserName(id) {
+      if (!id) return '-'
+      const item = this.userMap[id]
+      return item ? this.getUserLabel(item) : id
     },
     getBankAccountOptionLabel(item) {
       if (!item) return ''

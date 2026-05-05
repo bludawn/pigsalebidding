@@ -39,7 +39,7 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="bidProductList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="bidProductList" border @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
       <el-table-column label="商品编码" align="center" prop="bidProductCode" v-if="columns.bidProductCode.visible" :show-overflow-tooltip="true">
@@ -82,7 +82,7 @@
       <el-table-column label="总头数" align="center" prop="totalHeadCount" v-if="columns.totalHeadCount.visible" />
       <el-table-column label="起拍头数" align="center" prop="startBidCount" v-if="columns.startBidCount.visible" />
       <el-table-column label="竞价数量梯度" align="center" prop="bidCountStep" v-if="columns.bidCountStep.visible" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:bidProduct:edit']">修改</el-button>

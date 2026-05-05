@@ -32,7 +32,7 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="siteList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="siteList" border @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
       <el-table-column label="编号" align="center" prop="id" v-if="columns.id.visible" />
       <el-table-column label="场点名称" align="center" prop="siteName" v-if="columns.siteName.visible" :show-overflow-tooltip="true">
@@ -83,19 +83,27 @@
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
-      <el-table-column label="创建人" align="center" prop="createBy" v-if="columns.createBy.visible" />
+      <el-table-column label="创建人" align="center" v-if="columns.createBy.visible">
+        <template slot-scope="scope">
+          <span>{{ getUserName(scope.row.createBy) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="更新人" align="center" prop="updateBy" v-if="columns.updateBy.visible" />
+      <el-table-column label="更新人" align="center" v-if="columns.updateBy.visible">
+        <template slot-scope="scope">
+          <span>{{ getUserName(scope.row.updateBy) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="更新时间" align="center" prop="updateTime" v-if="columns.updateTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.updateTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button size="mini" type="text" icon="el-icon-view" @click="handleView(scope.row)">查看</el-button>
           <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['pig:site:edit']">修改</el-button>
@@ -198,6 +206,7 @@
 <script>
 import { listSite, getSite, delSite, addSite, updateSite } from "@/api/pig/site"
 import { listEnterprise } from "@/api/pig/enterprise"
+import { listUser } from "@/api/system/user"
 import { getToken } from "@/utils/auth"
 import { buildFileUrlList } from "@/utils/ruoyi"
 import pcasData from "@/assets/pcas-code.json"
@@ -242,6 +251,8 @@ export default {
       },
       enterpriseOptions: [],
       enterpriseMap: {},
+      userOptions: [],
+      userMap: {},
       viewModeOnly: false,
       pcasOptions: [],
       pcasCodeMap: {},
@@ -310,6 +321,24 @@ export default {
     getEnterpriseName(id) {
       if (!id) return ""
       return this.enterpriseMap[id] ? this.enterpriseMap[id].enterpriseName : id
+    },
+    loadUserOptions() {
+      listUser({ pageNum: 1, pageSize: 1000 }).then(response => {
+        this.userOptions = response.rows || []
+        this.userMap = this.userOptions.reduce((acc, item) => {
+          acc[item.userId] = item
+          return acc
+        }, {})
+      })
+    },
+    getUserLabel(item) {
+      if (!item) return ''
+      return item.nickName || item.userName || item.userId
+    },
+    getUserName(id) {
+      if (!id) return '-'
+      const item = this.userMap[id]
+      return item ? this.getUserLabel(item) : id
     },
     formatSiteFullAddress(code, detail) {
       const region = this.formatSiteAddressCode(code)
