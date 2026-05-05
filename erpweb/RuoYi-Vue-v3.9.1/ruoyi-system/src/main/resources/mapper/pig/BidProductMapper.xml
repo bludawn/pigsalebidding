@@ -30,7 +30,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectBidProductVo">
-        select f_id, f_bidProductCode, f_pigResourceId, f_enterpriseGroupId, f_siteId, f_startPrice, f_startTime, f_endTime, f_currentHighestPrice, f_bidNotice, f_remark, f_totalHeadCount, f_startBidCount, f_priceStep, f_addPrice, f_bidStatus, f_approvalStatus, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_bidProductCode, f_pigResourceId, f_enterpriseGroupId, f_siteId, f_startPrice, f_startTime, f_endTime, f_currentHighestPrice, f_bidNotice, f_remark, f_totalHeadCount, f_startBidCount, f_bidCountStep, f_priceStep, f_addPrice, f_bidStatus, f_approvalStatus, f_creator, f_createTime, f_updator, f_updateTime
         from t_bidProduct
     </sql>
 

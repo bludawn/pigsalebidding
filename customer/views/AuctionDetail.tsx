@@ -265,8 +265,9 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
     if (!isStepValid(bidPrice, bidStep)) return `出价需为${bidStep}的整数倍`;
     if (!Number.isInteger(bidCount) || bidCount <= 0) return '数量必须为正整数';
     if (bidCount < minBidCount) return `数量不能低于起拍数量(${minBidCount}头)`;
+    if (!isStepValid(bidCount - minBidCount, bidCountStep)) return `数量增幅需为${bidCountStep}头的整数倍`;
     return '';
-  }, [bidPrice, bidCount, bidStep, minBidCount]);
+  }, [bidPrice, bidCount, bidStep, minBidCount, bidCountStep]);
 
   const isBidding = detail?.bidStatus === 'BIDDING';
   const canSubmit = isBidding && !bidValidationMessage && !isSubmitting;
@@ -701,9 +702,11 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
           <div className="flex-1 min-w-0">
             <label className="text-[10px] text-slate-400 block mb-1 text-center">数量 (头)</label>
             <div className="flex items-center justify-center bg-slate-100 rounded-custom p-1">
-              <button onClick={() => setBidCount(c => Math.max(0, c - 1))} className="w-8 h-8 flex items-center justify-center text-slate-500 font-bold">-</button>
+              <button onClick={() => setBidCount(c => Math.max(0, c - bidCountStep))} className="w-8 h-8 flex items-center justify-center text-slate-500 font-bold">-</button>
               <input
                 type="number"
+                min={0}
+                step={bidCountStep}
                 value={bidCount}
                 onChange={e => setBidCount(parseInt(e.target.value, 10) || 0)}
                 className="flex-1 min-w-0 bg-transparent text-center font-bold text-sm focus:outline-none"
