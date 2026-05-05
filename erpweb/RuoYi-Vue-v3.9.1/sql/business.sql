@@ -839,7 +839,7 @@ INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, r
 SELECT '竞价管理', 0, 6, 'bidding', NULL, '', '', 1, 0, 'M', '0', '0', '', 'form', 'admin', sysdate(), '竞价管理目录'
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '竞价管理' AND parent_id = 0);
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
-SELECT '订单管理', 0, 7, 'orderManage', NULL, '', '', 1, 0, 'M', '0', '0', '', 'form', 'admin', sysdate(), '订单管理目录'
+SELECT '订单管理', 0, 7, 'orderManage', NULL, '', '', 1, 0, 'M', '0', '0', '', 'job', 'admin', sysdate(), '订单管理目录'
 WHERE NOT EXISTS (SELECT 1 FROM sys_menu WHERE menu_name = '订单管理' AND parent_id = 0);
 INSERT INTO sys_menu (menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
 SELECT '财务管理', 0, 8, 'finance', NULL, '', '', 1, 0, 'M', '0', '0', '', 'money', 'admin', sysdate(), '财务管理目录'
