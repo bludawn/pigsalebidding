@@ -131,7 +131,11 @@
           <span>{{ parseTime(scope.row.shipTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="送货信息id数组" align="center" prop="deliveryInfoIds" v-if="columns.deliveryInfoIds.visible" :show-overflow-tooltip="true" />
+      <el-table-column label="送货信息" align="center" prop="deliveryInfoIds" v-if="columns.deliveryInfoIds.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span style="white-space: nowrap;">{{ getDeliveryInfoLabel(scope.row.deliveryInfoIds) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="确认收货时间" align="center" prop="receiveTime" v-if="columns.receiveTime.visible" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.receiveTime) }}</span>
@@ -220,7 +224,7 @@
             <div>装货时间：{{ parseTime(item.loadTime) }}</div>
             <div>发货时间：{{ parseTime(item.shipTime) }}</div>
             <div>确认收货时间：{{ parseTime(item.receiveTime) }}</div>
-            <div>送货信息id数组：{{ item.deliveryInfoIds }}</div>
+            <div>送货信息：<span style="white-space: pre-line;">{{ getDeliveryInfoLabel(item.deliveryInfoIds) }}</span></div>
             <div>备注：{{ item.remark }}</div>
           </div>
           <div style="margin-top: 8px; text-align: right;">
@@ -923,7 +927,7 @@ export default {
         payTime: { label: '支付时间', visible: true },
         loadTime: { label: '装货时间', visible: true },
         shipTime: { label: '发货时间', visible: true },
-        deliveryInfoIds: { label: '送货信息id数组', visible: true },
+        deliveryInfoIds: { label: '送货信息', visible: true },
         receiveTime: { label: '确认收货时间', visible: true },
         remark: { label: '备注', visible: true },
         createBy: { label: '创建人', visible: true },
@@ -948,6 +952,7 @@ export default {
       siteMap: {},
       bankAccountOptions: [],
       bankAccountMap: {},
+      deliveryInfoMap: {},
       pcasCodeMap: {},
       viewModeOnly: false,
       deliveryInfoList: [],
@@ -993,6 +998,8 @@ export default {
     this.loadUserBidOptions()
     this.loadAddressOptions()
     this.loadPigResourceOptions()
+    this.loadPigTypeOptions()
+    this.loadSiteOptions()
     this.loadVehicleTypeOptions()
     this.loadBankAccountOptions()
   },
@@ -1008,13 +1015,16 @@ export default {
     }
   },
   methods: {
-    getList() {
+    async getList() {
       this.loading = true
-      listPigOrder(this.queryParams).then(response => {
+      try {
+        const response = await listPigOrder(this.queryParams)
         this.pigOrderList = response.rows
         this.total = response.total
+        await this.preloadDeliveryInfoMap(this.pigOrderList)
+      } finally {
         this.loading = false
-      })
+      }
     },
     cancel() {
       this.open = false
@@ -1252,7 +1262,12 @@ export default {
     },
     getBidProductOptionLabel(item) {
       if (!item) return ''
-      return item.bidProductCode || item.productName || item.productCode || item.id
+      const code = item.bidProductCode || item.id
+      const siteName = this.getSiteName(item.siteId) || '-'
+      const startPrice = item.startPrice != null ? item.startPrice : '-'
+      const highestPrice = item.currentHighestPrice != null ? item.currentHighestPrice : '-'
+      const quantity = item.totalHeadCount != null ? `${item.totalHeadCount}头` : '-'
+      return `编码:${code} 场点名称:${siteName} 起始价:${startPrice} 最高价:${highestPrice} 数量:${quantity}`
     },
     getBidProductLabel(id) {
       if (!id) return '-'
@@ -1283,11 +1298,10 @@ export default {
     getPigResourceOptionLabel(item) {
       if (!item) return ''
       const code = item.resourceCode || item.id
-      const pigType = this.getPigTypeName(item.pigTypeId)
-      const site = this.getSiteName(item.siteId)
-      const count = item.resourceCount != null ? `数量${item.resourceCount}头` : ''
-      const price = item.resourceUnitPrice != null ? `单价${item.resourceUnitPrice}` : ''
-      return [code, pigType, site, count, price].filter(Boolean).join(' ')
+      const pigType = this.getPigTypeName(item.pigTypeId) || '-'
+      const count = item.resourceCount != null ? `${item.resourceCount}头` : '-'
+      const price = item.resourceUnitPrice != null ? item.resourceUnitPrice : '-'
+      return `编码:${code} 生猪类型名称:${pigType} 数量头数:${count} 单价:${price}`
     },
     getPigResourceLabel(id) {
       if (!id) return '-'
@@ -1754,6 +1768,47 @@ export default {
     syncPaymentDeliveryInfoIds() {
       const ids = this.paymentDeliveryInfoList.map(item => item.id).filter(Boolean)
       this.paymentConfirmForm.deliveryInfoIds = ids.length ? ids.join(',') : undefined
+    },
+    formatDeliveryInfoSummary(item) {
+      if (!item) return ''
+      const delivererName = item.delivererName || '-'
+      const vehicleNo = item.vehicleNo || '-'
+      const vehicleType = this.getVehicleTypeName(item.vehicleTypeId) || '-'
+      const deliveryStatus = this.getDictLabel(this.dict.type.pig_delivery_status || [], item.deliveryStatus) || '-'
+      const loadCount = item.loadCount != null ? `${item.loadCount}头` : '-'
+      return `送货人:${delivererName} 车牌号:${vehicleNo} 车辆类型:${vehicleType} 状态:${deliveryStatus} 装猪数量:${loadCount}`
+    },
+    getDeliveryInfoLabel(ids) {
+      const idList = this.parseDeliveryIdList(ids)
+      if (!idList.length) return '-'
+      const map = this.deliveryInfoMap || {}
+      return idList.map(id => {
+        const item = map[id]
+        return item ? this.formatDeliveryInfoSummary(item) : `#${id}`
+      }).join('； ')
+    },
+    async preloadDeliveryInfoMap(orderList) {
+      const rows = Array.isArray(orderList) ? orderList : []
+      const idSet = new Set()
+      rows.forEach(row => {
+        this.parseDeliveryIdList(row && row.deliveryInfoIds).forEach(id => idSet.add(id))
+      })
+      if (!idSet.size) {
+        return
+      }
+      const currentMap = this.deliveryInfoMap || {}
+      const missingIds = Array.from(idSet).filter(id => !currentMap[id])
+      if (!missingIds.length) {
+        return
+      }
+      const results = await Promise.allSettled(missingIds.map(id => getDeliveryInfo(id)))
+      const nextMap = { ...currentMap }
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value && result.value.data) {
+          nextMap[missingIds[index]] = result.value.data
+        }
+      })
+      this.deliveryInfoMap = nextMap
     },
     parseDeliveryIdList(ids) {
       if (!ids) {
