@@ -23,11 +23,17 @@ const deliveryStatusLabelMap: Record<string, string> = {
   ARRIVED: '已送达',
 };
 
+const vehicleSourceLabelMap: Record<string, string> = {
+  OWN: '自有',
+  HIRE: '外雇',
+};
+
 const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => {
   const [detail, setDetail] = useState<OrderDetailInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [showPayConfirm, setShowPayConfirm] = useState(false);
+  const [showFinalPayConfirm, setShowFinalPayConfirm] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const amapRef = useRef<any>(null);
@@ -352,7 +358,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
               <div className="text-xs text-slate-500 space-y-2">
                 <div className="flex justify-between"><span>剩余货款</span><span className="text-slate-800 font-bold">¥{remainingPaymentAmount.toLocaleString('zh-CN')}</span></div>
                 <div className="flex justify-between"><span>运费</span><span className="text-slate-800 font-bold">¥{freightAmount.toLocaleString('zh-CN')}</span></div>
-                <div className="flex justify-between items-center"><span>尾款合计</span><span className="text-industry-red font-black text-base">¥{finalPaymentAmount.toLocaleString('zh-CN')}</span></div>
+                <div className="flex justify-between items-center"><span>{detail.status === 'COMPLETED' ? '已支付尾款' : '尾款合计'}</span><span className="text-industry-red font-black text-base">¥{finalPaymentAmount.toLocaleString('zh-CN')}</span></div>
               </div>
             </div>
           </>
@@ -411,7 +417,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
                       <div className="flex justify-between"><span>车辆类型</span><span className="text-slate-800 font-bold">{info.vehicleType}</span></div>
                     )}
                     {info.vehicleSource && (
-                      <div className="flex justify-between"><span>车辆来源</span><span className="text-slate-800 font-bold">{info.vehicleSource}</span></div>
+                      <div className="flex justify-between"><span>车辆来源</span><span className="text-slate-800 font-bold">{vehicleSourceLabelMap[info.vehicleSource] || info.vehicleSource}</span></div>
                     )}
                     {info.remark && (
                       <div className="flex justify-between"><span>备注</span><span className="text-slate-800 font-bold">{info.remark}</span></div>
@@ -461,18 +467,6 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
           </div>
         )}
 
-        {detail.contractName && (
-          <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
-            <div className="flex justify-between items-center">
-              <h2 className="text-sm font-bold">合同/协议</h2>
-              <button className="text-xs text-industry-red font-bold" onClick={() => alert('查看合同')}>
-                查看
-              </button>
-            </div>
-            <div className="text-xs text-slate-500 mt-2">{detail.contractName}</div>
-          </div>
-        )}
-
         <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
           <h2 className="text-sm font-bold mb-3">订单状态</h2>
           <div className="space-y-3">
@@ -503,11 +497,11 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
           )}
           {detail.status === 'WAIT_FINAL_PAY' && (
             <button
-              onClick={handlePay}
+              onClick={() => setShowFinalPayConfirm(true)}
               disabled={actionLoading}
               className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
             >
-              去支付尾款
+              确认支付尾款
             </button>
           )}
           {detail.status === 'WAIT_SHIP' && (
@@ -525,14 +519,6 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
               className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
             >
               确认收货
-            </button>
-          )}
-          {detail.status === 'COMPLETED' && (
-            <button
-              onClick={() => alert('再次采购')}
-              className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold"
-            >
-              再次采购
             </button>
           )}
           {detail.status === 'CANCELED' && (
@@ -570,6 +556,37 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
                 className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
               >
                 确认支付
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFinalPayConfirm && detail.status === 'WAIT_FINAL_PAY' && (
+        <div className="fixed inset-0 z-20 bg-black/40 flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-custom p-4 shadow-xl">
+            <h3 className="text-sm font-bold">确认支付尾款</h3>
+            <div className="mt-3 text-xs text-slate-500 space-y-2">
+              <div className="flex justify-between items-center"><span>尾款</span><span className="text-industry-red font-black text-base">¥{finalPaymentAmount.toLocaleString('zh-CN')}</span></div>
+              <div className="flex justify-between"><span>剩余货款</span><span className="text-slate-800 font-bold">¥{remainingPaymentAmount.toLocaleString('zh-CN')}</span></div>
+              <div className="flex justify-between"><span>运费</span><span className="text-slate-800 font-bold">¥{freightAmount.toLocaleString('zh-CN')}</span></div>
+              <div className="flex justify-between"><span>猪头数</span><span className="text-slate-800 font-bold">{detail.quantity}头</span></div>
+              <div className="flex justify-between"><span>总重量</span><span className="text-slate-800 font-bold">{(detail.totalWeight || 0).toLocaleString('zh-CN')}kg</span></div>
+            </div>
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={() => setShowFinalPayConfirm(false)}
+                disabled={actionLoading}
+                className="flex-1 py-2 bg-slate-100 text-slate-600 rounded-custom font-bold disabled:opacity-60"
+              >
+                取消
+              </button>
+              <button
+                onClick={handlePay}
+                disabled={actionLoading}
+                className="flex-1 py-2 bg-industry-red text-white rounded-custom font-bold disabled:opacity-60"
+              >
+                确认支付尾款
               </button>
             </div>
           </div>

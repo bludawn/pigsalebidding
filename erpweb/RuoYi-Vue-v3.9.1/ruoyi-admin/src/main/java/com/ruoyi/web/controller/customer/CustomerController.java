@@ -520,7 +520,9 @@ public class CustomerController extends BaseController {
             .count();
         UserBid query = new UserBid();
         query.setUserId(getUserId());
-        counts.myBidCount = userBidService.selectUserBidList(query).size();
+        counts.myBidCount = (int) userBidService.selectUserBidList(query).stream()
+            .filter(bid -> "BIDDING".equalsIgnoreCase(bid.getStatus()))
+            .count();
         return ok(counts);
     }
 
@@ -538,9 +540,22 @@ public class CustomerController extends BaseController {
     @PostMapping("/getBusinessStats")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:getBusinessStats')")
     public CustomerApiResult<BusinessStats> getBusinessStats() {
+        List<PigOrder> orders = selectOrdersByUser().stream()
+            .filter(order -> !"CANCELED".equalsIgnoreCase(order.getOrderStatus()))
+            .filter(order -> !"WAIT_CONFIRM".equalsIgnoreCase(order.getOrderStatus()))
+            .collect(Collectors.toList());
+
+        BigDecimal totalTradeAmount = orders.stream()
+            .map(order -> defaultZero(order.getOrderAmount()).add(defaultZero(order.getFreightAmount())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int totalPurchaseCount = orders.stream()
+            .mapToInt(this::resolveOrderHeadCount)
+            .sum();
+
         BusinessStats stats = new BusinessStats();
-        stats.totalTradeAmount = BigDecimal.ZERO;
-        stats.totalPurchaseCount = 0;
+        stats.totalTradeAmount = totalTradeAmount;
+        stats.totalPurchaseCount = totalPurchaseCount;
         return ok(stats);
     }
 
@@ -766,8 +781,10 @@ public class CustomerController extends BaseController {
         }
         if ("WAIT_FINAL_PAY".equalsIgnoreCase(order.getOrderStatus())) {
             order.setOrderStatus("COMPLETED");
+            order.setPayStatus("WAIT_CONFIRM_FINAL");
         } else {
             order.setOrderStatus("WAIT_SHIP");
+            order.setPayStatus("WAIT_CONFIRM_FIRST");
         }
         order.setPayTime(new Date());
         order.setUpdateBy(String.valueOf(getUserId()));
@@ -1348,6 +1365,14 @@ public class CustomerController extends BaseController {
 
     private int countOrderStatus(List<PigOrder> orders, String status) {
         return (int) orders.stream().filter(order -> status.equalsIgnoreCase(order.getOrderStatus())).count();
+    }
+
+    private int resolveOrderHeadCount(PigOrder order) {
+        if (order == null || order.getBidProductId() == null) {
+            return 0;
+        }
+        BidProduct bidProduct = bidProductService.selectBidProductById(order.getBidProductId());
+        return bidProduct != null && bidProduct.getTotalHeadCount() != null ? bidProduct.getTotalHeadCount() : 0;
     }
 
     private String normalizeOrderNo(String orderNo, String fallbackId) {

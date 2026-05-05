@@ -216,30 +216,23 @@ const ProfileView: React.FC<ProfileViewProps> = ({ onNavigate }) => {
       </div>
 
       <div className="bg-white mx-4 mt-2 rounded-custom p-5 shadow-sm border border-slate-100">
-        <div className="flex justify-between items-center mb-5">
-          <h3 className="text-[14px] font-black text-slate-800">总资产</h3>
-          <span className="text-industry-red text-[17px] font-black tracking-tighter">¥ {formatCurrency(assetSummary?.totalBalance || 0)}</span>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <AssetItem label="保证金" value={formatCurrency(assetSummary?.depositAmount)} />
-          <AssetItem label="货款" value={formatCurrency(assetSummary?.goodsAmount)} />
-          <AssetItem label="全部余额" value={formatCurrency(assetSummary?.totalBalance)} />
+        <div className="flex justify-between items-center">
+          <h3 className="text-[14px] font-black text-slate-800">保证金</h3>
+          <span className="text-industry-red text-[17px] font-black tracking-tighter">¥ {formatCurrency(assetSummary?.depositAmount || 0)}</span>
         </div>
       </div>
 
       <div className="bg-white mx-4 mt-4 rounded-custom p-5 shadow-sm border border-slate-100">
         <h3 className="text-[14px] font-black text-slate-800 mb-5">数据统计</h3>
         <div className="grid grid-cols-2 gap-4">
-          <StatItem label="交易总金额" value={`¥ ${formatCurrency(businessStats?.totalTradeAmount)}`} />
-          <StatItem label="购买总头数" value={`${businessStats?.totalPurchaseCount ?? '--'} 头`} />
+          <StatItem label="订单总金额" value={`¥ ${formatCurrency(businessStats?.totalTradeAmount)}`} />
+          <StatItem label="订单总猪头数" value={`${businessStats?.totalPurchaseCount ?? '--'} 头`} />
         </div>
       </div>
 
-      <div className="bg-white mx-4 mt-4 rounded-custom p-5 shadow-sm border border-slate-100 grid grid-cols-4 gap-y-8">
+      <div className="bg-white mx-4 mt-4 rounded-custom p-5 shadow-sm border border-slate-100 grid grid-cols-3 gap-y-8">
         <FuncBtn label="预付定金" icon="💳" onClick={() => alert('预付定金功能开发中')} />
-        <FuncBtn label="发票管理" icon="🧾" onClick={() => alert('发票管理功能开发中')} />
         <FuncBtn label="收货地址" icon="📍" onClick={() => onNavigate('address-management')} />
-        <FuncBtn label="合同协议" icon="🤝" onClick={() => alert('合同协议功能开发中')} />
         <FuncBtn label="联系我们" icon="📞" onClick={openContactDialog} />
       </div>
 
@@ -265,13 +258,6 @@ const OrderItem: React.FC<{ label: string; count?: number; onClick?: () => void 
       </span>
     )}
   </button>
-);
-
-const AssetItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 rounded-custom border border-slate-100">
-    <span className="text-[10px] text-slate-400 font-bold">{label}</span>
-    <span className="text-[13px] font-black text-slate-800 tracking-tight">¥{value}</span>
-  </div>
 );
 
 const StatItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
