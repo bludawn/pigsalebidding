@@ -39,7 +39,7 @@ public class BidProductController extends BaseController
     /**
      * 查询竞价商品列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:bidProduct:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:bidProduct:list')")
     @GetMapping("/list")
     public TableDataInfo list(BidProduct bidProduct)
     {

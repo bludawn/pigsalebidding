@@ -37,7 +37,7 @@ public class EnterpriseController extends BaseController
     /**
      * 查询企业信息列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:enterprise:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:enterprise:list')")
     @GetMapping("/list")
     public TableDataInfo list(Enterprise enterprise)
     {

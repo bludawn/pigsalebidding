@@ -171,6 +171,10 @@ f_createTime
 <if test="orderAmount != null">#{orderAmount},</if>
 <if test="totalWeight != null">#{totalWeight},</if>
 <if test="unitPrice != null">#{unitPrice},</if>
+<if test="firstPaymentAmount != null">#{firstPaymentAmount},</if>
+<if test="freightAmount != null">#{freightAmount},</if>
+<if test="remainingPaymentAmount != null">#{remainingPaymentAmount},</if>
+<if test="bankAccountId != null">#{bankAccountId},</if>
 <if test="bidQuantity != null">#{bidQuantity},</if>
 <if test="payStatus != null and payStatus != ''">#{payStatus},</if>
 <if test="payChannel != null and payChannel != ''">#{payChannel},</if>

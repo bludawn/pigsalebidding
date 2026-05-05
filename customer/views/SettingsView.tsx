@@ -34,7 +34,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onLogout }) => {
   const [nameEditing, setNameEditing] = useState(false);
   const [nameSaving, setNameSaving] = useState(false);
   const [avatarSaving, setAvatarSaving] = useState(false);
-  const [companyName, setCompanyName] = useState('');
+
   const [licensePreviews, setLicensePreviews] = useState<string[]>([]);
   const [materialPreviews, setMaterialPreviews] = useState<string[]>([]);
   const [licenseUploading, setLicenseUploading] = useState(false);
@@ -164,7 +164,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onLogout }) => {
     setCompanySubmitting(true);
     try {
       const res = await submitCompanyVerification({
-        companyName: companyName.trim(),
         licenseUrls: licensePreviews,
         materialUrls: materialPreviews,
       });

@@ -37,7 +37,7 @@ public class PigOrderController extends BaseController
     /**
      * 查询订单列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:pigOrder:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:pigOrder:list')")
     @GetMapping("/list")
     public TableDataInfo list(PigOrder pigOrder)
     {

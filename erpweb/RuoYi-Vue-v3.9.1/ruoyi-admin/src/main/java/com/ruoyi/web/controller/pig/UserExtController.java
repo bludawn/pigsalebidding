@@ -37,7 +37,7 @@ public class UserExtController extends BaseController
     /**
      * 查询用户信息拓展列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:userExt:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:userExt:list')")
     @GetMapping("/list")
     public TableDataInfo list(UserExt userExt)
     {

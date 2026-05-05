@@ -37,7 +37,7 @@ public class AddressController extends BaseController
     /**
      * 查询地址管理列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:address:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:address:list')")
     @GetMapping("/list")
     public TableDataInfo list(Address address)
     {

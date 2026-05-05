@@ -32,7 +32,7 @@ public class VehicleTypeController extends BaseController
     @Autowired
     private IVehicleTypeService vehicleTypeService;
 
-    @PreAuthorize("@ss.hasPermi('pig:vehicleType:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:vehicleType:list')")
     @GetMapping("/list")
     public TableDataInfo list(VehicleType vehicleType)
     {

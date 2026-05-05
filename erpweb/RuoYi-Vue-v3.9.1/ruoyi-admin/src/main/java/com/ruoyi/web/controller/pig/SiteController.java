@@ -39,7 +39,7 @@ public class SiteController extends BaseController
     /**
      * 查询场点列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:site:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:site:list')")
     @GetMapping("/list")
     public TableDataInfo list(Site site)
     {

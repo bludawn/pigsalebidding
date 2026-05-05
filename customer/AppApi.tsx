@@ -498,7 +498,7 @@ export async function saveUserProfile(params: { name: string; avatar: string }):
 /** 提交公司认证资料 */
 export async function submitCompanyVerification(params: {
   licenseUrls: string[];
-  materialUrls: string[];
+  materialUrls?: string[];
 }): Promise<ApiResponse<UserSettingsProfile>> {
   const result = await request<UserSettingsProfile>('/v1/weixincustomer/submitCompanyVerification', params);
   if (result.errcode !== 0 || !result.data) {

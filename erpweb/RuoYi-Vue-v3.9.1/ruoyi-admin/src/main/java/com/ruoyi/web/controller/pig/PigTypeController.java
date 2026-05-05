@@ -39,7 +39,7 @@ public class PigTypeController extends BaseController
     /**
      * 查询生猪类型列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:pigType:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:pigType:list')")
     @GetMapping("/list")
     public TableDataInfo list(PigType pigType)
     {

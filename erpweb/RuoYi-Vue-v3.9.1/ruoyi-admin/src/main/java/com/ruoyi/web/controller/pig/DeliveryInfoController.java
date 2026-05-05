@@ -37,7 +37,7 @@ public class DeliveryInfoController extends BaseController
     /**
      * 查询送货信息列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:deliveryInfo:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:deliveryInfo:list')")
     @GetMapping("/list")
     public TableDataInfo list(DeliveryInfo deliveryInfo)
     {

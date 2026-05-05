@@ -37,7 +37,7 @@ public class UserBidInfoController extends BaseController
     /**
      * 查询用户竞价信息维护列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:userBidInfo:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:userBidInfo:list')")
     @GetMapping("/list")
     public TableDataInfo list(UserBidInfo userBidInfo)
     {

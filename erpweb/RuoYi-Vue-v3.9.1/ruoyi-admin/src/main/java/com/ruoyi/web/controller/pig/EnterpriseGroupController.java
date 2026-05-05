@@ -37,7 +37,7 @@ public class EnterpriseGroupController extends BaseController
     /**
      * 查询企业分组列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:enterpriseGroup:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:enterpriseGroup:list')")
     @GetMapping("/list")
     public TableDataInfo list(EnterpriseGroup enterpriseGroup)
     {

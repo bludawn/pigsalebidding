@@ -37,7 +37,7 @@ public class UserBidController extends BaseController
     /**
      * 查询用户出价列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:userBid:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:userBid:list')")
     @GetMapping("/list")
     public TableDataInfo list(UserBid userBid)
     {

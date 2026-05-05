@@ -468,14 +468,59 @@ public class CustomerController extends BaseController {
     @PostMapping("/submitCompanyVerification")
     // @PreAuthorize("@ss.hasPermi('pig:weixincustomer:submitCompanyVerification')")
     public CustomerApiResult<UserSettingsProfile> submitCompanyVerification(@RequestBody SubmitCompanyVerificationRequest request) {
-        Enterprise enterprise = getEnterpriseByUser();
-        if (enterprise != null) {
+        if (request == null || request.licenseUrls == null || request.licenseUrls.isEmpty()) {
+            return fail(400, "请先上传营业执照");
+        }
+
+        Long userId = getUserId();
+        String operator = String.valueOf(userId);
+
+        UserExt userExt = userExtService.selectUserExtById(userId);
+        boolean isNewUserExt = userExt == null;
+        if (isNewUserExt) {
+            userExt = new UserExt();
+            userExt.setId(userId);
+            userExt.setCreateBy(operator);
+        }
+
+        Enterprise enterprise = null;
+        if (userExt.getEnterpriseId() != null) {
+            enterprise = enterpriseService.selectEnterpriseById(userExt.getEnterpriseId());
+        }
+
+        if (enterprise == null) {
+            enterprise = new Enterprise();
+            SysUser user = sysUserService.selectUserById(userId);
+            String nickName = user != null ? user.getNickName() : null;
+            String enterpriseName = StringUtils.isNotEmpty(nickName) ? nickName + "的企业" : ("待完善企业-" + userId);
+            enterprise.setEnterpriseName(enterpriseName);
             enterprise.setBusinessLicenseUrl(joinList(request.licenseUrls));
             enterprise.setOtherMaterialUrls(joinList(request.materialUrls));
             enterprise.setIsVerified(0);
-            enterprise.setUpdateBy(String.valueOf(getUserId()));
+            enterprise.setCanBid(0);
+            enterprise.setHasDeposit(0);
+            enterprise.setCreateBy(operator);
+            enterpriseService.insertEnterprise(enterprise);
+        } else {
+            enterprise.setBusinessLicenseUrl(joinList(request.licenseUrls));
+            if (request.materialUrls != null) {
+                enterprise.setOtherMaterialUrls(joinList(request.materialUrls));
+            }
+            enterprise.setIsVerified(0);
+            enterprise.setUpdateBy(operator);
             enterpriseService.updateEnterprise(enterprise);
         }
+
+        if (enterprise.getId() != null) {
+            userExt.setEnterpriseId(enterprise.getId());
+        }
+        if (isNewUserExt) {
+            userExtService.insertUserExt(userExt);
+        } else {
+            userExt.setUpdateBy(operator);
+            userExtService.updateUserExt(userExt);
+        }
+
         return getUserSettings();
     }
 

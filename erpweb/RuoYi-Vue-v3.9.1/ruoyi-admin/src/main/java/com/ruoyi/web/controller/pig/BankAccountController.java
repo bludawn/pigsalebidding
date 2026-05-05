@@ -32,7 +32,7 @@ public class BankAccountController extends BaseController
     @Autowired
     private IBankAccountService bankAccountService;
 
-    @PreAuthorize("@ss.hasPermi('pig:bankAccount:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:bankAccount:list')")
     @GetMapping("/list")
     public TableDataInfo list(BankAccount bankAccount)
     {

@@ -37,7 +37,7 @@ public class PigTagController extends BaseController
     /**
      * 查询生猪标签列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:pigTag:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:pigTag:list')")
     @GetMapping("/list")
     public TableDataInfo list(PigTag pigTag)
     {

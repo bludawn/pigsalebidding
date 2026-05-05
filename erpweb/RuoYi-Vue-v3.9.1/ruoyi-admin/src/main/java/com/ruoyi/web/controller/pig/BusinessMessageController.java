@@ -37,7 +37,7 @@ public class BusinessMessageController extends BaseController
     /**
      * 查询业务消息列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:businessMessage:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:businessMessage:list')")
     @GetMapping("/list")
     public TableDataInfo list(BusinessMessage businessMessage)
     {

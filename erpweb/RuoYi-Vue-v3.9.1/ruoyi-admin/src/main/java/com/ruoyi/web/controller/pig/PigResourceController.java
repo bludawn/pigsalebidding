@@ -39,7 +39,7 @@ public class PigResourceController extends BaseController
     /**
      * 查询生猪资源列表
      */
-    @PreAuthorize("@ss.hasPermi('pig:pigResource:list')")
+//    @PreAuthorize("@ss.hasPermi('pig:pigResource:list')")
     @GetMapping("/list")
     public TableDataInfo list(PigResource pigResource)
     {
