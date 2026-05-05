@@ -112,6 +112,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 AND f_receiveTime = #{receiveTime}
             </if>
         </where>
+        order by f_id desc
     </select>
 
     <select id="selectPigOrderById" parameterType="Long" resultMap="PigOrderResult">

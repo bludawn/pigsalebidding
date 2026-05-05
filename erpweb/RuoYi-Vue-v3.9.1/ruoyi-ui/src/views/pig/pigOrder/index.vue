@@ -301,30 +301,37 @@
           <el-input :value="getPigResourceLabel(confirmForm.pigResourceId)" disabled />
         </el-form-item>
         <el-form-item label="收货地址" prop="addressId">
-          <el-input :value="getAddressLabel(confirmForm.addressId)" disabled />
+          <el-select v-model="confirmForm.addressId" placeholder="请选择收货地址" filterable clearable>
+            <el-option v-for="item in addressOptions" :key="item.id" :label="getAddressOptionLabel(item)" :value="item.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="期望送达时间" prop="expectedDeliveryTime">
-          <el-input :value="parseTime(confirmForm.expectedDeliveryTime) || '-'" disabled />
+          <el-date-picker v-model="confirmForm.expectedDeliveryTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择期望送达时间" style="width: 100%;"></el-date-picker>
         </el-form-item>
         <el-form-item label="竞拍数量(头)" prop="bidQuantity">
-          <el-input :value="confirmForm.bidQuantity" disabled />
+          <el-input v-model="confirmForm.bidQuantity" placeholder="请输入竞拍数量" />
         </el-form-item>
         <el-form-item label="单价" prop="unitPrice">
-          <el-input :value="confirmForm.unitPrice" disabled />
+          <el-input v-model="confirmForm.unitPrice" placeholder="请输入单价" />
         </el-form-item>
         <el-form-item label="总重量(kg)" prop="totalWeight">
-          <el-input :value="confirmForm.totalWeight" disabled />
+          <el-input v-model="confirmForm.totalWeight" placeholder="请输入总重量" />
         </el-form-item>
         <el-form-item label="订单金额" prop="orderAmount">
-          <el-input :value="confirmForm.orderAmount" disabled />
+          <el-input v-model="confirmForm.orderAmount" placeholder="自动计算，可手工修改" />
         </el-form-item>
         <el-form-item label="首付货款" prop="firstPaymentAmount">
-          <el-input :value="confirmForm.firstPaymentAmount" disabled />
+          <el-input v-model="confirmForm.firstPaymentAmount" placeholder="请输入首付货款" />
         </el-form-item>
         <el-form-item label="收款银行账户" prop="bankAccountId">
-          <el-input :value="getBankAccountLabel(confirmForm.bankAccountId)" disabled />
+          <el-select v-model="confirmForm.bankAccountId" placeholder="请选择收款银行账户" filterable clearable>
+            <el-option v-for="item in bankAccountOptions" :key="item.id" :label="getBankAccountOptionLabel(item)" :value="item.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="送货信息">
+          <div style="margin-bottom: 8px;">
+            <el-button size="mini" type="primary" plain icon="el-icon-plus" @click="openConfirmDeliveryInfoDialog()">新增送货信息</el-button>
+          </div>
           <el-table :data="confirmDeliveryInfoList" size="mini" border style="width: 100%;">
             <el-table-column label="运输编码" prop="transportCode" min-width="140" />
             <el-table-column label="送货人" prop="delivererName" min-width="100" />
@@ -367,10 +374,16 @@
                 <dict-tag :options="dict.type.pig_delivery_status" :value="scope.row.deliveryStatus" />
               </template>
             </el-table-column>
+            <el-table-column label="操作" align="center" min-width="120">
+              <template slot-scope="scope">
+                <el-button type="text" size="mini" @click="openConfirmDeliveryInfoDialog(scope.row)">编辑</el-button>
+                <el-button type="text" size="mini" @click="removeConfirmDeliveryInfo(scope.$index)">移除</el-button>
+              </template>
+            </el-table-column>
           </el-table>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input :value="confirmForm.remark || '-'" type="textarea" disabled />
+          <el-input v-model="confirmForm.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -1024,6 +1037,15 @@ export default {
     },
     'form.totalWeight'() {
       this.updateOrderAmount()
+    },
+    'confirmForm.unitPrice'() {
+      this.updateConfirmOrderAmount()
+    },
+    'confirmForm.bidQuantity'() {
+      this.updateConfirmOrderAmount()
+    },
+    'confirmForm.totalWeight'() {
+      this.updateConfirmOrderAmount()
     }
   },
   methods: {
@@ -1475,6 +1497,7 @@ export default {
       this.resetConfirmForm()
     },
     submitConfirmOrder() {
+      this.syncConfirmDeliveryInfoIds()
       const payload = {
         id: this.confirmForm.id,
         addressId: this.confirmForm.addressId,
