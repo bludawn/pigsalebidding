@@ -60,6 +60,11 @@
           <dict-tag :options="dict.type.pig_order_status" :value="scope.row.orderStatus" />
         </template>
       </el-table-column>
+      <el-table-column label="支付状态" align="center" prop="payStatus" v-if="columns.payStatus.visible">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.pig_order_pay_status" :value="scope.row.payStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="订单来源" align="center" prop="orderSource" v-if="columns.orderSource.visible">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.pig_order_source" :value="scope.row.orderSource" />
@@ -68,6 +73,11 @@
       <el-table-column label="归属企业" align="center" prop="enterpriseId" v-if="columns.enterpriseId.visible" :show-overflow-tooltip="true">
         <template slot-scope="scope">
           <span>{{ getEnterpriseName(scope.row.enterpriseId) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="生猪资源" align="center" prop="pigResourceId" v-if="columns.pigResourceId.visible" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ getPigResourceLabel(scope.row.pigResourceId) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="竞价商品" align="center" prop="bidProductId" v-if="columns.bidProductId.visible" :show-overflow-tooltip="true">
@@ -90,11 +100,6 @@
           <span>{{ parseTime(scope.row.expectedDeliveryTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="生猪资源" align="center" prop="pigResourceId" v-if="columns.pigResourceId.visible" :show-overflow-tooltip="true">
-        <template slot-scope="scope">
-          <span>{{ getPigResourceLabel(scope.row.pigResourceId) }}</span>
-        </template>
-      </el-table-column>
       <el-table-column label="订单金额" align="center" prop="orderAmount" v-if="columns.orderAmount.visible" />
       <el-table-column label="首付货款" align="center" prop="firstPaymentAmount" v-if="columns.firstPaymentAmount.visible" />
       <el-table-column label="运费" align="center" prop="freightAmount" v-if="columns.freightAmount.visible" />
@@ -108,11 +113,6 @@
       <el-table-column label="竞拍数量(头)" align="center" prop="bidQuantity" v-if="columns.bidQuantity.visible">
         <template slot-scope="scope">
           <span>{{ scope.row.bidQuantity ? scope.row.bidQuantity + '头' : '-' }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="支付状态" align="center" prop="payStatus" v-if="columns.payStatus.visible">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.pig_order_pay_status" :value="scope.row.payStatus" />
         </template>
       </el-table-column>
       <el-table-column label="支付渠道" align="center" prop="payChannel" v-if="columns.payChannel.visible" />
@@ -1776,7 +1776,7 @@ export default {
       const vehicleType = this.getVehicleTypeName(item.vehicleTypeId) || '-'
       const deliveryStatus = this.getDictLabel(this.dict.type.pig_delivery_status || [], item.deliveryStatus) || '-'
       const loadCount = item.loadCount != null ? `${item.loadCount}头` : '-'
-      return `送货人:${delivererName} 车牌号:${vehicleNo} 车辆类型:${vehicleType} 状态:${deliveryStatus} 装猪数量:${loadCount}`
+      return [delivererName, vehicleNo, vehicleType, deliveryStatus, loadCount].join(' ')
     },
     getDeliveryInfoLabel(ids) {
       const idList = this.parseDeliveryIdList(ids)
