@@ -58,7 +58,26 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
     loadDetail();
   }, [loadDetail]);
 
-  const statusMeta = useMemo(() => (detail ? statusMetaMap[detail.status] : null), [detail]);
+  const isFirstPayPendingConfirm = detail?.status === 'WAIT_PAY' && detail?.payStatus === 'WAIT_CONFIRM_FIRST';
+  const isFinalPayPendingConfirm = detail?.status === 'WAIT_FINAL_PAY' && detail?.payStatus === 'WAIT_CONFIRM_FINAL';
+  const statusMeta = useMemo(() => {
+    if (!detail) return null;
+    if (isFirstPayPendingConfirm) {
+      return {
+        label: '待确认首付款',
+        desc: '您已支付首付款，正在确认中，请耐心等待',
+        badgeClass: 'bg-amber-100 text-amber-700',
+      };
+    }
+    if (isFinalPayPendingConfirm) {
+      return {
+        label: '待确认尾款',
+        desc: '您已支付尾款，正在确认中，请耐心等待',
+        badgeClass: 'bg-amber-100 text-amber-700',
+      };
+    }
+    return statusMetaMap[detail.status];
+  }, [detail, isFirstPayPendingConfirm, isFinalPayPendingConfirm]);
   const deliveryInfos = useMemo(() => (detail?.deliveryInfos || []).filter(Boolean), [detail]);
   const prepaymentAmount = detail?.priceInfo.prepaymentAmount ?? detail?.priceInfo.firstPaymentAmount ?? 0;
   const remainingPaymentAmount = detail?.priceInfo.remainingPaymentAmount ?? detail?.priceInfo.finalPaymentAmount ?? 0;
@@ -330,7 +349,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
             <div className="flex justify-between"><span>场点</span><span className="text-slate-800 font-bold">{detail.farmName}</span></div>
             <div className="flex justify-between"><span>品种</span><span className="text-slate-800 font-bold">{detail.pigTypeName}</span></div>
             <div className="flex justify-between"><span>体重段</span><span className="text-slate-800 font-bold">{detail.weightRange}</span></div>
-            <div className="flex justify-between"><span>数量</span><span className="text-slate-800 font-bold">{detail.quantity}头</span></div>
+            <div className="flex justify-between"><span>猪头数</span><span className="text-slate-800 font-bold">{detail.quantity}头</span></div>
             <div className="flex justify-between"><span>总重量</span><span className="text-slate-800 font-bold">{(detail.totalWeight || 0).toLocaleString('zh-CN')}kg</span></div>
             <div className="flex justify-between"><span>单价</span><span className="text-slate-800 font-bold">¥{detail.price.toFixed(2)}/kg</span></div>
             <div className="flex justify-between"><span>货款</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.goodsAmount.toLocaleString('zh-CN')}</span></div>
@@ -408,7 +427,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
                       <div className="flex justify-between"><span>联系电话</span><span className="text-slate-800 font-bold">{info.driverPhone}</span></div>
                     )}
                     {info.loadCount !== undefined && info.loadCount !== null && (
-                      <div className="flex justify-between"><span>数量</span><span className="text-slate-800 font-bold">{info.loadCount}头</span></div>
+                      <div className="flex justify-between"><span>猪头数</span><span className="text-slate-800 font-bold">{info.loadCount}头</span></div>
                     )}
                     {info.deliveryStatus && (
                       <div className="flex justify-between"><span>状态</span><span className="text-slate-800 font-bold">{deliveryStatusLabelMap[info.deliveryStatus] || info.deliveryStatus}</span></div>
@@ -486,7 +505,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 max-w-md mx-auto">
         <div className="flex gap-3">
-          {detail.status === 'WAIT_PAY' && (
+          {detail.status === 'WAIT_PAY' && !isFirstPayPendingConfirm && (
             <button
               onClick={() => setShowPayConfirm(true)}
               disabled={actionLoading}
@@ -495,7 +514,7 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
               确认支付
             </button>
           )}
-          {detail.status === 'WAIT_FINAL_PAY' && (
+          {detail.status === 'WAIT_FINAL_PAY' && !isFinalPayPendingConfirm && (
             <button
               onClick={() => setShowFinalPayConfirm(true)}
               disabled={actionLoading}

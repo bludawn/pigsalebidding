@@ -62,7 +62,7 @@ public class DeliveryInfoController extends BaseController
     /**
      * 获取送货信息详细信息
      */
-    @PreAuthorize("@ss.hasPermi('pig:deliveryInfo:query')")
+//    @PreAuthorize("@ss.hasPermi('pig:deliveryInfo:query')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id)
     {

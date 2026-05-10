@@ -825,11 +825,12 @@ public class CustomerController extends BaseController {
             return ok(result);
         }
         if ("WAIT_FINAL_PAY".equalsIgnoreCase(order.getOrderStatus())) {
-            order.setOrderStatus("COMPLETED");
             order.setPayStatus("WAIT_CONFIRM_FINAL");
-        } else {
-            order.setOrderStatus("WAIT_SHIP");
+        } else if ("WAIT_PAY".equalsIgnoreCase(order.getOrderStatus())) {
             order.setPayStatus("WAIT_CONFIRM_FIRST");
+        } else {
+            result.success = false;
+            return ok(result);
         }
         order.setPayTime(new Date());
         order.setUpdateBy(String.valueOf(getUserId()));
@@ -942,10 +943,11 @@ public class CustomerController extends BaseController {
         item.orderId = String.valueOf(order.getId());
         item.orderNo = normalizeOrderNo(order.getOrderNo(), item.orderId);
         item.status = mapOrderStatus(order.getOrderStatus());
+        item.payStatus = order.getPayStatus();
         item.farmName = site != null ? site.getSiteName() : null;
         item.pigTypeName = pigType != null ? pigType.getPigName() : null;
         item.weightRange = pigType != null ? pigType.getWeightRange() : null;
-        item.quantity = bidProduct != null ? bidProduct.getTotalHeadCount() : null;
+        item.quantity = order.getBidQuantity();
         item.totalWeight = defaultZero(order.getTotalWeight());
         item.price = bidProduct != null ? bidProduct.getCurrentHighestPrice() : null;
         item.totalAmount = defaultZero(order.getOrderAmount());
@@ -968,13 +970,14 @@ public class CustomerController extends BaseController {
         detail.orderId = String.valueOf(order.getId());
         detail.orderNo = normalizeOrderNo(order.getOrderNo(), detail.orderId);
         detail.status = mapOrderStatus(order.getOrderStatus());
+        detail.payStatus = order.getPayStatus();
         detail.farmName = site != null ? site.getSiteName() : null;
         detail.farmAddress = buildFarmAddress(site);
         detail.farmLongitude = site != null ? site.getSiteLongitude() : null;
         detail.farmLatitude = site != null ? site.getSiteLatitude() : null;
         detail.pigTypeName = pigType != null ? pigType.getPigName() : null;
         detail.weightRange = pigType != null ? pigType.getWeightRange() : null;
-        detail.quantity = bidProduct != null ? bidProduct.getTotalHeadCount() : null;
+        detail.quantity = order.getBidQuantity();
         detail.totalWeight = defaultZero(order.getTotalWeight());
         detail.price = bidProduct != null ? bidProduct.getCurrentHighestPrice() : null;
         detail.priceInfo = buildPriceInfo(order);

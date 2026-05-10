@@ -320,6 +320,7 @@ public class CustomerModels
         public String orderId;
         public String orderNo;
         public String status;
+        public String payStatus;
         public String farmName;
         public String pigTypeName;
         public String weightRange;
@@ -401,6 +402,7 @@ public class CustomerModels
         public String orderId;
         public String orderNo;
         public String status;
+        public String payStatus;
         public String farmName;
         public String farmAddress;
         public String farmLongitude;

@@ -58,6 +58,7 @@ export interface OrderListItem {
   orderId: string;
   orderNo?: string;
   status: OrderStatus;
+  payStatus?: string;
   farmName: string;
   pigTypeName: string;
   weightRange: string;
@@ -137,6 +138,7 @@ export interface OrderDetailInfo {
   orderId: string;
   orderNo?: string;
   status: OrderStatus;
+  payStatus?: string;
   farmName: string;
   farmAddress?: string;
   farmLongitude?: string;

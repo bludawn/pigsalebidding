@@ -133,7 +133,7 @@ const OrderListView: React.FC<OrderListViewProps> = ({ params, onBack, onNavigat
                     {item.pigTypeName} · {item.weightRange}
                   </div>
                   <div className="flex justify-between items-center text-xs text-slate-600">
-                    <span>数量：<span className="font-bold text-slate-800">{item.quantity}头</span></span>
+                    <span>猪头数：<span className="font-bold text-slate-800">{item.quantity}头</span></span>
                     <span>总重量：<span className="font-bold text-slate-800">{(item.totalWeight || 0).toLocaleString('zh-CN')}kg</span></span>
                   </div>
                   <div className="flex justify-between items-center text-xs text-slate-600">
