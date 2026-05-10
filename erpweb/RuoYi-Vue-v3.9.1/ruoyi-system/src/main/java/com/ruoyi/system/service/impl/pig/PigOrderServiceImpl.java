@@ -45,32 +45,6 @@ public class PigOrderServiceImpl implements IPigOrderService
     @Override
     public int updatePigOrder(PigOrder pigOrder)
     {
-        if (pigOrder == null || pigOrder.getId() == null)
-        {
-            return pigOrderMapper.updatePigOrder(pigOrder);
-        }
-
-        PigOrder dbOrder = pigOrderMapper.selectPigOrderById(pigOrder.getId());
-        Date now = new Date();
-
-        if (dbOrder != null)
-        {
-            if ("WAIT_PAY".equalsIgnoreCase(pigOrder.getOrderStatus())
-                && "WAIT_CONFIRM".equalsIgnoreCase(dbOrder.getOrderStatus())
-                && dbOrder.getOrderCreateEventTime() == null)
-            {
-                pigOrder.setOrderCreateEventTime(now);
-            }
-            if ("WAIT_RECEIVE".equalsIgnoreCase(pigOrder.getOrderStatus()) && dbOrder.getShipEventTime() == null)
-            {
-                pigOrder.setShipEventTime(now);
-            }
-            if ("COMPLETED".equalsIgnoreCase(pigOrder.getOrderStatus()) && dbOrder.getCompletedEventTime() == null)
-            {
-                pigOrder.setCompletedEventTime(now);
-            }
-        }
-
         return pigOrderMapper.updatePigOrder(pigOrder);
     }
 

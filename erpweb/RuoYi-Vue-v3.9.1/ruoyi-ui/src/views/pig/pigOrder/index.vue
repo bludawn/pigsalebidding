@@ -116,19 +116,29 @@
         </template>
       </el-table-column>
       <el-table-column label="支付渠道" align="center" prop="payChannel" v-if="columns.payChannel.visible" />
-      <el-table-column label="支付时间" align="center" prop="payTime" v-if="columns.payTime.visible" width="160">
+      <el-table-column label="竞拍时间" align="center" prop="bidEventTime" v-if="columns.bidEventTime.visible" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.payTime) }}</span>
+          <span>{{ parseTime(scope.row.bidEventTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="装货时间" align="center" prop="loadTime" v-if="columns.loadTime.visible" width="160">
+      <el-table-column label="竞拍成功时间" align="center" prop="bidSuccessEventTime" v-if="columns.bidSuccessEventTime.visible" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.loadTime) }}</span>
+          <span>{{ parseTime(scope.row.bidSuccessEventTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="发货时间" align="center" prop="shipTime" v-if="columns.shipTime.visible" width="160">
+      <el-table-column label="生成订单时间" align="center" prop="orderCreateEventTime" v-if="columns.orderCreateEventTime.visible" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.shipTime) }}</span>
+          <span>{{ parseTime(scope.row.orderCreateEventTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="首付款支付时间" align="center" prop="firstPayEventTime" v-if="columns.firstPayEventTime.visible" width="160">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.firstPayEventTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="发货时间" align="center" prop="shipEventTime" v-if="columns.shipEventTime.visible" width="160">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.shipEventTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="送货信息" align="center" prop="deliveryInfoIds" v-if="columns.deliveryInfoIds.visible" :show-overflow-tooltip="true">
@@ -136,9 +146,19 @@
           <span style="white-space: nowrap;">{{ getDeliveryInfoLabel(scope.row.deliveryInfoIds) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="确认收货时间" align="center" prop="receiveTime" v-if="columns.receiveTime.visible" width="160">
+      <el-table-column label="收货时间" align="center" prop="receiveEventTime" v-if="columns.receiveEventTime.visible" width="160">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.receiveTime) }}</span>
+          <span>{{ parseTime(scope.row.receiveEventTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="尾款支付时间" align="center" prop="finalPayEventTime" v-if="columns.finalPayEventTime.visible" width="160">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.finalPayEventTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="完成时间" align="center" prop="completedEventTime" v-if="columns.completedEventTime.visible" width="160">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.completedEventTime) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" v-if="columns.remark.visible" :show-overflow-tooltip="true" />
@@ -227,11 +247,15 @@
             <div>总重量(kg)：{{ item.totalWeight }}</div>
             <div>支付状态：<dict-tag :options="dict.type.pig_order_pay_status" :value="item.payStatus" /></div>
             <div>支付渠道：{{ item.payChannel }}</div>
-            <div>支付时间：{{ parseTime(item.payTime) }}</div>
+            <div>竞拍时间：{{ parseTime(item.bidEventTime) }}</div>
+            <div>竞拍成功时间：{{ parseTime(item.bidSuccessEventTime) }}</div>
+            <div>生成订单时间：{{ parseTime(item.orderCreateEventTime) }}</div>
+            <div>首付款支付时间：{{ parseTime(item.firstPayEventTime) }}</div>
             <div>期望送达时间：{{ parseTime(item.expectedDeliveryTime) }}</div>
-            <div>装货时间：{{ parseTime(item.loadTime) }}</div>
-            <div>发货时间：{{ parseTime(item.shipTime) }}</div>
-            <div>确认收货时间：{{ parseTime(item.receiveTime) }}</div>
+            <div>发货时间：{{ parseTime(item.shipEventTime) }}</div>
+            <div>收货时间：{{ parseTime(item.receiveEventTime) }}</div>
+            <div>尾款支付时间：{{ parseTime(item.finalPayEventTime) }}</div>
+            <div>完成时间：{{ parseTime(item.completedEventTime) }}</div>
             <div>送货信息：<span style="white-space: pre-line;">{{ getDeliveryInfoLabel(item.deliveryInfoIds) }}</span></div>
             <div>备注：{{ item.remark }}</div>
           </div>
@@ -299,6 +323,30 @@
         </el-form-item>
         <el-form-item label="生猪资源">
           <el-input :value="getPigResourceLabel(confirmForm.pigResourceId)" disabled />
+        </el-form-item>
+        <el-form-item label="竞拍时间">
+          <el-input :value="parseTime(confirmForm.bidEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="竞拍成功时间">
+          <el-input :value="parseTime(confirmForm.bidSuccessEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="生成订单时间">
+          <el-input :value="parseTime(confirmForm.orderCreateEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="首付款支付时间">
+          <el-input :value="parseTime(confirmForm.firstPayEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="发货时间">
+          <el-input :value="parseTime(confirmForm.shipEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="收货时间">
+          <el-input :value="parseTime(confirmForm.receiveEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="尾款支付时间">
+          <el-input :value="parseTime(confirmForm.finalPayEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="完成时间">
+          <el-input :value="parseTime(confirmForm.completedEventTime) || '-'" disabled />
         </el-form-item>
         <el-form-item label="收货地址" prop="addressId">
           <el-select v-model="confirmForm.addressId" placeholder="请选择收货地址" filterable clearable>
@@ -448,25 +496,23 @@
         <el-form-item label="收款银行账户">
           <el-input :value="getBankAccountLabel(paymentConfirmForm.bankAccountId)" disabled />
         </el-form-item>
-        <el-form-item label="支付时间">
-          <el-date-picker
-            v-model="paymentConfirmForm.payTime"
-            type="datetime"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            format="yyyy-MM-dd HH:mm:ss"
-            placeholder="请选择支付时间"
-            clearable
-            style="width: 100%;"
-          />
+        <el-form-item label="生成订单时间">
+          <el-input :value="parseTime(paymentConfirmForm.orderCreateEventTime) || '-'" disabled />
         </el-form-item>
-        <el-form-item label="装货时间">
-          <el-input :value="parseTime(paymentConfirmForm.loadTime) || '-'" disabled />
+        <el-form-item label="首付款支付时间">
+          <el-input :value="parseTime(paymentConfirmForm.firstPayEventTime) || '-'" disabled />
         </el-form-item>
         <el-form-item label="发货时间">
-          <el-input :value="parseTime(paymentConfirmForm.shipTime) || '-'" disabled />
+          <el-input :value="parseTime(paymentConfirmForm.shipEventTime) || '-'" disabled />
         </el-form-item>
-        <el-form-item label="确认收货时间">
-          <el-input :value="parseTime(paymentConfirmForm.receiveTime) || '-'" disabled />
+        <el-form-item label="收货时间">
+          <el-input :value="parseTime(paymentConfirmForm.receiveEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="尾款支付时间">
+          <el-input :value="parseTime(paymentConfirmForm.finalPayEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="完成时间">
+          <el-input :value="parseTime(paymentConfirmForm.completedEventTime) || '-'" disabled />
         </el-form-item>
         <el-form-item label="送货信息">
           <el-table :data="paymentDeliveryInfoList" size="mini" border style="width: 100%;">
@@ -587,17 +633,17 @@
         <el-form-item label="支付渠道">
           <el-input :value="shipConfirmForm.payChannel || '-'" disabled />
         </el-form-item>
-        <el-form-item label="支付时间">
-          <el-input :value="parseTime(shipConfirmForm.payTime) || '-'" disabled />
-        </el-form-item>
-        <el-form-item label="装货时间">
-          <el-date-picker v-model="shipConfirmForm.loadTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择装货时间" style="width: 100%;"></el-date-picker>
+        <el-form-item label="首付款支付时间">
+          <el-input :value="parseTime(shipConfirmForm.firstPayEventTime) || '-'" disabled />
         </el-form-item>
         <el-form-item label="发货时间">
-          <el-date-picker v-model="shipConfirmForm.shipTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择发货时间" style="width: 100%;"></el-date-picker>
+          <el-input :value="parseTime(shipConfirmForm.shipEventTime) || '-'" disabled />
         </el-form-item>
-        <el-form-item label="确认收货时间">
-          <el-input :value="parseTime(shipConfirmForm.receiveTime) || '-'" disabled />
+        <el-form-item label="收货时间">
+          <el-input :value="parseTime(shipConfirmForm.receiveEventTime) || '-'" disabled />
+        </el-form-item>
+        <el-form-item label="尾款支付时间">
+          <el-input :value="parseTime(shipConfirmForm.finalPayEventTime) || '-'" disabled />
         </el-form-item>
         <el-form-item label="送货信息">
           <div style="margin-bottom: 8px;">
@@ -741,14 +787,20 @@
         <el-form-item label="支付渠道" prop="payChannel">
           <el-input v-model="form.payChannel" placeholder="请输入支付渠道" :disabled="viewModeOnly" />
         </el-form-item>
-        <el-form-item label="支付时间" prop="payTime">
-          <el-date-picker v-model="form.payTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择支付时间" :disabled="viewModeOnly"></el-date-picker>
+        <el-form-item label="竞拍时间" prop="bidEventTime">
+          <el-date-picker v-model="form.bidEventTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择竞拍时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
-        <el-form-item label="装货时间" prop="loadTime">
-          <el-date-picker v-model="form.loadTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择装货时间" :disabled="viewModeOnly"></el-date-picker>
+        <el-form-item label="竞拍成功时间" prop="bidSuccessEventTime">
+          <el-date-picker v-model="form.bidSuccessEventTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择竞拍成功时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
-        <el-form-item label="发货时间" prop="shipTime">
-          <el-date-picker v-model="form.shipTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择发货时间" :disabled="viewModeOnly"></el-date-picker>
+        <el-form-item label="生成订单时间" prop="orderCreateEventTime">
+          <el-date-picker v-model="form.orderCreateEventTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择生成订单时间" :disabled="viewModeOnly"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="首付款支付时间" prop="firstPayEventTime">
+          <el-date-picker v-model="form.firstPayEventTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择首付款支付时间" :disabled="viewModeOnly"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="发货时间" prop="shipEventTime">
+          <el-date-picker v-model="form.shipEventTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择发货时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="送货信息">
           <div style="margin-bottom: 8px;">
@@ -805,8 +857,14 @@
             </el-table-column>
           </el-table>
         </el-form-item>
-        <el-form-item label="确认收货时间" prop="receiveTime">
-          <el-date-picker v-model="form.receiveTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择确认收货时间" :disabled="viewModeOnly"></el-date-picker>
+        <el-form-item label="收货时间" prop="receiveEventTime">
+          <el-date-picker v-model="form.receiveEventTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择收货时间" :disabled="viewModeOnly"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="尾款支付时间" prop="finalPayEventTime">
+          <el-date-picker v-model="form.finalPayEventTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择尾款支付时间" :disabled="viewModeOnly"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="完成时间" prop="completedEventTime">
+          <el-date-picker v-model="form.completedEventTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择完成时间" :disabled="viewModeOnly"></el-date-picker>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" :disabled="viewModeOnly" />
@@ -946,11 +1004,15 @@ export default {
         bidQuantity: { label: '竞拍数量', visible: true },
         payStatus: { label: '支付状态', visible: true },
         payChannel: { label: '支付渠道', visible: true },
-        payTime: { label: '支付时间', visible: true },
-        loadTime: { label: '装货时间', visible: true },
-        shipTime: { label: '发货时间', visible: true },
+        bidEventTime: { label: '竞拍时间', visible: true },
+        bidSuccessEventTime: { label: '竞拍成功时间', visible: true },
+        orderCreateEventTime: { label: '生成订单时间', visible: true },
+        firstPayEventTime: { label: '首付款支付时间', visible: true },
+        shipEventTime: { label: '发货时间', visible: true },
         deliveryInfoIds: { label: '送货信息', visible: true },
-        receiveTime: { label: '确认收货时间', visible: true },
+        receiveEventTime: { label: '收货时间', visible: true },
+        finalPayEventTime: { label: '尾款支付时间', visible: true },
+        completedEventTime: { label: '完成时间', visible: true },
         remark: { label: '备注', visible: true },
         createBy: { label: '创建人', visible: true },
         createTime: { label: '创建时间', visible: true },
@@ -1104,11 +1166,15 @@ export default {
         bidQuantity: undefined,
         unitPrice: undefined,
         payChannel: undefined,
-        payTime: undefined,
-        loadTime: undefined,
-        shipTime: undefined,
+        bidEventTime: undefined,
+        bidSuccessEventTime: undefined,
+        orderCreateEventTime: undefined,
+        firstPayEventTime: undefined,
+        shipEventTime: undefined,
         deliveryInfoIds: undefined,
-        receiveTime: undefined
+        receiveEventTime: undefined,
+        finalPayEventTime: undefined,
+        completedEventTime: undefined
       }
       this.deliveryInfoList = []
       this.resetForm("form")
@@ -1526,7 +1592,8 @@ export default {
         bankAccountId: this.confirmForm.bankAccountId,
         deliveryInfoIds: this.confirmForm.deliveryInfoIds,
         remark: this.confirmForm.remark,
-        orderStatus: 'WAIT_PAY'
+        orderStatus: 'WAIT_PAY',
+        orderCreateEventTime: this.parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}')
       }
       updatePigOrder(payload).then(() => {
         this.$modal.msgSuccess('订单确认成功，状态已变更为待付款')
@@ -1556,11 +1623,13 @@ export default {
         remainingPaymentAmount: undefined,
         bankAccountId: undefined,
         payChannel: undefined,
-        payTime: undefined,
-        loadTime: undefined,
-        shipTime: undefined,
+        orderCreateEventTime: undefined,
+        firstPayEventTime: undefined,
+        shipEventTime: undefined,
+        receiveEventTime: undefined,
+        finalPayEventTime: undefined,
+        completedEventTime: undefined,
         deliveryInfoIds: undefined,
-        receiveTime: undefined,
         remark: undefined
       }
       this.paymentDeliveryInfoList = []
@@ -1609,7 +1678,9 @@ export default {
         id: this.paymentConfirmForm.id,
         payStatus: nextPayStatus,
         orderStatus: nextOrderStatus,
-        payTime: this.paymentConfirmForm.payTime,
+        firstPayEventTime: nextPayStatus === 'CONFIRMED_FIRST' ? this.parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}') : this.paymentConfirmForm.firstPayEventTime,
+        finalPayEventTime: nextPayStatus === 'CONFIRMED_FINAL' ? this.parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}') : this.paymentConfirmForm.finalPayEventTime,
+        completedEventTime: nextOrderStatus === 'COMPLETED' ? this.parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}') : this.paymentConfirmForm.completedEventTime,
         payChannel: this.paymentConfirmForm.payChannel,
         remark: this.paymentConfirmForm.remark
       }
@@ -1641,11 +1712,13 @@ export default {
         remainingPaymentAmount: undefined,
         bankAccountId: undefined,
         payChannel: undefined,
-        payTime: undefined,
-        loadTime: undefined,
-        shipTime: undefined,
+        orderCreateEventTime: undefined,
+        firstPayEventTime: undefined,
+        shipEventTime: undefined,
+        receiveEventTime: undefined,
+        finalPayEventTime: undefined,
+        completedEventTime: undefined,
         deliveryInfoIds: undefined,
-        receiveTime: undefined,
         remark: undefined
       }
       this.shipDeliveryInfoList = []
@@ -1678,11 +1751,10 @@ export default {
         freightAmount: this.shipConfirmForm.freightAmount,
         remainingPaymentAmount: this.shipConfirmForm.remainingPaymentAmount,
         bankAccountId: this.shipConfirmForm.bankAccountId,
-        loadTime: this.shipConfirmForm.loadTime,
-        shipTime: this.shipConfirmForm.shipTime,
         deliveryInfoIds: this.shipConfirmForm.deliveryInfoIds,
         remark: this.shipConfirmForm.remark,
-        orderStatus: 'WAIT_RECEIVE'
+        orderStatus: 'WAIT_RECEIVE',
+        shipEventTime: this.parseTime(new Date(), '{y}-{m}-{d} {h}:{i}:{s}')
       }
       updatePigOrder(payload).then(() => {
         this.$modal.msgSuccess('发货确认成功，订单状态已更新为待收货')

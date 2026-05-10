@@ -61,7 +61,7 @@ public class PigDashboardController extends BaseController
 
             pendingReceivableAmount = pendingReceivableAmount.add(calcPendingReceivable(order, status));
 
-            Date completedTime = order.getUpdateTime() != null ? order.getUpdateTime() : order.getReceiveTime();
+            Date completedTime = order.getCompletedEventTime() != null ? order.getCompletedEventTime() : order.getUpdateTime();
             if ("COMPLETED".equals(status) && completedTime != null && !completedTime.before(monthStart))
             {
                 monthlyCompletedIncome = monthlyCompletedIncome.add(safeAdd(order.getOrderAmount(), order.getFreightAmount()));

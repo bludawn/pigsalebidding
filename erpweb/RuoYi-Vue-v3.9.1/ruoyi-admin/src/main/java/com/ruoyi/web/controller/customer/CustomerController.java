@@ -834,7 +834,6 @@ public class CustomerController extends BaseController {
             result.success = false;
             return ok(result);
         }
-        order.setPayTime(new Date());
         order.setUpdateBy(String.valueOf(getUserId()));
         pigOrderService.updatePigOrder(order);
         result.success = true;
@@ -851,7 +850,6 @@ public class CustomerController extends BaseController {
             return ok(result);
         }
         order.setOrderStatus("WAIT_FINAL_PAY");
-        order.setReceiveTime(new Date());
         order.setReceiveEventTime(new Date());
         order.setUpdateBy(String.valueOf(getUserId()));
         pigOrderService.updatePigOrder(order);
@@ -1220,10 +1218,10 @@ public class CustomerController extends BaseController {
 
         timeline.add(buildTimelineNode("竞拍", formatDate(order.getBidEventTime()), null, true));
         timeline.add(buildTimelineNode("竞拍成功", formatDate(order.getBidSuccessEventTime()), null, true));
-        timeline.add(buildTimelineNode("生成订单", firstNotBlank(formatDate(order.getOrderCreateEventTime()), formatDate(order.getCreateTime())), null, true));
+        timeline.add(buildTimelineNode("生成订单", formatDate(order.getOrderCreateEventTime()), null, true));
         timeline.add(buildTimelineNode("首付款支付", formatDate(order.getFirstPayEventTime()), null, firstPayHappened));
-        timeline.add(buildTimelineNode("发货", firstNotBlank(formatDate(order.getShipEventTime()), formatDate(order.getShipTime())), null, shipHappened));
-        timeline.add(buildTimelineNode("收货", firstNotBlank(formatDate(order.getReceiveEventTime()), formatDate(order.getReceiveTime())), null, receiveHappened));
+        timeline.add(buildTimelineNode("发货", formatDate(order.getShipEventTime()), null, shipHappened));
+        timeline.add(buildTimelineNode("收货", formatDate(order.getReceiveEventTime()), null, receiveHappened));
         timeline.add(buildTimelineNode("尾款支付", formatDate(order.getFinalPayEventTime()), null, finalPayHappened));
         timeline.add(buildTimelineNode("完成", formatDate(order.getCompletedEventTime()), null, completedHappened));
         return timeline;
