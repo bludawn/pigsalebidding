@@ -489,16 +489,19 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
         <div className="bg-white rounded-custom p-4 mt-4 shadow-sm border border-slate-100">
           <h2 className="text-sm font-bold mb-3">订单状态</h2>
           <div className="space-y-3">
-            {detail.timeline.map((node, index) => (
-              <div key={`${node.label}-${index}`} className="flex items-start gap-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-industry-red mt-1.5" />
-                <div>
-                  <div className="text-xs font-bold text-slate-700">{node.label}</div>
-                  {node.time && <div className="text-[10px] text-slate-400 mt-0.5">{node.time}</div>}
-                  {node.desc && <div className="text-[10px] text-slate-500 mt-0.5">{node.desc}</div>}
+            {detail.timeline.map((node, index) => {
+              const happened = node.happened ?? Boolean(node.time);
+              return (
+                <div key={`${node.label}-${index}`} className="flex items-start gap-3">
+                  <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${happened ? 'bg-industry-red' : 'bg-slate-300'}`} />
+                  <div>
+                    <div className={`text-xs font-bold ${happened ? 'text-slate-700' : 'text-slate-400'}`}>{node.label}</div>
+                    {happened && <div className="text-[10px] text-slate-400 mt-0.5">{node.time || '--'}</div>}
+                    {node.desc && <div className="text-[10px] text-slate-500 mt-0.5">{node.desc}</div>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

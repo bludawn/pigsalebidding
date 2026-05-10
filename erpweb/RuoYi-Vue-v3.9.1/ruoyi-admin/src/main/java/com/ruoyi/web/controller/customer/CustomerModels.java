@@ -395,6 +395,7 @@ public class CustomerModels
         public String label;
         public String time;
         public String desc;
+        public Boolean happened;
     }
 
     public static class OrderDetailInfo

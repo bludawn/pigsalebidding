@@ -105,11 +105,15 @@
   - 收款银行账户id，int8，外键
   - 支付状态，字符串枚举值，'UNPAID' | 'WAIT_CONFIRM_FIRST' | 'CONFIRMED_FIRST' | 'WAIT_CONFIRM_FINAL' | 'CONFIRMED_FINAL'（默认值：'UNPAID'）
   - 支付渠道，字符串
-  - 支付时间，datetime
-  - 装货时间，datetime
-  - 发货时间，datetime
   - 送货信息id，字符串数组，逗号隔开
-  - 确认收货时间，datetime
+  - 竞拍时间（事件），datetime，竞拍 -> 竞拍成功 -> 生成订单 -> 首付款支付 -> 发货 -> 收货 -> 尾款支付 -> 完成
+  - 竞拍成功时间（事件），datetime
+  - 生成订单时间（事件），datetime
+  - 首付款支付时间（事件），datetime
+  - 发货时间（事件），datetime
+  - 收货时间（事件），datetime
+  - 尾款支付时间（事件），datetime
+  - 完成时间（事件），datetime
   - 其他审计字段
 10. 送货信息表
   - id，int8，自增唯一id

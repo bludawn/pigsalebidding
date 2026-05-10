@@ -131,6 +131,7 @@ export interface OrderTimelineNode {
   label: string;
   time?: string;
   desc?: string;
+  happened?: boolean;
 }
 
 /** 订单详情 */

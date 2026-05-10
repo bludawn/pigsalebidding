@@ -826,8 +826,10 @@ public class CustomerController extends BaseController {
         }
         if ("WAIT_FINAL_PAY".equalsIgnoreCase(order.getOrderStatus())) {
             order.setPayStatus("WAIT_CONFIRM_FINAL");
+            order.setFinalPayEventTime(new Date());
         } else if ("WAIT_PAY".equalsIgnoreCase(order.getOrderStatus())) {
             order.setPayStatus("WAIT_CONFIRM_FIRST");
+            order.setFirstPayEventTime(new Date());
         } else {
             result.success = false;
             return ok(result);
@@ -850,6 +852,7 @@ public class CustomerController extends BaseController {
         }
         order.setOrderStatus("WAIT_FINAL_PAY");
         order.setReceiveTime(new Date());
+        order.setReceiveEventTime(new Date());
         order.setUpdateBy(String.valueOf(getUserId()));
         pigOrderService.updatePigOrder(order);
         result.success = true;
@@ -1182,18 +1185,56 @@ public class CustomerController extends BaseController {
 
     private List<OrderTimelineNode> buildTimeline(PigOrder order) {
         List<OrderTimelineNode> timeline = new ArrayList<OrderTimelineNode>();
-        timeline.add(buildTimelineNode("下单", formatDate(order.getCreateTime()), null));
-        timeline.add(buildTimelineNode("支付", formatDate(order.getPayTime()), null));
-        timeline.add(buildTimelineNode("发货", formatDate(order.getShipTime()), null));
-        timeline.add(buildTimelineNode("收货", formatDate(order.getReceiveTime()), null));
+        String orderStatus = order.getOrderStatus();
+        String payStatus = order.getPayStatus();
+
+        boolean firstPayHappened = order.getFirstPayEventTime() != null
+            || "WAIT_SHIP".equalsIgnoreCase(orderStatus)
+            || "WAIT_RECEIVE".equalsIgnoreCase(orderStatus)
+            || "WAIT_FINAL_PAY".equalsIgnoreCase(orderStatus)
+            || "COMPLETED".equalsIgnoreCase(orderStatus)
+            || "WAIT_CONFIRM_FINAL".equalsIgnoreCase(payStatus)
+            || "CONFIRMED_FINAL".equalsIgnoreCase(payStatus)
+            || "CONFIRMED_FIRST".equalsIgnoreCase(payStatus);
+
+        boolean shipHappened = order.getShipEventTime() != null
+            || "WAIT_RECEIVE".equalsIgnoreCase(orderStatus)
+            || "WAIT_FINAL_PAY".equalsIgnoreCase(orderStatus)
+            || "COMPLETED".equalsIgnoreCase(orderStatus)
+            || "WAIT_CONFIRM_FINAL".equalsIgnoreCase(payStatus)
+            || "CONFIRMED_FINAL".equalsIgnoreCase(payStatus);
+
+        boolean receiveHappened = order.getReceiveEventTime() != null
+            || "WAIT_FINAL_PAY".equalsIgnoreCase(orderStatus)
+            || "COMPLETED".equalsIgnoreCase(orderStatus)
+            || "WAIT_CONFIRM_FINAL".equalsIgnoreCase(payStatus)
+            || "CONFIRMED_FINAL".equalsIgnoreCase(payStatus);
+
+        boolean finalPayHappened = order.getFinalPayEventTime() != null
+            || "WAIT_CONFIRM_FINAL".equalsIgnoreCase(payStatus)
+            || "CONFIRMED_FINAL".equalsIgnoreCase(payStatus)
+            || "COMPLETED".equalsIgnoreCase(orderStatus);
+
+        boolean completedHappened = order.getCompletedEventTime() != null
+            || "COMPLETED".equalsIgnoreCase(orderStatus);
+
+        timeline.add(buildTimelineNode("竞拍", formatDate(order.getBidEventTime()), null, true));
+        timeline.add(buildTimelineNode("竞拍成功", formatDate(order.getBidSuccessEventTime()), null, true));
+        timeline.add(buildTimelineNode("生成订单", firstNotBlank(formatDate(order.getOrderCreateEventTime()), formatDate(order.getCreateTime())), null, true));
+        timeline.add(buildTimelineNode("首付款支付", formatDate(order.getFirstPayEventTime()), null, firstPayHappened));
+        timeline.add(buildTimelineNode("发货", firstNotBlank(formatDate(order.getShipEventTime()), formatDate(order.getShipTime())), null, shipHappened));
+        timeline.add(buildTimelineNode("收货", firstNotBlank(formatDate(order.getReceiveEventTime()), formatDate(order.getReceiveTime())), null, receiveHappened));
+        timeline.add(buildTimelineNode("尾款支付", formatDate(order.getFinalPayEventTime()), null, finalPayHappened));
+        timeline.add(buildTimelineNode("完成", formatDate(order.getCompletedEventTime()), null, completedHappened));
         return timeline;
     }
 
-    private OrderTimelineNode buildTimelineNode(String label, String time, String desc) {
+    private OrderTimelineNode buildTimelineNode(String label, String time, String desc, Boolean happened) {
         OrderTimelineNode node = new OrderTimelineNode();
         node.label = label;
         node.time = time;
         node.desc = desc;
+        node.happened = happened;
         return node;
     }
 
@@ -1370,6 +1411,17 @@ public class CustomerController extends BaseController {
         return date != null ? DateUtils.parseDateToStr(DateUtils.YYYY_MM_DD_HH_MM_SS, date) : null;
     }
 
+    private String firstNotBlank(String... values) {
+        if (values == null || values.length == 0) {
+            return null;
+        }
+        for (String value : values) {
+            if (StringUtils.isNotEmpty(value)) {
+                return value;
+            }
+        }
+        return null;
+    }
 
     private String firstImageUrl(PigType pigType) {
         if (pigType == null || StringUtils.isEmpty(pigType.getPigMedia())) {

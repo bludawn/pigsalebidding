@@ -154,6 +154,7 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
         }
 
         PigOrder order = new PigOrder();
+        Date now = new Date();
         order.setOrderStatus("WAIT_CONFIRM");
         order.setOrderSource("BID");
         order.setEnterpriseId(bid.getEnterpriseId());
@@ -165,6 +166,9 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
         BigDecimal price = bid.getPrice() == null ? BigDecimal.ZERO : bid.getPrice();
         order.setUnitPrice(price);
         order.setBidQuantity(allocated);
+        order.setBidEventTime(bid.getBidTime());
+        order.setBidSuccessEventTime(now);
+        order.setOrderCreateEventTime(now);
         order.setCreateBy(String.valueOf(bid.getUserId()));
 
         pigOrderService.insertPigOrder(order);

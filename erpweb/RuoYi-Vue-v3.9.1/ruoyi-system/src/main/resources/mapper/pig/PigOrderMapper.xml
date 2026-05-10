@@ -31,6 +31,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="shipTime" column="f_shipTime" />
         <result property="deliveryInfoIds" column="f_deliveryInfoIds" />
         <result property="receiveTime" column="f_receiveTime" />
+        <result property="bidEventTime" column="f_bidEventTime" />
+        <result property="bidSuccessEventTime" column="f_bidSuccessEventTime" />
+        <result property="orderCreateEventTime" column="f_orderCreateEventTime" />
+        <result property="firstPayEventTime" column="f_firstPayEventTime" />
+        <result property="shipEventTime" column="f_shipEventTime" />
+        <result property="receiveEventTime" column="f_receiveEventTime" />
+        <result property="finalPayEventTime" column="f_finalPayEventTime" />
+        <result property="completedEventTime" column="f_completedEventTime" />
         <result property="createBy" column="f_creator" />
         <result property="createTime" column="f_createTime" />
         <result property="updateBy" column="f_updator" />
@@ -154,6 +162,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="shipTime != null">f_shipTime,</if>
 <if test="deliveryInfoIds != null and deliveryInfoIds != ''">f_deliveryInfoIds,</if>
 <if test="receiveTime != null">f_receiveTime,</if>
+<if test="bidEventTime != null">f_bidEventTime,</if>
+<if test="bidSuccessEventTime != null">f_bidSuccessEventTime,</if>
+<if test="orderCreateEventTime != null">f_orderCreateEventTime,</if>
+<if test="firstPayEventTime != null">f_firstPayEventTime,</if>
+<if test="shipEventTime != null">f_shipEventTime,</if>
+<if test="receiveEventTime != null">f_receiveEventTime,</if>
+<if test="finalPayEventTime != null">f_finalPayEventTime,</if>
+<if test="completedEventTime != null">f_completedEventTime,</if>
 <if test="createBy != null and createBy != ''">f_creator,</if>
 f_createTime
         ) values (
@@ -183,6 +199,14 @@ f_createTime
 <if test="shipTime != null">#{shipTime},</if>
 <if test="deliveryInfoIds != null and deliveryInfoIds != ''">#{deliveryInfoIds},</if>
 <if test="receiveTime != null">#{receiveTime},</if>
+<if test="bidEventTime != null">#{bidEventTime},</if>
+<if test="bidSuccessEventTime != null">#{bidSuccessEventTime},</if>
+<if test="orderCreateEventTime != null">#{orderCreateEventTime},</if>
+<if test="firstPayEventTime != null">#{firstPayEventTime},</if>
+<if test="shipEventTime != null">#{shipEventTime},</if>
+<if test="receiveEventTime != null">#{receiveEventTime},</if>
+<if test="finalPayEventTime != null">#{finalPayEventTime},</if>
+<if test="completedEventTime != null">#{completedEventTime},</if>
 <if test="createBy != null and createBy != ''">#{createBy},</if>
 sysdate()
         )
@@ -216,6 +240,14 @@ sysdate()
             <if test="shipTime != null">f_shipTime = #{shipTime},</if>
             <if test="deliveryInfoIds != null and deliveryInfoIds != ''">f_deliveryInfoIds = #{deliveryInfoIds},</if>
             <if test="receiveTime != null">f_receiveTime = #{receiveTime},</if>
+            <if test="bidEventTime != null">f_bidEventTime = #{bidEventTime},</if>
+            <if test="bidSuccessEventTime != null">f_bidSuccessEventTime = #{bidSuccessEventTime},</if>
+            <if test="orderCreateEventTime != null">f_orderCreateEventTime = #{orderCreateEventTime},</if>
+            <if test="firstPayEventTime != null">f_firstPayEventTime = #{firstPayEventTime},</if>
+            <if test="shipEventTime != null">f_shipEventTime = #{shipEventTime},</if>
+            <if test="receiveEventTime != null">f_receiveEventTime = #{receiveEventTime},</if>
+            <if test="finalPayEventTime != null">f_finalPayEventTime = #{finalPayEventTime},</if>
+            <if test="completedEventTime != null">f_completedEventTime = #{completedEventTime},</if>
             <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
             f_updateTime = sysdate()
         </set>

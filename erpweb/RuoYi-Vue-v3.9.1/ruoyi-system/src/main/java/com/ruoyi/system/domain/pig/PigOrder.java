@@ -125,6 +125,45 @@ public class PigOrder extends BaseEntity
     @Excel(name = "确认收货时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date receiveTime;
 
+    /** 竞拍时间（事件） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "竞拍时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date bidEventTime;
+
+    /** 竞拍成功时间（事件） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "竞拍成功时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date bidSuccessEventTime;
+
+    /** 生成订单时间（事件） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "生成订单时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date orderCreateEventTime;
+
+    /** 首付款支付时间（事件） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "首付款支付时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date firstPayEventTime;
+
+    /** 发货时间（事件） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "发货时间(事件)", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date shipEventTime;
+
+    /** 收货时间（事件） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "收货时间(事件)", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date receiveEventTime;
+
+    /** 尾款支付时间（事件） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "尾款支付时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date finalPayEventTime;
+
+    /** 完成时间（事件） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "完成时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date completedEventTime;
 
     public BigDecimal getUnitPrice() {
         return unitPrice;
@@ -414,6 +453,14 @@ public class PigOrder extends BaseEntity
             .append("shipTime", getShipTime())
             .append("deliveryInfoIds", getDeliveryInfoIds())
             .append("receiveTime", getReceiveTime())
+            .append("bidEventTime", getBidEventTime())
+            .append("bidSuccessEventTime", getBidSuccessEventTime())
+            .append("orderCreateEventTime", getOrderCreateEventTime())
+            .append("firstPayEventTime", getFirstPayEventTime())
+            .append("shipEventTime", getShipEventTime())
+            .append("receiveEventTime", getReceiveEventTime())
+            .append("finalPayEventTime", getFinalPayEventTime())
+            .append("completedEventTime", getCompletedEventTime())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())
