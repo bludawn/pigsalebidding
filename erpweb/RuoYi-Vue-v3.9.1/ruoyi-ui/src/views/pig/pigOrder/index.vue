@@ -521,7 +521,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitPaymentConfirm">确 认</el-button>
+        <el-button type="primary" @click="submitPaymentConfirm">{{ paymentConfirmForm.payStatus === 'WAIT_CONFIRM_FINAL' ? '已确认尾款' : '已确认首付款' }}</el-button>
         <el-button @click="cancelPaymentConfirm">取 消</el-button>
       </div>
     </el-dialog>
@@ -1591,10 +1591,16 @@ export default {
     },
     submitPaymentConfirm() {
       let nextPayStatus = ''
+      let nextOrderStatus = ''
+      let successMsg = ''
       if (this.paymentConfirmForm.payStatus === 'WAIT_CONFIRM_FINAL') {
         nextPayStatus = 'CONFIRMED_FINAL'
+        nextOrderStatus = 'COMPLETED'
+        successMsg = '尾款确认成功，订单状态已更新为已完成'
       } else if (this.paymentConfirmForm.payStatus === 'WAIT_CONFIRM_FIRST') {
         nextPayStatus = 'CONFIRMED_FIRST'
+        nextOrderStatus = 'WAIT_SHIP'
+        successMsg = '首付款确认成功，订单状态已更新为待发货'
       } else {
         this.$modal.msgWarning('当前支付状态不支持确认')
         return
@@ -1602,12 +1608,13 @@ export default {
       const payload = {
         id: this.paymentConfirmForm.id,
         payStatus: nextPayStatus,
+        orderStatus: nextOrderStatus,
         payTime: this.paymentConfirmForm.payTime,
         payChannel: this.paymentConfirmForm.payChannel,
         remark: this.paymentConfirmForm.remark
       }
       updatePigOrder(payload).then(() => {
-        this.$modal.msgSuccess('支付确认成功')
+        this.$modal.msgSuccess(successMsg)
         this.paymentConfirmOpen = false
         this.getList()
       })
