@@ -168,7 +168,6 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
         order.setBidQuantity(allocated);
         order.setBidEventTime(bid.getBidTime());
         order.setBidSuccessEventTime(now);
-        order.setOrderCreateEventTime(now);
         order.setCreateBy(String.valueOf(bid.getUserId()));
 
         pigOrderService.insertPigOrder(order);

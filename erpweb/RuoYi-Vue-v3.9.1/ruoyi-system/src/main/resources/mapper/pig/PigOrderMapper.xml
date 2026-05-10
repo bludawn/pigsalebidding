@@ -46,7 +46,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectPigOrderVo">
-        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_enterpriseId, f_bidProductId, f_userBidId, f_addressId, f_expectedDeliveryTime, f_remark, f_pigResourceId, f_orderAmount, f_totalWeight, f_unitPrice, f_firstPaymentAmount, f_freightAmount, f_remainingPaymentAmount, f_bankAccountId, f_bidQuantity, f_payStatus, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_enterpriseId, f_bidProductId, f_userBidId, f_addressId, f_expectedDeliveryTime, f_remark, f_pigResourceId, f_orderAmount, f_totalWeight, f_unitPrice, f_firstPaymentAmount, f_freightAmount, f_remainingPaymentAmount, f_bankAccountId, f_bidQuantity, f_payStatus, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_bidEventTime, f_bidSuccessEventTime, f_orderCreateEventTime, f_firstPayEventTime, f_shipEventTime, f_receiveEventTime, f_finalPayEventTime, f_completedEventTime, f_creator, f_createTime, f_updator, f_updateTime
         from t_order
     </sql>
 

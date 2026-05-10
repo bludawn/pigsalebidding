@@ -423,6 +423,88 @@ public class PigOrder extends BaseEntity
         return receiveTime;
     }
 
+
+    public void setBidEventTime(Date bidEventTime)
+    {
+        this.bidEventTime = bidEventTime;
+    }
+
+    public Date getBidEventTime()
+    {
+        return bidEventTime;
+    }
+
+    public void setBidSuccessEventTime(Date bidSuccessEventTime)
+    {
+        this.bidSuccessEventTime = bidSuccessEventTime;
+    }
+
+    public Date getBidSuccessEventTime()
+    {
+        return bidSuccessEventTime;
+    }
+
+    public void setOrderCreateEventTime(Date orderCreateEventTime)
+    {
+        this.orderCreateEventTime = orderCreateEventTime;
+    }
+
+    public Date getOrderCreateEventTime()
+    {
+        return orderCreateEventTime;
+    }
+
+    public void setFirstPayEventTime(Date firstPayEventTime)
+    {
+        this.firstPayEventTime = firstPayEventTime;
+    }
+
+    public Date getFirstPayEventTime()
+    {
+        return firstPayEventTime;
+    }
+
+    public void setShipEventTime(Date shipEventTime)
+    {
+        this.shipEventTime = shipEventTime;
+    }
+
+    public Date getShipEventTime()
+    {
+        return shipEventTime;
+    }
+
+    public void setReceiveEventTime(Date receiveEventTime)
+    {
+        this.receiveEventTime = receiveEventTime;
+    }
+
+    public Date getReceiveEventTime()
+    {
+        return receiveEventTime;
+    }
+
+    public void setFinalPayEventTime(Date finalPayEventTime)
+    {
+        this.finalPayEventTime = finalPayEventTime;
+    }
+
+    public Date getFinalPayEventTime()
+    {
+        return finalPayEventTime;
+    }
+
+    public void setCompletedEventTime(Date completedEventTime)
+    {
+        this.completedEventTime = completedEventTime;
+    }
+
+    public Date getCompletedEventTime()
+    {
+        return completedEventTime;
+    }
+
+
     @Override
     public String toString()
     {

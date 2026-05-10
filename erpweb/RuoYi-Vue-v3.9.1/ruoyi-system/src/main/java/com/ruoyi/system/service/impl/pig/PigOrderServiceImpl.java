@@ -39,9 +39,6 @@ public class PigOrderServiceImpl implements IPigOrderService
         if (StringUtils.isBlank(pigOrder.getPayStatus())) {
             pigOrder.setPayStatus("UNPAID");
         }
-        if (pigOrder.getOrderCreateEventTime() == null) {
-            pigOrder.setOrderCreateEventTime(new Date());
-        }
         return pigOrderMapper.insertPigOrder(pigOrder);
     }
 
@@ -58,6 +55,12 @@ public class PigOrderServiceImpl implements IPigOrderService
 
         if (dbOrder != null)
         {
+            if ("WAIT_PAY".equalsIgnoreCase(pigOrder.getOrderStatus())
+                && "WAIT_CONFIRM".equalsIgnoreCase(dbOrder.getOrderStatus())
+                && dbOrder.getOrderCreateEventTime() == null)
+            {
+                pigOrder.setOrderCreateEventTime(now);
+            }
             if ("WAIT_RECEIVE".equalsIgnoreCase(pigOrder.getOrderStatus()) && dbOrder.getShipEventTime() == null)
             {
                 pigOrder.setShipEventTime(now);
