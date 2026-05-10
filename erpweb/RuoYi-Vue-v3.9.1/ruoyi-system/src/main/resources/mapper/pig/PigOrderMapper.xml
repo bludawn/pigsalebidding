@@ -26,11 +26,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="bidQuantity" column="f_bidQuantity" />
         <result property="payStatus" column="f_payStatus" />
         <result property="payChannel" column="f_payChannel" />
-        <result property="payTime" column="f_payTime" />
-        <result property="loadTime" column="f_loadTime" />
-        <result property="shipTime" column="f_shipTime" />
         <result property="deliveryInfoIds" column="f_deliveryInfoIds" />
-        <result property="receiveTime" column="f_receiveTime" />
         <result property="bidEventTime" column="f_bidEventTime" />
         <result property="bidSuccessEventTime" column="f_bidSuccessEventTime" />
         <result property="orderCreateEventTime" column="f_orderCreateEventTime" />
@@ -46,7 +42,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectPigOrderVo">
-        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_enterpriseId, f_bidProductId, f_userBidId, f_addressId, f_expectedDeliveryTime, f_remark, f_pigResourceId, f_orderAmount, f_totalWeight, f_unitPrice, f_firstPaymentAmount, f_freightAmount, f_remainingPaymentAmount, f_bankAccountId, f_bidQuantity, f_payStatus, f_payChannel, f_payTime, f_loadTime, f_shipTime, f_deliveryInfoIds, f_receiveTime, f_bidEventTime, f_bidSuccessEventTime, f_orderCreateEventTime, f_firstPayEventTime, f_shipEventTime, f_receiveEventTime, f_finalPayEventTime, f_completedEventTime, f_creator, f_createTime, f_updator, f_updateTime
+        select f_id, f_orderNo, f_orderStatus, f_orderSource, f_enterpriseId, f_bidProductId, f_userBidId, f_addressId, f_expectedDeliveryTime, f_remark, f_pigResourceId, f_orderAmount, f_totalWeight, f_unitPrice, f_firstPaymentAmount, f_freightAmount, f_remainingPaymentAmount, f_bankAccountId, f_bidQuantity, f_payStatus, f_payChannel, f_deliveryInfoIds, f_bidEventTime, f_bidSuccessEventTime, f_orderCreateEventTime, f_firstPayEventTime, f_shipEventTime, f_receiveEventTime, f_finalPayEventTime, f_completedEventTime, f_creator, f_createTime, f_updator, f_updateTime
         from t_order
     </sql>
 
@@ -104,20 +100,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="payChannel != null and payChannel != ''">
                 AND f_payChannel like concat('%', #{payChannel}, '%')
             </if>
-            <if test="payTime != null">
-                AND f_payTime = #{payTime}
-            </if>
-            <if test="loadTime != null">
-                AND f_loadTime = #{loadTime}
-            </if>
-            <if test="shipTime != null">
-                AND f_shipTime = #{shipTime}
-            </if>
             <if test="deliveryInfoIds != null and deliveryInfoIds != ''">
                 AND f_deliveryInfoIds like concat('%', #{deliveryInfoIds}, '%')
-            </if>
-            <if test="receiveTime != null">
-                AND f_receiveTime = #{receiveTime}
             </if>
         </where>
         order by f_id desc
@@ -157,11 +141,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <if test="bidQuantity != null">f_bidQuantity,</if>
 <if test="payStatus != null and payStatus != ''">f_payStatus,</if>
 <if test="payChannel != null and payChannel != ''">f_payChannel,</if>
-<if test="payTime != null">f_payTime,</if>
-<if test="loadTime != null">f_loadTime,</if>
-<if test="shipTime != null">f_shipTime,</if>
 <if test="deliveryInfoIds != null and deliveryInfoIds != ''">f_deliveryInfoIds,</if>
-<if test="receiveTime != null">f_receiveTime,</if>
 <if test="bidEventTime != null">f_bidEventTime,</if>
 <if test="bidSuccessEventTime != null">f_bidSuccessEventTime,</if>
 <if test="orderCreateEventTime != null">f_orderCreateEventTime,</if>
@@ -194,11 +174,7 @@ f_createTime
 <if test="bidQuantity != null">#{bidQuantity},</if>
 <if test="payStatus != null and payStatus != ''">#{payStatus},</if>
 <if test="payChannel != null and payChannel != ''">#{payChannel},</if>
-<if test="payTime != null">#{payTime},</if>
-<if test="loadTime != null">#{loadTime},</if>
-<if test="shipTime != null">#{shipTime},</if>
 <if test="deliveryInfoIds != null and deliveryInfoIds != ''">#{deliveryInfoIds},</if>
-<if test="receiveTime != null">#{receiveTime},</if>
 <if test="bidEventTime != null">#{bidEventTime},</if>
 <if test="bidSuccessEventTime != null">#{bidSuccessEventTime},</if>
 <if test="orderCreateEventTime != null">#{orderCreateEventTime},</if>
@@ -235,11 +211,7 @@ sysdate()
             <if test="bidQuantity != null">f_bidQuantity = #{bidQuantity},</if>
             <if test="payStatus != null and payStatus != ''">f_payStatus = #{payStatus},</if>
             <if test="payChannel != null and payChannel != ''">f_payChannel = #{payChannel},</if>
-            <if test="payTime != null">f_payTime = #{payTime},</if>
-            <if test="loadTime != null">f_loadTime = #{loadTime},</if>
-            <if test="shipTime != null">f_shipTime = #{shipTime},</if>
             <if test="deliveryInfoIds != null and deliveryInfoIds != ''">f_deliveryInfoIds = #{deliveryInfoIds},</if>
-            <if test="receiveTime != null">f_receiveTime = #{receiveTime},</if>
             <if test="bidEventTime != null">f_bidEventTime = #{bidEventTime},</if>
             <if test="bidSuccessEventTime != null">f_bidSuccessEventTime = #{bidSuccessEventTime},</if>
             <if test="orderCreateEventTime != null">f_orderCreateEventTime = #{orderCreateEventTime},</if>

@@ -101,29 +101,9 @@ public class PigOrder extends BaseEntity
     @Excel(name = "支付渠道")
     private String payChannel;
 
-    /** 支付时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Excel(name = "支付时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
-    private Date payTime;
-
-    /** 装货时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Excel(name = "装货时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
-    private Date loadTime;
-
-    /** 发货时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Excel(name = "发货时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
-    private Date shipTime;
-
     /** 送货信息id数组 */
     @Excel(name = "送货信息id数组")
     private String deliveryInfoIds;
-
-    /** 确认收货时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @Excel(name = "确认收货时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
-    private Date receiveTime;
 
     /** 竞拍时间（事件） */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -373,36 +353,6 @@ public class PigOrder extends BaseEntity
         return payChannel;
     }
 
-    public void setPayTime(Date payTime)
-    {
-        this.payTime = payTime;
-    }
-
-    public Date getPayTime()
-    {
-        return payTime;
-    }
-
-    public void setLoadTime(Date loadTime)
-    {
-        this.loadTime = loadTime;
-    }
-
-    public Date getLoadTime()
-    {
-        return loadTime;
-    }
-
-    public void setShipTime(Date shipTime)
-    {
-        this.shipTime = shipTime;
-    }
-
-    public Date getShipTime()
-    {
-        return shipTime;
-    }
-
     public void setDeliveryInfoIds(String deliveryInfoIds)
     {
         this.deliveryInfoIds = deliveryInfoIds;
@@ -411,16 +361,6 @@ public class PigOrder extends BaseEntity
     public String getDeliveryInfoIds()
     {
         return deliveryInfoIds;
-    }
-
-    public void setReceiveTime(Date receiveTime)
-    {
-        this.receiveTime = receiveTime;
-    }
-
-    public Date getReceiveTime()
-    {
-        return receiveTime;
     }
 
 
@@ -530,11 +470,7 @@ public class PigOrder extends BaseEntity
             .append("bidQuantity", getBidQuantity())
             .append("payStatus", getPayStatus())
             .append("payChannel", getPayChannel())
-            .append("payTime", getPayTime())
-            .append("loadTime", getLoadTime())
-            .append("shipTime", getShipTime())
             .append("deliveryInfoIds", getDeliveryInfoIds())
-            .append("receiveTime", getReceiveTime())
             .append("bidEventTime", getBidEventTime())
             .append("bidSuccessEventTime", getBidSuccessEventTime())
             .append("orderCreateEventTime", getOrderCreateEventTime())
