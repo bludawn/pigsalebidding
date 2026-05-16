@@ -169,15 +169,9 @@ const App: React.FC = () => {
 
     return (
       <div className={`flex-1 ${currentRoute === 'tabs' ? '' : 'hidden'}`}>
-        <div className={activeTab === 'home' ? 'block' : 'hidden'}>
-          <HomeView onNavigate={navigate} />
-        </div>
-        <div className={activeTab === 'message' ? 'block' : 'hidden'}>
-          <MessageView onNavigate={navigate} />
-        </div>
-        <div className={activeTab === 'profile' ? 'block' : 'hidden'}>
-          <ProfileView onNavigate={navigate} />
-        </div>
+        {activeTab === 'home' && <HomeView onNavigate={navigate} />}
+        {activeTab === 'message' && <MessageView onNavigate={navigate} />}
+        {activeTab === 'profile' && <ProfileView onNavigate={navigate} />}
       </div>
     );
   };

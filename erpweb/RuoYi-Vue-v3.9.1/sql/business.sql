@@ -284,6 +284,32 @@ CREATE TABLE t_bankAccount (
   PRIMARY KEY (f_id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='银行账号表';
 
+DROP TABLE IF EXISTS t_customerNotice;
+CREATE TABLE t_customerNotice (
+  f_id bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  f_userId bigint(20) DEFAULT NULL COMMENT '接收用户id',
+  f_bizType varchar(32) DEFAULT NULL COMMENT '业务类型',
+  f_eventType varchar(32) DEFAULT NULL COMMENT '事件类型',
+  f_title varchar(100) DEFAULT NULL COMMENT '通知标题',
+  f_content varchar(500) DEFAULT NULL COMMENT '通知内容',
+  f_targetType varchar(32) DEFAULT NULL COMMENT '跳转目标类型',
+  f_targetId bigint(20) DEFAULT NULL COMMENT '跳转目标id',
+  f_targetRoute varchar(32) DEFAULT NULL COMMENT '跳转路由标识',
+  f_payload text COMMENT '扩展数据json',
+  f_readStatus tinyint(1) DEFAULT 0 COMMENT '是否已读：0未读 1已读',
+  f_readTime datetime COMMENT '阅读时间',
+  f_sourceEventId varchar(64) DEFAULT NULL COMMENT '来源事件唯一标识',
+  f_isDeleted tinyint(1) DEFAULT 0 COMMENT '是否删除：0否 1是',
+  f_creator varchar(64) DEFAULT '' COMMENT '创建人',
+  f_createTime datetime COMMENT '创建时间',
+  f_updator varchar(64) DEFAULT '' COMMENT '更新人',
+  f_updateTime datetime COMMENT '更新时间',
+  PRIMARY KEY (f_id),
+  UNIQUE KEY uk_source_event (f_sourceEventId),
+  KEY idx_user_read_time (f_userId, f_readStatus, f_createTime),
+  KEY idx_user_biz_time (f_userId, f_bizType, f_createTime)
+) ENGINE=InnoDB AUTO_INCREMENT=1 COMMENT='客户端通知中心表';
+
 DROP TABLE IF EXISTS t_businessMessage;
 CREATE TABLE t_businessMessage (
   f_id bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',

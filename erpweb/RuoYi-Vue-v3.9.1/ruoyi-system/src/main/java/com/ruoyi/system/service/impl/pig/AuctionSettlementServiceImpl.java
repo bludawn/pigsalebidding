@@ -8,14 +8,12 @@ import java.util.Set;
 import java.util.TimerTask;
 
 import com.ruoyi.system.manager.AsyncManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.domain.pig.BidProduct;
-import com.ruoyi.system.domain.pig.BusinessMessage;
+import com.ruoyi.system.domain.pig.CustomerNotice;
 import com.ruoyi.system.domain.pig.PigOrder;
 import com.ruoyi.system.domain.pig.UserBid;
 import com.ruoyi.system.domain.pig.UserBidInfo;
@@ -23,7 +21,7 @@ import com.ruoyi.system.mapper.pig.BidProductMapper;
 import com.ruoyi.system.mapper.pig.PigOrderMapper;
 import com.ruoyi.system.mapper.pig.UserBidMapper;
 import com.ruoyi.system.service.pig.IAuctionSettlementService;
-import com.ruoyi.system.service.pig.IBusinessMessageService;
+import com.ruoyi.system.service.pig.ICustomerNoticeService;
 import com.ruoyi.system.service.pig.IPigOrderService;
 import com.ruoyi.system.service.pig.IUserBidInfoService;
 import com.ruoyi.system.service.pig.IUserBidService;
@@ -36,7 +34,6 @@ import com.ruoyi.system.service.pig.IUserBidService;
 @Service
 public class AuctionSettlementServiceImpl implements IAuctionSettlementService
 {
-    private static final Logger log = LoggerFactory.getLogger(AuctionSettlementServiceImpl.class);
 
     @Autowired
     private BidProductMapper bidProductMapper;
@@ -57,7 +54,7 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
     private IPigOrderService pigOrderService;
 
     @Autowired
-    private IBusinessMessageService businessMessageService;
+    private ICustomerNoticeService customerNoticeService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -236,9 +233,7 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
             @Override
             public void run()
             {
-                String content = buildSuccessMessage(bid, product, allocated);
-                sendSiteMessage(bid.getUserId(), "BID_SUCCESS", content);
-                sendWeChatMessage(bid.getUserId(), content);
+                createBidNotice(bid, product, "BID_SUCCESS", "竞拍成功通知", buildSuccessMessage(bid, product, allocated));
             }
         });
     }
@@ -250,11 +245,32 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
             @Override
             public void run()
             {
-                String content = buildFailedMessage(product);
-                sendSiteMessage(bid.getUserId(), "BID_FAILED", content);
-                sendWeChatMessage(bid.getUserId(), content);
+                createBidNotice(bid, product, "BID_FAILED", "竞拍失败通知", buildFailedMessage(product));
             }
         });
+    }
+
+    private void createBidNotice(UserBid bid, BidProduct product, String eventType, String title, String content)
+    {
+        if (bid == null || bid.getUserId() == null || product == null || product.getId() == null)
+        {
+            return;
+        }
+        CustomerNotice notice = new CustomerNotice();
+        notice.setUserId(bid.getUserId());
+        notice.setBizType("BID");
+        notice.setEventType(eventType);
+        notice.setTitle(title);
+        notice.setContent(content);
+        notice.setTargetType("AUCTION");
+        notice.setTargetId(product.getId());
+        notice.setTargetRoute("auction-detail");
+        notice.setPayload(buildBidPayload(product));
+        notice.setReadStatus(0);
+        notice.setIsDeleted(0);
+        notice.setSourceEventId(eventType + "_" + bid.getId());
+        notice.setCreateBy("system");
+        customerNoticeService.createNoticeIfAbsent(notice);
     }
 
     private String buildSuccessMessage(UserBid bid, BidProduct product, int allocated)
@@ -271,34 +287,9 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
         return "竞拍失败，商品" + code + "未获得订单。";
     }
 
-    private void sendSiteMessage(Long userId, String type, String content)
+    private String buildBidPayload(BidProduct product)
     {
-        if (userId == null)
-        {
-            return;
-        }
-        BusinessMessage message = new BusinessMessage();
-        message.setUserId(userId);
-        message.setMessageType(type);
-        message.setMessageContent(content);
-        message.setIsRead(0);
-        message.setCreateBy("system");
-        businessMessageService.insertBusinessMessage(message);
-    }
-
-    private void sendWeChatMessage(Long userId, String content)
-    {
-        if (userId == null)
-        {
-            return;
-        }
-        BusinessMessage message = new BusinessMessage();
-        message.setUserId(userId);
-        message.setMessageType("WECHAT");
-        message.setMessageContent(content);
-        message.setIsRead(0);
-        message.setCreateBy("system");
-        businessMessageService.insertBusinessMessage(message);
-        log.info("[WeChat] send placeholder message to userId={}, content={}", userId, content);
+        String code = product.getBidProductCode() == null ? "" : product.getBidProductCode();
+        return "{\"auctionId\":" + product.getId() + ",\"bidProductCode\":\"" + code + "\"}";
     }
 }

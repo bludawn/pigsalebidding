@@ -1,80 +1,90 @@
-
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { getNoticeList, readAllNotices, readNotice } from '../AppApi';
+import { AuctionItem, NoticeItem } from '../types';
 
 interface MessageListProps {
-  params: { type: string; title: string };
+  params: { bizType: 'BID' | 'ORDER'; title: string };
   onBack: () => void;
   onNavigate: (route: string, params?: any) => void;
 }
 
 const MessageList: React.FC<MessageListProps> = ({ params, onBack, onNavigate }) => {
-  const renderList = () => {
-    switch(params.type) {
-      case 'product':
-        return (
-          <div className="p-4 space-y-4">
-            <MessageCard 
-              type="竞价失败"
-              time="昨天 15:44"
-              content={{
-                场次: '温氏现代养殖场 02',
-                体重: '105-125kg',
-                品种: '三元 A',
-                竞价数量: '200头',
-                单价: '¥16.50/kg',
-                提示: '很遗憾，您的报价未能中标。建议关注同场次其他货源。'
-              }}
-            />
-            <MessageCard 
-              type="商品猪评价提醒"
-              time="2024-05-12"
-              content={{
-                订单状态: '已签收',
-                评价奖励: '评价立得10积分',
-                奖励说明: '积分可用于竞价保证金抵扣'
-              }}
-              hasAction
-              onAction={() => alert('跳转成功！已到订单详情')}
-            />
-          </div>
-        );
-      case 'payment':
-        return (
-          <div className="p-4 space-y-4">
-            <MessageCard 
-              type="账户余额动账通知"
-              time="3天前 09:20"
-              hasRedDot
-              content={{
-                动账时间: '2024-05-10 09:15',
-                交易类型: '商品猪支出',
-                交易金额: '-¥345,200.00',
-                提示: '点击查看交易详情'
-              }}
-              hasAction
-              onAction={() => onNavigate('payment-detail')}
-            />
-          </div>
-        );
-      case 'mall':
-        return (
-          <div className="p-4 space-y-4">
-             <MessageCard 
-              type="报单状态变更通知"
-              time="2024-05-08"
-              hasRedDot
-              content={{
-                报单类型: '商品猪',
-                报单编号: 'BD202405080012',
-                状态变更: '匹配成功',
-                提示: '点击查看匹配详情'
-              }}
-              hasAction
-              onAction={() => onNavigate('match-detail')}
-            />
-          </div>
-        );
+  const [loading, setLoading] = useState(false);
+  const [records, setRecords] = useState<NoticeItem[]>([]);
+
+  const unreadCount = useMemo(() => records.filter(item => (item.readStatus || 0) === 0).length, [records]);
+
+  const load = async () => {
+    setLoading(true);
+    const res = await getNoticeList({
+      current: 1,
+      size: 100,
+      searchCount: true,
+      bizType: params.bizType,
+    });
+    if (res.errcode === 0 && res.data) {
+      setRecords(res.data.records || []);
     }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+  }, [params.bizType]);
+
+  const handleReadAll = async () => {
+    await readAllNotices({ bizType: params.bizType });
+    setRecords(prev => prev.map(item => ({ ...item, readStatus: 1 })));
+  };
+
+  const buildAuctionParams = (notice: NoticeItem): AuctionItem => {
+    const fallbackTitle = notice.title || '竞拍详情';
+    return {
+      id: notice.targetId || '',
+      farmId: '',
+      farmName: '',
+      farmIcon: '',
+      breed: fallbackTitle,
+      quantity: 0,
+      weightRange: '',
+      tags: [],
+      startingPrice: 0,
+      startingCount: 0,
+      endTime: new Date(),
+      imageUrl: '',
+      bidStatus: 'ENDED',
+      bidStartTime: '',
+      customerBidStatus: 'NO_BID',
+    };
+  };
+
+  const jumpByNotice = (notice: NoticeItem) => {
+    if (notice.targetRoute === 'order-detail' && notice.targetId) {
+      onNavigate('order-detail', { orderId: notice.targetId });
+      return;
+    }
+    if (notice.targetRoute === 'auction-detail' && notice.targetId) {
+      onNavigate('auction-detail', buildAuctionParams(notice));
+      return;
+    }
+    window.alert('目标内容不存在或已下线');
+  };
+
+  const handleOpen = async (notice: NoticeItem) => {
+    if ((notice.readStatus || 0) === 0) {
+      await readNotice({ noticeId: notice.noticeId });
+      setRecords(prev => prev.map(item => item.noticeId === notice.noticeId ? { ...item, readStatus: 1 } : item));
+    }
+    jumpByNotice(notice);
+  };
+
+  const eventLabel = (eventType?: string) => {
+    if (eventType === 'BID_SUCCESS') return '竞拍成功';
+    if (eventType === 'BID_FAILED') return '竞拍失败';
+    if (eventType === 'ORDER_CREATED') return '订单生成';
+    if (eventType === 'ORDER_SHIPPED') return '订单发货';
+    if (eventType === 'ORDER_COMPLETED') return '订单完成';
+    return '通知';
   };
 
   return (
@@ -84,40 +94,41 @@ const MessageList: React.FC<MessageListProps> = ({ params, onBack, onNavigate })
           <svg className="w-5 h-5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
         </button>
         <h1 className="flex-1 text-center text-sm font-bold">{params.title}</h1>
+        <button onClick={handleReadAll} className="absolute right-4 text-xs text-industry-red" disabled={unreadCount === 0}>
+          全部已读
+        </button>
       </div>
-      {renderList()}
+
+      {loading && <div className="p-6 text-center text-slate-400 text-sm">加载中...</div>}
+
+      {!loading && records.length === 0 && (
+        <div className="p-10 text-center text-slate-400 text-sm">暂无通知</div>
+      )}
+
+      {!loading && records.length > 0 && (
+        <div className="p-4 space-y-3">
+          {records.map(item => (
+            <button
+              key={item.noticeId}
+              onClick={() => handleOpen(item)}
+              className="w-full text-left bg-white rounded-custom border border-slate-100 p-4 shadow-sm active:bg-slate-50"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-800">{eventLabel(item.eventType)}</span>
+                  {(item.readStatus || 0) === 0 && <span className="w-1.5 h-1.5 rounded-full bg-industry-red" />}
+                </div>
+                <span className="text-[10px] text-slate-400">{item.createTime || '-'}</span>
+              </div>
+              <div className="text-sm font-semibold text-slate-800 mb-1">{item.title}</div>
+              <div className="text-xs text-slate-500 leading-5">{item.content}</div>
+              <div className="mt-3 text-xs text-industry-red font-bold">点击查看详情</div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
-
-const MessageCard: React.FC<{ type: string, time: string, content: any, hasAction?: boolean, onAction?: () => void, hasRedDot?: boolean }> = ({ type, time, content, hasAction, onAction, hasRedDot }) => (
-  <div className="bg-white rounded-custom border border-slate-100 overflow-hidden shadow-sm">
-    <div className="px-4 py-3 flex justify-between items-center border-b border-slate-50">
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs font-bold text-slate-800">{type}</span>
-        {hasRedDot && <div className="w-1.5 h-1.5 bg-industry-red rounded-full"></div>}
-      </div>
-      <span className="text-[10px] text-slate-400">{time}</span>
-    </div>
-    <div className="p-4 space-y-2">
-      {Object.entries(content).map(([key, value]: [string, any]) => (
-        <div key={key} className="flex justify-between items-start">
-          <span className="text-[11px] text-slate-400 min-w-[60px]">{key}</span>
-          <span className={`text-[11px] font-medium text-right flex-1 ${key.includes('金额') ? 'text-industry-red font-bold' : 'text-slate-700'}`}>
-            {value}
-          </span>
-        </div>
-      ))}
-    </div>
-    {hasAction && (
-      <button 
-        onClick={onAction}
-        className="w-full py-2.5 bg-slate-50 border-t border-slate-100 text-xs text-industry-red font-bold active:bg-slate-100 transition-colors"
-      >
-        查看详情
-      </button>
-    )}
-  </div>
-);
 
 export default MessageList;

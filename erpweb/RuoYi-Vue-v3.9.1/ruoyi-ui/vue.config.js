@@ -9,7 +9,7 @@ const CompressionPlugin = require('compression-webpack-plugin')
 
 const name = process.env.VUE_APP_TITLE || '生猪竞拍管理系统' // 网页标题
 
-const baseUrl = 'http://localhost:8090' // 后端接口
+const baseUrl = process.env.VUE_APP_FILE_BASE_URL || 'http://localhost:8090' // 后端接口
 
 const port = process.env.port || process.env.npm_config_port || 80 // 端口
 

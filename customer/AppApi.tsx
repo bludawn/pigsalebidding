@@ -18,6 +18,8 @@ import {
   MyBidItem,
   MyBidStatus,
   MyBidStatusCounts,
+  NoticeItem,
+  NoticeUnreadCount,
   OrderCounts,
   OrderDetailInfo,
   OrderListItem,
@@ -610,6 +612,29 @@ export function getTransactionList(params: ListRequestParams): Promise<ApiRespon
   isPositive: boolean;
 }>>> {
   return request('/v1/weixincustomer/getTransactionList', params);
+}
+
+// ============ 通知相关接口 ============
+
+export interface NoticeListParams extends ListRequestParams {
+  bizType?: 'BID' | 'ORDER';
+  readStatus?: number;
+}
+
+export function getNoticeList(params: NoticeListParams): Promise<ApiResponse<ListResponseData<NoticeItem>>> {
+  return request<ListResponseData<NoticeItem>>('/v1/weixincustomer/notice/list', params);
+}
+
+export function getNoticeUnreadCount(): Promise<ApiResponse<NoticeUnreadCount>> {
+  return request<NoticeUnreadCount>('/v1/weixincustomer/notice/unreadCount');
+}
+
+export function readNotice(params: { noticeId: string }): Promise<ApiResponse<{ success: boolean }>> {
+  return request<{ success: boolean }>('/v1/weixincustomer/notice/read', params);
+}
+
+export function readAllNotices(params?: { bizType?: 'BID' | 'ORDER' }): Promise<ApiResponse<{ success: boolean }>> {
+  return request<{ success: boolean }>('/v1/weixincustomer/notice/readAll', params || {});
 }
 
 // ============ 订单相关接口 ============

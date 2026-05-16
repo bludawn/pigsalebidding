@@ -289,6 +289,36 @@ export interface RegionItem {
   children?: RegionItem[];
 }
 
+export type NoticeBizType = 'BID' | 'ORDER';
+
+export type NoticeEventType =
+  | 'BID_SUCCESS'
+  | 'BID_FAILED'
+  | 'ORDER_CREATED'
+  | 'ORDER_SHIPPED'
+  | 'ORDER_COMPLETED';
+
+export interface NoticeItem {
+  noticeId: string;
+  bizType: NoticeBizType;
+  eventType: NoticeEventType;
+  title: string;
+  content: string;
+  targetType?: 'AUCTION' | 'ORDER';
+  targetId?: string;
+  targetRoute?: 'auction-detail' | 'order-detail' | string;
+  payload?: string;
+  readStatus: number;
+  readTime?: string;
+  createTime?: string;
+}
+
+export interface NoticeUnreadCount {
+  totalUnread: number;
+  bidUnread: number;
+  orderUnread: number;
+}
+
 export interface Message {
   id: string;
   type: 'product' | 'payment' | 'mall';

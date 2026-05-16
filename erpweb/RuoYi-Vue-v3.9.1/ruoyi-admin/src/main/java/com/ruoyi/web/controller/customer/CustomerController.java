@@ -35,6 +35,7 @@ import com.ruoyi.framework.config.ServerConfig;
 import com.ruoyi.system.domain.pig.Address;
 import com.ruoyi.system.domain.pig.BankAccount;
 import com.ruoyi.system.domain.pig.BidProduct;
+import com.ruoyi.system.domain.pig.CustomerNotice;
 import com.ruoyi.system.domain.pig.DeliveryInfo;
 import com.ruoyi.system.domain.pig.Enterprise;
 import com.ruoyi.system.domain.pig.PigOrder;
@@ -99,6 +100,9 @@ public class CustomerController extends BaseController {
 
     @Autowired
     private IBankAccountService bankAccountService;
+
+    @Autowired
+    private ICustomerNoticeService customerNoticeService;
 
     @Autowired
     private ServerConfig serverConfig;
@@ -857,6 +861,63 @@ public class CustomerController extends BaseController {
         return ok(result);
     }
 
+    @PostMapping("/notice/list")
+    public CustomerApiResult<ListResponseData<NoticeItem>> getNoticeList(@RequestBody(required = false) NoticeListRequest request)
+    {
+        int current = getPageCurrent(request);
+        int size = getPageSize(request);
+        PageHelper.startPage(current, size);
+        CustomerNotice query = new CustomerNotice();
+        query.setUserId(getUserId());
+        query.setIsDeleted(0);
+        if (request != null && StringUtils.isNotEmpty(request.bizType))
+        {
+            query.setBizType(request.bizType);
+        }
+        if (request != null && request.readStatus != null)
+        {
+            query.setReadStatus(request.readStatus);
+        }
+        List<CustomerNotice> list = customerNoticeService.selectCustomerNoticeList(query);
+        PageInfo<CustomerNotice> pageInfo = new PageInfo<CustomerNotice>(list);
+        List<NoticeItem> records = list.stream().map(this::buildNoticeItem).collect(Collectors.toList());
+        return ok(buildPage(records, pageInfo, current, size));
+    }
+
+    @PostMapping("/notice/unreadCount")
+    public CustomerApiResult<NoticeUnreadCount> getNoticeUnreadCount()
+    {
+        NoticeUnreadCount count = new NoticeUnreadCount();
+        count.totalUnread = customerNoticeService.countUnreadByUserId(getUserId());
+        count.bidUnread = customerNoticeService.countUnreadByUserIdAndBizType(getUserId(), "BID");
+        count.orderUnread = customerNoticeService.countUnreadByUserIdAndBizType(getUserId(), "ORDER");
+        return ok(count);
+    }
+
+    @PostMapping("/notice/read")
+    public CustomerApiResult<SimpleResult> readNotice(@RequestBody NoticeReadRequest request)
+    {
+        SimpleResult result = new SimpleResult();
+        if (request == null || StringUtils.isEmpty(request.noticeId))
+        {
+            result.success = false;
+            return ok(result);
+        }
+        int rows = customerNoticeService.markReadByIdAndUserId(toLong(request.noticeId), getUserId(), String.valueOf(getUserId()));
+        result.success = rows > 0;
+        return ok(result);
+    }
+
+    @PostMapping("/notice/readAll")
+    public CustomerApiResult<SimpleResult> readAllNotices(@RequestBody(required = false) NoticeReadAllRequest request)
+    {
+        String bizType = request == null ? null : request.bizType;
+        customerNoticeService.markAllReadByUserId(getUserId(), bizType, String.valueOf(getUserId()));
+        SimpleResult result = new SimpleResult();
+        result.success = true;
+        return ok(result);
+    }
+
     protected <T> CustomerApiResult<T> ok(T data) {
         return CustomerApiResult.success(data);
     }
@@ -932,6 +993,28 @@ public class CustomerController extends BaseController {
         item.latitude = address.getLatitude();
         item.isDefault = address.getIsDefault() != null && address.getIsDefault() == 1;
         item.updatedAt = formatDate(address.getUpdateTime());
+        return item;
+    }
+
+    private NoticeItem buildNoticeItem(CustomerNotice notice)
+    {
+        if (notice == null)
+        {
+            return null;
+        }
+        NoticeItem item = new NoticeItem();
+        item.noticeId = notice.getId() == null ? null : String.valueOf(notice.getId());
+        item.bizType = notice.getBizType();
+        item.eventType = notice.getEventType();
+        item.title = notice.getTitle();
+        item.content = notice.getContent();
+        item.targetType = notice.getTargetType();
+        item.targetId = notice.getTargetId() == null ? null : String.valueOf(notice.getTargetId());
+        item.targetRoute = notice.getTargetRoute();
+        item.payload = notice.getPayload();
+        item.readStatus = notice.getReadStatus();
+        item.readTime = formatDate(notice.getReadTime());
+        item.createTime = formatDate(notice.getCreateTime());
         return item;
     }
 

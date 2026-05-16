@@ -130,6 +130,22 @@ public class CustomerModels
         public String orderId;
     }
 
+    public static class NoticeListRequest extends ListRequestParams
+    {
+        public String bizType;
+        public Integer readStatus;
+    }
+
+    public static class NoticeReadRequest
+    {
+        public String noticeId;
+    }
+
+    public static class NoticeReadAllRequest
+    {
+        public String bizType;
+    }
+
     public static class FarmItem
     {
         public String id;
@@ -469,6 +485,29 @@ public class CustomerModels
         public BigDecimal amount;
         public String icon;
         public Boolean isPositive;
+    }
+
+    public static class NoticeItem
+    {
+        public String noticeId;
+        public String bizType;
+        public String eventType;
+        public String title;
+        public String content;
+        public String targetType;
+        public String targetId;
+        public String targetRoute;
+        public String payload;
+        public Integer readStatus;
+        public String readTime;
+        public String createTime;
+    }
+
+    public static class NoticeUnreadCount
+    {
+        public Long totalUnread;
+        public Long bidUnread;
+        public Long orderUnread;
     }
 
     public static class SimpleResult

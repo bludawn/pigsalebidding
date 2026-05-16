@@ -1,11 +1,30 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { getNoticeUnreadCount } from '../AppApi';
 
 interface MessageViewProps {
   onNavigate: (route: string, params?: any) => void;
 }
 
 const MessageView: React.FC<MessageViewProps> = ({ onNavigate }) => {
+  const [counts, setCounts] = useState({ bidUnread: 0, orderUnread: 0 });
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const res = await getNoticeUnreadCount();
+      if (!cancelled && res.errcode === 0 && res.data) {
+        setCounts({
+          bidUnread: res.data.bidUnread || 0,
+          orderUnread: res.data.orderUnread || 0,
+        });
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
       <div className="bg-white px-4 py-4 border-b border-slate-100 flex items-center justify-center sticky top-0 z-10">
@@ -13,29 +32,21 @@ const MessageView: React.FC<MessageViewProps> = ({ onNavigate }) => {
       </div>
 
       <div className="flex flex-col">
-        <MessageCategoryItem 
-          title="商品猪消息中心" 
-          description="报单关联的场次、体重范围信息已更新" 
-          time="10:30" 
-          unreadCount={3}
-          icon="🐷"
-          onClick={() => onNavigate('msg-list', { type: 'product', title: '商品猪消息中心' })}
+        <MessageCategoryItem
+          title="竞拍通知"
+          description="竞拍成功、竞拍失败等通知"
+          time="最新"
+          unreadCount={counts.bidUnread}
+          icon="🏷️"
+          onClick={() => onNavigate('msg-list', { bizType: 'BID', title: '竞拍通知' })}
         />
-        <MessageCategoryItem 
-          title="支付消息" 
-          description="账户操作时间、支出类型、金额变动明细" 
-          time="昨天" 
-          unreadCount={1}
-          icon="💰"
-          onClick={() => onNavigate('msg-list', { type: 'payment', title: '支付消息' })}
-        />
-        <MessageCategoryItem 
-          title="商城消息" 
-          description="报单编号、匹配状态更新通知" 
-          time="3天前" 
-          unreadCount={0}
-          icon="🛒"
-          onClick={() => onNavigate('msg-list', { type: 'mall', title: '商城消息' })}
+        <MessageCategoryItem
+          title="订单通知"
+          description="订单生成、发货、完成等通知"
+          time="最新"
+          unreadCount={counts.orderUnread}
+          icon="📦"
+          onClick={() => onNavigate('msg-list', { bizType: 'ORDER', title: '订单通知' })}
         />
       </div>
     </div>
@@ -57,7 +68,7 @@ const MessageCategoryItem: React.FC<ItemProps> = ({ title, description, time, un
       {icon}
       {unreadCount > 0 && (
         <span className="absolute -top-1 -right-1 bg-industry-red text-white text-[10px] min-w-[16px] h-4 rounded-full flex items-center justify-center border-2 border-white px-1">
-          {unreadCount}
+          {unreadCount > 99 ? '99+' : unreadCount}
         </span>
       )}
     </div>

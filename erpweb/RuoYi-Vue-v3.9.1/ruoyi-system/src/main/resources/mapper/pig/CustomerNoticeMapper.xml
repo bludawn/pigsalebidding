@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.pig.CustomerNoticeMapper">
+
+    <resultMap type="CustomerNotice" id="CustomerNoticeResult">
+        <id property="id" column="f_id" />
+        <result property="userId" column="f_userId" />
+        <result property="bizType" column="f_bizType" />
+        <result property="eventType" column="f_eventType" />
+        <result property="title" column="f_title" />
+        <result property="content" column="f_content" />
+        <result property="targetType" column="f_targetType" />
+        <result property="targetId" column="f_targetId" />
+        <result property="targetRoute" column="f_targetRoute" />
+        <result property="payload" column="f_payload" />
+        <result property="readStatus" column="f_readStatus" />
+        <result property="readTime" column="f_readTime" />
+        <result property="sourceEventId" column="f_sourceEventId" />
+        <result property="isDeleted" column="f_isDeleted" />
+        <result property="createBy" column="f_creator" />
+        <result property="createTime" column="f_createTime" />
+        <result property="updateBy" column="f_updator" />
+        <result property="updateTime" column="f_updateTime" />
+    </resultMap>
+
+    <sql id="selectCustomerNoticeVo">
+        select f_id, f_userId, f_bizType, f_eventType, f_title, f_content, f_targetType, f_targetId, f_targetRoute, f_payload,
+               f_readStatus, f_readTime, f_sourceEventId, f_isDeleted, f_creator, f_createTime, f_updator, f_updateTime
+        from t_customerNotice
+    </sql>
+
+    <select id="selectCustomerNoticeList" parameterType="CustomerNotice" resultMap="CustomerNoticeResult">
+        <include refid="selectCustomerNoticeVo"/>
+        <where>
+            <if test="id != null">
+                AND f_id = #{id}
+            </if>
+            <if test="userId != null">
+                AND f_userId = #{userId}
+            </if>
+            <if test="bizType != null and bizType != ''">
+                AND f_bizType = #{bizType}
+            </if>
+            <if test="eventType != null and eventType != ''">
+                AND f_eventType = #{eventType}
+            </if>
+            <if test="readStatus != null">
+                AND f_readStatus = #{readStatus}
+            </if>
+            <if test="isDeleted != null">
+                AND f_isDeleted = #{isDeleted}
+            </if>
+        </where>
+        order by f_createTime desc, f_id desc
+    </select>
+
+    <select id="selectCustomerNoticeById" parameterType="Long" resultMap="CustomerNoticeResult">
+        <include refid="selectCustomerNoticeVo"/>
+        where f_id = #{id}
+    </select>
+
+    <select id="selectCustomerNoticeBySourceEventId" parameterType="String" resultMap="CustomerNoticeResult">
+        <include refid="selectCustomerNoticeVo"/>
+        where f_sourceEventId = #{sourceEventId}
+        limit 1
+    </select>
+
+    <insert id="insertCustomerNotice" parameterType="CustomerNotice" useGeneratedKeys="true" keyProperty="id">
+        insert into t_customerNotice(
+            <if test="id != null and id != 0">f_id,</if>
+            <if test="userId != null">f_userId,</if>
+            <if test="bizType != null and bizType != ''">f_bizType,</if>
+            <if test="eventType != null and eventType != ''">f_eventType,</if>
+            <if test="title != null and title != ''">f_title,</if>
+            <if test="content != null and content != ''">f_content,</if>
+            <if test="targetType != null and targetType != ''">f_targetType,</if>
+            <if test="targetId != null">f_targetId,</if>
+            <if test="targetRoute != null and targetRoute != ''">f_targetRoute,</if>
+            <if test="payload != null and payload != ''">f_payload,</if>
+            <if test="readStatus != null">f_readStatus,</if>
+            <if test="readTime != null">f_readTime,</if>
+            <if test="sourceEventId != null and sourceEventId != ''">f_sourceEventId,</if>
+            <if test="isDeleted != null">f_isDeleted,</if>
+            <if test="createBy != null and createBy != ''">f_creator,</if>
+            f_createTime
+        ) values (
+            <if test="id != null and id != 0">#{id},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="bizType != null and bizType != ''">#{bizType},</if>
+            <if test="eventType != null and eventType != ''">#{eventType},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="content != null and content != ''">#{content},</if>
+            <if test="targetType != null and targetType != ''">#{targetType},</if>
+            <if test="targetId != null">#{targetId},</if>
+            <if test="targetRoute != null and targetRoute != ''">#{targetRoute},</if>
+            <if test="payload != null and payload != ''">#{payload},</if>
+            <if test="readStatus != null">#{readStatus},</if>
+            <if test="readTime != null">#{readTime},</if>
+            <if test="sourceEventId != null and sourceEventId != ''">#{sourceEventId},</if>
+            <if test="isDeleted != null">#{isDeleted},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        )
+    </insert>
+
+    <update id="updateCustomerNotice" parameterType="CustomerNotice">
+        update t_customerNotice
+        <set>
+            <if test="userId != null">f_userId = #{userId},</if>
+            <if test="bizType != null and bizType != ''">f_bizType = #{bizType},</if>
+            <if test="eventType != null and eventType != ''">f_eventType = #{eventType},</if>
+            <if test="title != null and title != ''">f_title = #{title},</if>
+            <if test="content != null and content != ''">f_content = #{content},</if>
+            <if test="targetType != null and targetType != ''">f_targetType = #{targetType},</if>
+            <if test="targetId != null">f_targetId = #{targetId},</if>
+            <if test="targetRoute != null and targetRoute != ''">f_targetRoute = #{targetRoute},</if>
+            <if test="payload != null and payload != ''">f_payload = #{payload},</if>
+            <if test="readStatus != null">f_readStatus = #{readStatus},</if>
+            <if test="readTime != null">f_readTime = #{readTime},</if>
+            <if test="sourceEventId != null and sourceEventId != ''">f_sourceEventId = #{sourceEventId},</if>
+            <if test="isDeleted != null">f_isDeleted = #{isDeleted},</if>
+            <if test="updateBy != null and updateBy != ''">f_updator = #{updateBy},</if>
+            f_updateTime = sysdate()
+        </set>
+        where f_id = #{id}
+    </update>
+
+    <select id="countUnreadByUserId" parameterType="Long" resultType="java.lang.Long">
+        select count(1)
+        from t_customerNotice
+        where f_userId = #{userId}
+          and f_isDeleted = 0
+          and f_readStatus = 0
+    </select>
+
+    <select id="countUnreadByUserIdAndBizType" resultType="java.lang.Long">
+        select count(1)
+        from t_customerNotice
+        where f_userId = #{userId}
+          and f_bizType = #{bizType}
+          and f_isDeleted = 0
+          and f_readStatus = 0
+    </select>
+
+    <update id="markReadByIdAndUserId">
+        update t_customerNotice
+        set f_readStatus = 1,
+            f_readTime = sysdate(),
+            f_updator = #{updateBy},
+            f_updateTime = sysdate()
+        where f_id = #{id}
+          and f_userId = #{userId}
+          and f_isDeleted = 0
+    </update>
+
+    <update id="markAllReadByUserId">
+        update t_customerNotice
+        set f_readStatus = 1,
+            f_readTime = sysdate(),
+            f_updator = #{updateBy},
+            f_updateTime = sysdate()
+        where f_userId = #{userId}
+          and f_isDeleted = 0
+          and f_readStatus = 0
+          <if test="bizType != null and bizType != ''">
+              and f_bizType = #{bizType}
+          </if>
+    </update>
+
+</mapper>
