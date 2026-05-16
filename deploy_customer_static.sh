@@ -5,6 +5,7 @@ PROJECT_DIR="/Users/baack/Desktop/CodeBuddy/pigsalebidding/customer"
 REMOTE_TARGET="${1:-root@47.107.66.81}"
 REMOTE_DIR="${2:-/usr/share/nginx/html/customer}"
 BUILD_BASE="${BUILD_BASE:-/customer/}"
+FILE_BASE_URL="${FILE_BASE_URL:-}"
 
 if ! command -v ssh >/dev/null 2>&1; then
   echo "未找到 ssh 命令，请先安装 OpenSSH 客户端。"
@@ -24,7 +25,7 @@ fi
 echo "[1/4] 进入项目目录: $PROJECT_DIR"
 cd "$PROJECT_DIR"
 
-echo "[2/4] 安装依赖并构建静态资源 (base=$BUILD_BASE)"
+echo "[2/4] 安装依赖并构建静态资源 (base=$BUILD_BASE, fileBase=${FILE_BASE_URL:-<empty>})"
 if [ -f "pnpm-lock.yaml" ]; then
   if ! command -v pnpm >/dev/null 2>&1; then
     echo "检测到 pnpm-lock.yaml，但未安装 pnpm。请先执行: npm i -g pnpm"
@@ -35,7 +36,7 @@ else
   npm install
 fi
 
-npx vite build --base="$BUILD_BASE"
+VITE_FILE_BASE_URL="$FILE_BASE_URL" npx vite build --base="$BUILD_BASE"
 
 if [ ! -d "dist" ]; then
   echo "构建失败：未找到 dist 目录"

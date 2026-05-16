@@ -3,6 +3,8 @@ import Router from 'vue-router'
 
 Vue.use(Router)
 
+const routerBase = process.env.VUE_APP_PUBLIC_PATH || '/'
+
 /* Layout */
 import Layout from '@/layout'
 
@@ -178,6 +180,7 @@ Router.prototype.replace = function push(location) {
 
 export default new Router({
   mode: 'history', // 去掉url中的#
+  base: routerBase,
   scrollBehavior: () => ({ y: 0 }),
   routes: constantRoutes
 })
