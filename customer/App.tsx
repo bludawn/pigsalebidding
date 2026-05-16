@@ -16,7 +16,7 @@ import OrderListView from './views/OrderListView';
 import OrderDetailView from './views/OrderDetailView';
 import SettingsView from './views/SettingsView';
 import LoginView from './views/LoginView';
-import { clearAuthToken, getAuthToken, getFarmList, getProductTags } from './AppApi';
+import { clearAuthToken, getAuthToken, getFarmList, getNoticeUnreadCount, getProductTags } from './AppApi';
 
 /** 全局数据上下文 */
 interface AppContextType {
@@ -38,6 +38,7 @@ const App: React.FC = () => {
   const [currentRoute, setCurrentRoute] = useState<string>('tabs');
   const [isAuthed, setIsAuthed] = useState<boolean>(() => Boolean(getAuthToken()));
   const [routeParams, setRouteParams] = useState<any>(null);
+  const [messageListParams, setMessageListParams] = useState<{ bizType: 'BID' | 'ORDER'; title: string } | null>(null);
   const [auctionDetailParams, setAuctionDetailParams] = useState<AuctionItem | null>(null);
   const [auctionDetailBackRoute, setAuctionDetailBackRoute] = useState<string>('tabs');
   const [auctionDetailRefreshKey, setAuctionDetailRefreshKey] = useState(0);
@@ -47,6 +48,7 @@ const App: React.FC = () => {
   const [orderListParams, setOrderListParams] = useState<{ status: OrderListStatus } | null>(null);
   const [orderDetailParams, setOrderDetailParams] = useState<{ orderId: string } | null>(null);
   const [orderDetailBackRoute, setOrderDetailBackRoute] = useState<string>('order-list');
+  const [messageUnread, setMessageUnread] = useState(0);
   const scrollPositionsRef = useRef<Record<string, number>>({});
   
   // 全局数据
@@ -98,6 +100,28 @@ const App: React.FC = () => {
     }
   }, [isAuthed, currentRoute]);
 
+  useEffect(() => {
+    if (!isAuthed) {
+      setMessageUnread(0);
+      return;
+    }
+    let cancelled = false;
+    const loadUnread = async () => {
+      try {
+        const res = await getNoticeUnreadCount();
+        if (!cancelled && res.errcode === 0 && res.data) {
+          setMessageUnread(res.data.totalUnread || 0);
+        }
+      } catch (error) {
+        // ignore
+      }
+    };
+    loadUnread();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthed, currentRoute, activeTab]);
+
   const navigate = (route: string, params: any = null) => {
     if (currentRoute === 'tabs') {
       scrollPositionsRef.current[`tabs-${activeTab}`] = window.scrollY;
@@ -107,6 +131,10 @@ const App: React.FC = () => {
       setAuctionDetailParams(params as AuctionItem);
       setAuctionDetailBackRoute(currentRoute);
       setAuctionDetailRefreshKey(prev => prev + 1);
+    }
+
+    if (route === 'msg-list' && params) {
+      setMessageListParams(params as { bizType: 'BID' | 'ORDER'; title: string });
     }
 
     if (route === 'order-list' && params) {
@@ -205,8 +233,8 @@ const App: React.FC = () => {
           </div>
         )}
         {currentRoute === 'free-quote' && <FreeQuote onBack={() => setCurrentRoute('tabs')} />}
-        {currentRoute === 'msg-list' && (
-          <MessageList params={routeParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
+        {currentRoute === 'msg-list' && messageListParams && (
+          <MessageList params={messageListParams} onBack={() => setCurrentRoute('tabs')} onNavigate={navigate} />
         )}
         {currentRoute === 'payment-detail' && <PaymentDetail onBack={() => setCurrentRoute('msg-list')} />}
         {currentRoute === 'match-detail' && <MatchDetail onBack={() => setCurrentRoute('msg-list')} />}
@@ -221,7 +249,7 @@ const App: React.FC = () => {
           </div>
         )}
         {orderDetailParams && currentRoute === 'order-detail' && (
-          <OrderDetailView params={orderDetailParams} onBack={() => setCurrentRoute(orderDetailBackRoute)} />
+          <OrderDetailView params={orderDetailParams} onBack={() => setCurrentRoute(orderDetailBackRoute)} onNavigate={navigate} />
         )}
         {auctionMaintenanceParams && (
           <div className={currentRoute === 'auction-maintenance' ? 'block h-full' : 'hidden h-full'}>
@@ -273,6 +301,7 @@ const App: React.FC = () => {
           <TabItem 
             active={activeTab === 'message'} 
             label="消息" 
+            showDot={messageUnread > 0}
             icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>}
             onClick={() => setActiveTab('message')} 
           />
@@ -293,11 +322,13 @@ interface TabItemProps {
   label: string;
   icon: React.ReactNode;
   onClick: () => void;
+  showDot?: boolean;
 }
 
-const TabItem: React.FC<TabItemProps> = ({ active, label, icon, onClick }) => (
-  <button onClick={onClick} className={`flex flex-col items-center gap-0.5 ${active ? 'text-industry-red font-bold' : 'text-slate-400'}`}>
+const TabItem: React.FC<TabItemProps> = ({ active, label, icon, onClick, showDot }) => (
+  <button onClick={onClick} className={`relative flex flex-col items-center gap-0.5 ${active ? 'text-industry-red font-bold' : 'text-slate-400'}`}>
     {icon}
+    {showDot && <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-industry-red" />}
     <span className="text-[10px]">{label}</span>
   </button>
 );

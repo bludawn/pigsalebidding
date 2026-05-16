@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { OrderDetailInfo, OrderStatus } from '../types';
+import { AuctionItem, OrderDetailInfo, OrderStatus } from '../types';
 import { confirmReceipt, getOrderDetail, payOrder } from '../AppApi';
 
 interface OrderDetailViewProps {
   params: { orderId: string };
   onBack: () => void;
+  onNavigate: (route: string, params?: any) => void;
 }
 
 const statusMetaMap: Record<OrderStatus, { label: string; desc: string; badgeClass: string }> = {
@@ -28,7 +29,7 @@ const vehicleSourceLabelMap: Record<string, string> = {
   HIRE: '外雇',
 };
 
-const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => {
+const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack, onNavigate }) => {
   const [detail, setDetail] = useState<OrderDetailInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -84,6 +85,31 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
   const freightAmount = detail?.priceInfo.freightAmount ?? 0;
   const finalPaymentAmount = remainingPaymentAmount + freightAmount;
   const isWaitPay = detail?.status === 'WAIT_PAY';
+  const isAuctionOrder = Boolean(detail?.bidProductId) && String(detail?.orderSource || '').toUpperCase() === 'BID';
+
+  const handleGoAuctionDetail = () => {
+    if (!detail?.bidProductId) {
+      return;
+    }
+    const auctionParams: AuctionItem = {
+      id: detail.bidProductId,
+      farmId: '',
+      farmName: detail.farmName || '',
+      farmIcon: '',
+      breed: detail.pigTypeName || '竞拍商品',
+      quantity: detail.quantity || 0,
+      weightRange: detail.weightRange || '',
+      tags: [],
+      startingPrice: Number(detail.price || 0),
+      startingCount: 0,
+      endTime: new Date(),
+      imageUrl: '',
+      bidStatus: 'ENDED',
+      bidStartTime: '',
+      customerBidStatus: 'NO_BID',
+    };
+    onNavigate('auction-detail', auctionParams);
+  };
 
   const ensureAmap = useCallback(() => {
     if ((window as any).AMap) {
@@ -354,6 +380,14 @@ const OrderDetailView: React.FC<OrderDetailViewProps> = ({ params, onBack }) => 
             <div className="flex justify-between"><span>单价</span><span className="text-slate-800 font-bold">¥{detail.price.toFixed(2)}/kg</span></div>
             <div className="flex justify-between"><span>货款</span><span className="text-slate-800 font-bold">¥{detail.priceInfo.goodsAmount.toLocaleString('zh-CN')}</span></div>
           </div>
+          {isAuctionOrder && (
+            <button
+              onClick={handleGoAuctionDetail}
+              className="mt-3 w-full py-2 border border-industry-red text-industry-red rounded-custom text-xs font-bold"
+            >
+              查看竞拍商品详情
+            </button>
+          )}
         </div>
 
         {isWaitPay ? (

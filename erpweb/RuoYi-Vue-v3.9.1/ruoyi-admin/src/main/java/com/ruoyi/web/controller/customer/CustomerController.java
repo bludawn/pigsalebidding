@@ -1053,6 +1053,8 @@ public class CustomerController extends BaseController {
         OrderDetailInfo detail = new OrderDetailInfo();
         detail.orderId = String.valueOf(order.getId());
         detail.orderNo = normalizeOrderNo(order.getOrderNo(), detail.orderId);
+        detail.orderSource = order.getOrderSource();
+        detail.bidProductId = order.getBidProductId() == null ? null : String.valueOf(order.getBidProductId());
         detail.status = mapOrderStatus(order.getOrderStatus());
         detail.payStatus = order.getPayStatus();
         detail.farmName = site != null ? site.getSiteName() : null;

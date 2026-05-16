@@ -418,6 +418,8 @@ public class CustomerModels
     {
         public String orderId;
         public String orderNo;
+        public String orderSource;
+        public String bidProductId;
         public String status;
         public String payStatus;
         public String farmName;

@@ -138,6 +138,8 @@ export interface OrderTimelineNode {
 export interface OrderDetailInfo {
   orderId: string;
   orderNo?: string;
+  orderSource?: string;
+  bidProductId?: string;
   status: OrderStatus;
   payStatus?: string;
   farmName: string;
