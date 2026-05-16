@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
             target: 'http://localhost:8090',
             changeOrigin: true,
           },
-          '/profile': {
+          '/profile': { // 下载文件
             target: 'http://localhost:8090',
             changeOrigin: true,
           },
