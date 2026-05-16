@@ -9,6 +9,7 @@ import {
 } from '../AppApi';
 import regionData from '../data/pcas-code.json';
 import RegionPicker from './RegionPicker';
+import { normalizeRegionName } from '../regionUtils';
 
 interface AddressManagementViewProps {
   onBack: () => void;
@@ -117,11 +118,10 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
     try {
       const res = await getAddressList({ current: 1, size: PAGE_SIZE, searchCount: false });
       if (res.errcode === 0 && res.data) {
-        const normalizedRecords = (res.data.records || []).map(item => {
-          if (item.regionName) return item;
-          const fullName = getRegionFullNameByCode(item.regionCode);
-          return fullName ? { ...item, regionName: fullName } : item;
-        });
+        const normalizedRecords = (res.data.records || []).map(item => ({
+          ...item,
+          regionName: normalizeRegionName(item.regionName, item.regionCode),
+        }));
         setAddresses(normalizedRecords);
 
         if (normalizedRecords.length === 1 && !normalizedRecords[0].isDefault) {
@@ -282,7 +282,7 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
 
   const openEditForm = (item: AddressItem) => {
     setEditingAddress(item);
-    const regionName = item.regionName || getRegionFullNameByCode(item.regionCode);
+    const regionName = normalizeRegionName(item.regionName, item.regionCode);
     setFormData({
       contactName: item.contactName,
       contactPhone: item.contactPhone,
@@ -444,7 +444,7 @@ const AddressManagementView: React.FC<AddressManagementViewProps> = ({ onBack, s
   const displayAddresses = useMemo(() => {
     return addresses.map(address => ({
       ...address,
-      regionName: address.regionName || getRegionFullNameByCode(address.regionCode),
+      regionName: normalizeRegionName(address.regionName, address.regionCode),
       isDefault: address.isDefault || (hasSingleAddress && addresses[0]?.id === address.id),
     }));
   }, [addresses, hasSingleAddress]);

@@ -29,6 +29,7 @@ import {
   UserProfile,
   UserSettingsProfile,
 } from './types';
+import { normalizeAddressText, normalizeRegionName } from './regionUtils';
 
 // ============ 通用类型定义 ============
 
@@ -237,6 +238,16 @@ const mapContactInfo = (info: ContactInfo): ContactInfo => ({
   wechatQrCodeUrl: withFileHost(info.wechatQrCodeUrl),
 });
 
+const mapAddressItem = (item: AddressItem): AddressItem => ({
+  ...item,
+  regionName: normalizeRegionName(item.regionName, item.regionCode),
+});
+
+const mapAuctionMaintenanceInfo = (info: AuctionMaintenanceInfo): AuctionMaintenanceInfo => ({
+  ...info,
+  regionName: normalizeRegionName(info.regionName),
+});
+
 /** 竞价列表请求参数 */
 export interface AuctionListParams extends ListRequestParams {
   bidStatus?: BidStatus; // 竞价状态
@@ -324,7 +335,14 @@ export async function getAuctionDetail(params: { auctionId: string }): Promise<A
 
 /** 获取竞价维护信息 */
 export async function getAuctionMaintenance(params: { auctionId: string }): Promise<ApiResponse<AuctionMaintenanceInfo | null>> {
-  return request<AuctionMaintenanceInfo | null>('/v1/weixincustomer/getAuctionMaintenance', params);
+  const result = await request<AuctionMaintenanceInfo | null>('/v1/weixincustomer/getAuctionMaintenance', params);
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: mapAuctionMaintenanceInfo(result.data),
+  };
 }
 
 /** 保存竞价维护信息 */
@@ -334,7 +352,14 @@ export async function saveAuctionMaintenance(params: {
   expectedDeliveryTime: string;
   remark?: string;
 }): Promise<ApiResponse<AuctionMaintenanceInfo>> {
-  return request<AuctionMaintenanceInfo>('/v1/weixincustomer/saveAuctionMaintenance', params);
+  const result = await request<AuctionMaintenanceInfo>('/v1/weixincustomer/saveAuctionMaintenance', params);
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: mapAuctionMaintenanceInfo(result.data),
+  };
 }
 
 /** 获取出价明细 */
@@ -566,7 +591,17 @@ export async function getContactInfo(): Promise<ApiResponse<ContactInfo>> {
 
 /** 获取地址列表 */
 export async function getAddressList(params: ListRequestParams): Promise<ApiResponse<ListResponseData<AddressItem>>> {
-  return request<ListResponseData<AddressItem>>('/v1/weixincustomer/getAddressList', params);
+  const result = await request<ListResponseData<AddressItem>>('/v1/weixincustomer/getAddressList', params);
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: {
+      ...result.data,
+      records: (result.data.records || []).map(mapAddressItem),
+    },
+  };
 }
 
 /** 新增地址 */
@@ -591,7 +626,14 @@ export function setDefaultAddress(params: { id: string }): Promise<ApiResponse<{
 
 /** 获取默认地址 */
 export async function getDefaultAddress(): Promise<ApiResponse<AddressItem>> {
-  return request<AddressItem>('/v1/weixincustomer/getDefaultAddress');
+  const result = await request<AddressItem>('/v1/weixincustomer/getDefaultAddress');
+  if (result.errcode !== 0 || !result.data) {
+    return result;
+  }
+  return {
+    ...result,
+    data: mapAddressItem(result.data),
+  };
 }
 
 /** 获取账户余额 */
@@ -662,6 +704,11 @@ export async function getOrderList(params: ListRequestParams & {
 
 const mapOrderDetail = (detail: OrderDetailInfo): OrderDetailInfo => ({
   ...detail,
+  farmAddress: normalizeAddressText(detail.farmAddress),
+  deliveryInfo: {
+    ...detail.deliveryInfo,
+    address: normalizeAddressText(detail.deliveryInfo?.address),
+  },
   deliveryInfos: (detail.deliveryInfos || []).map(item => {
     const attachmentUrls = (item.attachmentUrls || []).map(withFileHost);
     const attachmentFiles = (item.attachmentFiles || []).map(file => ({

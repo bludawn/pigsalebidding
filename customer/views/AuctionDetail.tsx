@@ -494,7 +494,7 @@ const AuctionDetail: React.FC<AuctionDetailProps> = ({ params, onBack, onNavigat
       <div className="p-4 flex items-start justify-between gap-4 border-b-8 border-slate-100">
         <div className="flex-1">
           <h2 className="text-sm font-bold">信息维护</h2>
-          <p className="text-[11px] text-slate-400 mt-0.5">请确认收货地址、装猪时间等基础信息</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">请确认收货地址、期望送达时间等基础信息</p>
           <div className="mt-2 text-[11px] text-slate-500">
             {isMaintenanceLoading ? (
               <span className="text-slate-400">维护信息加载中...</span>
