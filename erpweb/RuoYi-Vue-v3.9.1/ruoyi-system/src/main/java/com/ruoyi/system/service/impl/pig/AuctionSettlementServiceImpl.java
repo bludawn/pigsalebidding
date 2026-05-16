@@ -8,23 +8,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimerTask;
 
+import com.ruoyi.system.domain.pig.*;
 import com.ruoyi.system.manager.AsyncManager;
+import com.ruoyi.system.mapper.pig.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.system.domain.pig.BidProduct;
-import com.ruoyi.system.domain.pig.CustomerNotice;
-import com.ruoyi.system.domain.pig.PigOrder;
-import com.ruoyi.system.domain.pig.PigResource;
-import com.ruoyi.system.domain.pig.PigType;
-import com.ruoyi.system.domain.pig.UserBid;
-import com.ruoyi.system.domain.pig.UserBidInfo;
-import com.ruoyi.system.mapper.pig.BidProductMapper;
-import com.ruoyi.system.mapper.pig.PigOrderMapper;
-import com.ruoyi.system.mapper.pig.PigResourceMapper;
-import com.ruoyi.system.mapper.pig.PigTypeMapper;
-import com.ruoyi.system.mapper.pig.UserBidMapper;
 import com.ruoyi.system.service.pig.IAuctionSettlementService;
 import com.ruoyi.system.service.pig.ICustomerNoticeService;
 import com.ruoyi.system.service.pig.IPigOrderService;
@@ -54,6 +44,9 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
 
     @Autowired
     private PigTypeMapper pigTypeMapper;
+
+    @Autowired
+    private SiteMapper siteMapper;
 
     @Autowired
     private IUserBidService userBidService;
@@ -288,8 +281,8 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
     {
         BigDecimal price = bid.getPrice() == null ? BigDecimal.ZERO : bid.getPrice();
         BigDecimal amount = calculateEstimatedTotalPrice(price, allocated, product);
-        String code = product.getBidProductCode() == null ? String.valueOf(product.getId()) : product.getBidProductCode();
-        return "竞拍成功，商品" + code + "已生成待付款订单，数量" + allocated + "头，单价" + price + "元/kg，预计总价" + amount + "元。";
+        String productName = resolveNoticeProductName(product);
+        return "竞拍成功，" + productName + " 已生成待付款订单，数量" + allocated + "头，单价" + price + "元/kg，预计总价" + amount + "元。";
     }
 
     private BigDecimal calculateEstimatedTotalPrice(BigDecimal bidPrice, int bidCount, BidProduct product)
@@ -302,6 +295,83 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
             return base.setScale(2, RoundingMode.HALF_UP);
         }
         return base.multiply(avgWeight).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private String resolveNoticeProductName(BidProduct product)
+    {
+        BidProduct sourceProduct = resolveSourceBidProduct(product);
+        if (sourceProduct == null)
+        {
+            return "商品";
+        }
+        String fallbackName = StringUtils.isNotEmpty(sourceProduct.getBidProductCode())
+            ? "商品" + sourceProduct.getBidProductCode()
+            : "商品" + sourceProduct.getId();
+        if (sourceProduct.getPigResourceId() == null)
+        {
+            return fallbackName;
+        }
+
+        PigResource pigResource = pigResourceMapper.selectPigResourceById(sourceProduct.getPigResourceId());
+        if (pigResource == null)
+        {
+            return fallbackName;
+        }
+
+        String siteName = "";
+        if (pigResource.getSiteId() != null)
+        {
+            Site site = siteMapper.selectSiteById(pigResource.getSiteId());
+            siteName = site == null ? "" : StringUtils.trim(site.getSiteName());
+        }
+
+        String pigTypeName = "";
+        if (pigResource.getPigTypeId() != null)
+        {
+            PigType pigType = pigTypeMapper.selectPigTypeById(pigResource.getPigTypeId());
+            pigTypeName = pigType == null ? "" : StringUtils.trim(pigType.getPigName());
+        }
+
+        if (StringUtils.isEmpty(siteName) && StringUtils.isEmpty(pigTypeName))
+        {
+            return fallbackName;
+        }
+        if (StringUtils.isEmpty(siteName))
+        {
+            return pigTypeName;
+        }
+        if (StringUtils.isEmpty(pigTypeName))
+        {
+            return siteName;
+        }
+        return siteName + "·" + pigTypeName;
+    }
+
+    private BidProduct resolveSourceBidProduct(BidProduct product)
+    {
+        if (product == null)
+        {
+            return null;
+        }
+        if (StringUtils.isNotEmpty(product.getBidProductCode()))
+        {
+            BidProduct query = new BidProduct();
+            query.setBidProductCode(product.getBidProductCode());
+            List<BidProduct> products = bidProductMapper.selectBidProductList(query);
+            if (products != null && !products.isEmpty() && products.get(0) != null)
+            {
+                return products.get(0);
+            }
+        }
+        if (product.getId() != null)
+        {
+            BidProduct byId = bidProductMapper.selectBidProductById(product.getId());
+            if (byId != null)
+            {
+                return byId;
+            }
+        }
+        return product;
     }
 
     private BigDecimal resolveAverageWeight(BidProduct product)
@@ -349,8 +419,8 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
 
     private String buildFailedMessage(BidProduct product)
     {
-        String code = product.getBidProductCode() == null ? String.valueOf(product.getId()) : product.getBidProductCode();
-        return "竞拍失败，商品" + code + "未获得订单。";
+        String productName = resolveNoticeProductName(product);
+        return "竞拍失败，" + productName + " 未获得订单。";
     }
 
     private String buildBidPayload(BidProduct product)
