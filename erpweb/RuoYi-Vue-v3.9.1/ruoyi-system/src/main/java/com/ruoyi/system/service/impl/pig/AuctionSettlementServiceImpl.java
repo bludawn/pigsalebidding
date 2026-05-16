@@ -1,6 +1,7 @@
 package com.ruoyi.system.service.impl.pig;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -15,10 +16,14 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.system.domain.pig.BidProduct;
 import com.ruoyi.system.domain.pig.CustomerNotice;
 import com.ruoyi.system.domain.pig.PigOrder;
+import com.ruoyi.system.domain.pig.PigResource;
+import com.ruoyi.system.domain.pig.PigType;
 import com.ruoyi.system.domain.pig.UserBid;
 import com.ruoyi.system.domain.pig.UserBidInfo;
 import com.ruoyi.system.mapper.pig.BidProductMapper;
 import com.ruoyi.system.mapper.pig.PigOrderMapper;
+import com.ruoyi.system.mapper.pig.PigResourceMapper;
+import com.ruoyi.system.mapper.pig.PigTypeMapper;
 import com.ruoyi.system.mapper.pig.UserBidMapper;
 import com.ruoyi.system.service.pig.IAuctionSettlementService;
 import com.ruoyi.system.service.pig.ICustomerNoticeService;
@@ -43,6 +48,12 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
 
     @Autowired
     private PigOrderMapper pigOrderMapper;
+
+    @Autowired
+    private PigResourceMapper pigResourceMapper;
+
+    @Autowired
+    private PigTypeMapper pigTypeMapper;
 
     @Autowired
     private IUserBidService userBidService;
@@ -276,9 +287,64 @@ public class AuctionSettlementServiceImpl implements IAuctionSettlementService
     private String buildSuccessMessage(UserBid bid, BidProduct product, int allocated)
     {
         BigDecimal price = bid.getPrice() == null ? BigDecimal.ZERO : bid.getPrice();
-        BigDecimal amount = price.multiply(new BigDecimal(allocated));
+        BigDecimal amount = calculateEstimatedTotalPrice(price, allocated, product);
         String code = product.getBidProductCode() == null ? String.valueOf(product.getId()) : product.getBidProductCode();
-        return "竞拍成功，商品" + code + "已生成待付款订单，数量" + allocated + "头，单价" + price + "元/kg，金额" + amount + "元。";
+        return "竞拍成功，商品" + code + "已生成待付款订单，数量" + allocated + "头，单价" + price + "元/kg，预计总价" + amount + "元。";
+    }
+
+    private BigDecimal calculateEstimatedTotalPrice(BigDecimal bidPrice, int bidCount, BidProduct product)
+    {
+        BigDecimal safePrice = bidPrice == null ? BigDecimal.ZERO : bidPrice;
+        BigDecimal base = safePrice.multiply(BigDecimal.valueOf(Math.max(bidCount, 0L)));
+        BigDecimal avgWeight = resolveAverageWeight(product);
+        if (avgWeight.compareTo(BigDecimal.ZERO) <= 0)
+        {
+            return base.setScale(2, RoundingMode.HALF_UP);
+        }
+        return base.multiply(avgWeight).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal resolveAverageWeight(BidProduct product)
+    {
+        if (product == null || product.getPigResourceId() == null)
+        {
+            return BigDecimal.ZERO;
+        }
+        PigResource pigResource = pigResourceMapper.selectPigResourceById(product.getPigResourceId());
+        if (pigResource == null || pigResource.getPigTypeId() == null)
+        {
+            return BigDecimal.ZERO;
+        }
+        PigType pigType = pigTypeMapper.selectPigTypeById(pigResource.getPigTypeId());
+        if (pigType == null)
+        {
+            return BigDecimal.ZERO;
+        }
+        return parseAverageWeightRange(pigType.getWeightRange());
+    }
+
+    private BigDecimal parseAverageWeightRange(String weightRange)
+    {
+        if (StringUtils.isEmpty(weightRange))
+        {
+            return BigDecimal.ZERO;
+        }
+        String normalized = weightRange.split("/")[0].trim();
+        String[] parts = normalized.split("-");
+        if (parts.length < 2)
+        {
+            return BigDecimal.ZERO;
+        }
+        try
+        {
+            BigDecimal min = new BigDecimal(parts[0].trim());
+            BigDecimal max = new BigDecimal(parts[1].trim());
+            return min.add(max).divide(BigDecimal.valueOf(2), 6, RoundingMode.HALF_UP);
+        }
+        catch (Exception e)
+        {
+            return BigDecimal.ZERO;
+        }
     }
 
     private String buildFailedMessage(BidProduct product)
